@@ -1,0 +1,63 @@
+﻿name: specific_deployment
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Copy files via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: 178.62.36.14
+          username: root
+          password: Muuo02593.443JNZ
+          port: 22
+          source: "."
+          target: "/root/nodeapplications/isp-portal"
+      - name: Execute deployment script via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: 178.62.36.148
+          username: root
+          password: Muuo02593.443JNZ
+          port: 22
+          script: |
+            # Set variables
+            APP_NAME="isp-portal"
+            APP_DIR="/root/nodeapplications/$APP_NAME"
+
+            echo "Deploying $APP_NAME to $APP_DIR"
+
+            # Ensure Node.js 20+ is installed
+            if ! command -v node &> /dev/null || [ "$(node -v | cut -d. -f1 | tr -d 'v')" -lt 20 ]; then
+                echo "Node.js 20+ required. Installing/upgrading Node.js..."
+                curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+                sudo apt-get install -y nodejs
+            else
+                echo "Node.js version is compatible: $(node --version)"
+            fi
+
+            # Check if npm is installed
+            if ! command -v npm &> /dev/null; then
+                echo "npm not found. Installing npm..."
+                sudo apt-get install -y npm
+            else
+                echo "npm is already installed: $(npm --version)"
+            fi
+
+            # Navigate to app directory, install and build
+            cd $APP_DIR
+            if [ -f "package.json" ]; then
+                echo "Installing dependencies..."
+                npm install
+                echo "Building application..."
+                npm run build
+            else
+                echo "No package.json found, skipping build"
+            fi
+
+            echo "Deployment complete for $APP_NAME!"

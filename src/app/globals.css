@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+:root {
+  --background: #FFFFFF;
+  --foreground: #111827;
+
+  /* Brand Design Tokens - Solid 2D */
+  --pace-purple: #4B1D8F;
+  --pace-purple-light: #F4F0FF;
+  --pace-green: #2CB34A;
+  --pace-green-light: #E9F7EF;
+  --pace-border: #E5E7EB;
+  --pace-bg-subtle: #F9FAFB;
+
+  /* Data Matrix Colors - High Fidelity */
+  --admin-label: #4B5563;
+  --admin-value: #111827;
+  --admin-dim: #9CA3AF;
+
+  --pace-red: #E11D48;
+  --pace-red-light: #FFF1F2;
+  --card-bg: #FFFFFF;
+  --header-bg: #FFFFFF;
+}
+
+.dark {
+  --background: #0B0E14;
+  --foreground: #F3F4F6;
+
+  --pace-purple: #5B2DA0;
+  --pace-purple-light: #1E1830;
+  --pace-green: #4ADE80;
+  --pace-green-light: #1A2E22;
+  --pace-border: #1F2937;
+  --pace-bg-subtle: #161B22;
+
+  --admin-label: #9CA3AF;
+  --admin-value: #F3F4F6;
+  --admin-dim: #6B7280;
+
+  --pace-red: #FB7185;
+  --pace-red-light: #2D161B;
+  --card-bg: #111827;
+  --header-bg: #111827;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-figtree: var(--font-figtree);
+
+  --color-pace-purple: var(--pace-purple);
+  --color-pace-purple-light: var(--pace-purple-light);
+  --color-pace-green: var(--pace-green);
+  --color-pace-green-light: var(--pace-green-light);
+  --color-pace-border: var(--pace-border);
+  --color-pace-bg-subtle: var(--pace-bg-subtle);
+
+  /* Unified Admin Palette */
+  --color-admin-label: var(--admin-label);
+  --color-admin-value: var(--admin-value);
+  --color-admin-dim: var(--admin-dim);
+
+  --color-pace-red: var(--pace-red);
+  --color-pace-red-light: var(--pace-red-light);
+  --color-card-bg: var(--card-bg);
+  --color-header-bg: var(--header-bg);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Remove default shadow behavior for clean 2D look */
+.shadow-sm,
+.shadow-md,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl {
+  box-shadow: none !important;
+}
+
+/* Excel-like Table Header */
+th {
+  font-weight: 600;
+  color: var(--admin-label);
+  background-color: var(--pace-bg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 12px !important;
+  font-size: 10px !important;
+}
+
+td {
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+}
+
+tr:hover td {
+  background-color: var(--pace-bg-subtle);
+}
+
+/* Custom Scrollbar - High Visibility */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--admin-dim);
+  border: 2px solid var(--background);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-label);
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #9CA3AF transparent;
+}
+
+/* Tightening up spacing */
+input,
+select,
+button {
+  font-size: 13px !important;
+}
+
+/* Data Row Styling */
+.data-row:hover {
+  background-color: var(--pace-bg-subtle);
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer-wrapper {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--pace-bg-subtle);
+}
+
+.shimmer-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(90deg,
+      rgba(150, 150, 150, 0) 0%,
+      rgba(150, 150, 150, 0.1) 50%,
+      rgba(150, 150, 150, 0) 100%);
+  animation: shimmer 1.5s infinite;
+}
+
+/* Spinner Animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+}
