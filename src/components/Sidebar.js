@@ -128,7 +128,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, pathname })
                                 priority
                             />
                         ) : (
-                            <span className="text-sm font-black text-pace-purple tracking-tighter uppercase">PPPoE Control</span>
+                            <span className="text-sm font-black text-pace-purple tracking-tighter uppercase">PaceWisp</span>
                         )}
                     </Link>
                 </div>
