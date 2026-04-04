@@ -71,23 +71,32 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, pathname })
             icon: Users,
             children: [
                 { name: 'All Customers', href: '/dashboard/customers' },
-                { name: 'Active Users', href: '/dashboard/customers/active' },
-                { name: 'Expiring Soon', href: '/dashboard/customers/expiring' },
-                { name: 'Add New', href: '/dashboard/customers/new' },
+                { name: 'Active Sessions', href: '/dashboard/customers?status=active' },
+                { name: 'Add Subscriber', href: '/dashboard/customers/new' },
             ]
         },
         {
             id: 'billing',
-            name: 'Billing',
+            name: 'Finance',
             icon: CreditCard,
             children: [
-                { name: 'Today\'s Payments', href: '/dashboard/mpesa' },
-                { name: 'All Transactions', href: '/dashboard/reports' },
-                { name: 'Revenue Analytics', href: '/dashboard/income' },
+                { name: 'M-Pesa Ledger', href: '/dashboard/mpesa' },
+                { name: 'Business Expenses', href: '/dashboard/expenses' },
+                { name: 'Financial Reports', href: '/dashboard/reports' },
             ]
         },
-        { id: 'routers', name: 'MikroTik Routers', href: '/dashboard/routers', icon: Network },
-        { id: 'notifications', name: 'System Alerts', href: '/dashboard/notifications', icon: Bell },
+        {
+            id: 'network',
+            name: 'Infrastructure',
+            icon: Network,
+            children: [
+                { name: 'MikroTik Routers', href: '/dashboard/routers' },
+                { name: 'Service Packages', href: '/dashboard/packages' },
+                { name: 'Network Alerts', href: '/dashboard/notifications' },
+            ]
+        },
+        { id: 'sms', name: 'SMS Center', href: '/dashboard/sms', icon: Send },
+        { id: 'staff', name: 'Staff & Policy', href: '/dashboard/staff', icon: ShieldCheck },
         { id: 'settings', name: 'System Settings', href: '/dashboard/settings', icon: Settings },
     ]
 
@@ -119,14 +128,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, pathname })
                                 priority
                             />
                         ) : (
-                            <Image
-                                src="/logoc.png"
-                                alt="PPPoE Home"
-                                width={32}
-                                height={32}
-                                className="h-6 w-auto object-contain"
-                                priority
-                            />
+                            <span className="text-sm font-black text-pace-purple tracking-tighter uppercase">PPPoE Control</span>
                         )}
                     </Link>
                 </div>

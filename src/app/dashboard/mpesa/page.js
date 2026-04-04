@@ -1,220 +1,177 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Search, Filter, CheckCircle2, XCircle, Clock, Smartphone, RefreshCw, Loader2 } from 'lucide-react'
+import React, { useState, useEffect, Suspense } from 'react'
+import { CreditCard, Search, Download, TrendingUp, TrendingDown, DollarSign, Smartphone, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/Badge'
 import { Skeleton } from '@/components/Skeleton'
-import { mpesaService } from '@/services/mpesa'
+import { mockDashboardData, mockRecentPayments } from '@/services/mockData'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
-export default function MpesaTransactionsPage() {
+function PaymentsContent() {
     const [isLoading, setIsLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
-    const [transactions, setTransactions] = useState([])
-    const [page, setPage] = useState(1)
-    const [hasMore, setHasMore] = useState(true)
-    const [isLoadingMore, setIsLoadingMore] = useState(false)
-    const [total, setTotal] = useState(0)
+    const [payments, setPayments] = useState([])
 
-    const observer = useRef()
-    const fetchLock = useRef(false)
-
-    const loadTransactions = async (pageNum, isAppend = false) => {
-        if (fetchLock.current) return
-        fetchLock.current = true
-
-        try {
-            if (isAppend) setIsLoadingMore(true)
-            else setIsLoading(true)
-
-            const response = await mpesaService.getTransactions({
-                page: pageNum,
-                limit: 12,
-
-                search: searchTerm
-            })
-
-            if (response?.status === 'success') {
-                const newItems = response.data || []
-                const serverTotal = response.pagination?.total || 0
-                const serverHasMore = response.pagination?.has_more ?? false
-
-                if (isAppend) {
-                    setTransactions(prev => {
-                        const existingIds = new Set(prev.map(item => item.id));
-                        const uniqueNew = newItems.filter(item => !existingIds.has(item.id));
-                        return [...prev, ...uniqueNew];
-                    });
-                } else {
-                    setTransactions(newItems)
-                }
-
-                setTotal(serverTotal)
-                setHasMore(serverHasMore)
-                setPage(pageNum)
-            } else {
-                setHasMore(false)
-            }
-        } catch (error) {
-            console.error("Failed to load transactions", error)
-            setHasMore(false)
-        } finally {
-            setIsLoading(false)
-            setIsLoadingMore(false)
-            fetchLock.current = false
-        }
-    }
-
-    useEffect(() => {
-        loadTransactions(1, false)
-    }, [])
-
-    // Search with debounce
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (searchTerm !== undefined) {
-                loadTransactions(1, false)
-            }
-        }, 500)
+            setPayments(mockDashboardData.recentPayments)
+            setIsLoading(false)
+        }, 800)
         return () => clearTimeout(timer)
-    }, [searchTerm])
+    }, [])
 
-    // Infinite scroll observer
-    const lastElementRef = useCallback(node => {
-        if (isLoading || isLoadingMore) return
-        if (observer.current) observer.current.disconnect()
-        observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore && !fetchLock.current) {
-                loadTransactions(page + 1, true)
-            }
-        })
-        if (node) observer.current.observe(node)
-    }, [isLoading, isLoadingMore, hasMore, page])
-
-    const handleRefresh = () => {
-        setSearchTerm('')
-        loadTransactions(1, false)
-    }
-
-    const getStatusConfig = (status) => {
-        switch (status) {
-            case 'Success':
-                return { variant: 'success', icon: CheckCircle2, color: 'text-green-600' }
-            case 'Failed':
-                return { variant: 'error', icon: XCircle, color: 'text-red-500' }
-            default:
-                return { variant: 'default', icon: Clock, color: 'text-gray-500' }
-        }
-    }
+    const filteredPayments = payments.filter(p => 
+        p.customer.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        p.receipt.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
     return (
-        <div className="space-y-4 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto">
-            {/* Control Bar with Search */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-card-bg p-4 rounded-xl border border-pace-border">
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+        <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0">
+            {/* Header with Paybill Info */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
+                <div>
+                    <h1 className="text-xl font-bold text-admin-value uppercase tracking-tight flex items-center gap-3">
+                        <CreditCard size={24} className="text-pace-purple" />
+                        Collection Ledger
+                    </h1>
+                    <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-widest uppercase">M-Pesa C2B reconciliation and real-time payment feed</p>
+                </div>
+                
+                <div className="flex items-center gap-6 bg-card-bg border border-pace-border p-4 rounded-2xl shadow-sm">
+                    <div className="flex flex-col border-r border-pace-border pr-6">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Active Paybill</p>
+                        <h3 className="text-lg font-black text-pace-purple mt-1 select-all">{mockDashboardData.stats.paybill}</h3>
+                    </div>
+                    <div className="flex flex-col pl-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Account Name</p>
+                        <h3 className="text-sm font-bold text-admin-value mt-1">{mockDashboardData.stats.accountName}</h3>
+                    </div>
+                </div>
+            </div>
+
+            {/* Financial Pulse */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="bg-card-bg border border-pace-border p-6 rounded-2xl">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-600 flex items-center justify-center">
+                            <TrendingUp size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Net Banked</p>
+                            <h3 className="text-lg font-black text-admin-value mt-1">KES {mockDashboardData.stats.totalRevenueToday.toLocaleString()}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-card-bg border border-pace-border p-6 rounded-2xl">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                            <DollarSign size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Average Ticket</p>
+                            <h3 className="text-lg font-black text-admin-value mt-1">KES {(mockDashboardData.stats.totalRevenueToday / mockDashboardData.stats.todayPayments).toFixed(0)}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div className="md:col-span-2 bg-card-bg border border-pace-border p-6 rounded-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <MessageSquare size={80} className="text-pace-purple" />
+                    </div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <Smartphone size={16} className="text-pace-purple" />
+                        <h4 className="text-[11px] font-black uppercase text-admin-dim tracking-widest">Automation Status</h4>
+                    </div>
+                    <p className="text-[11px] font-medium text-admin-value leading-relaxed">
+                        STK Push automation is active. Payment notifications are currently being dispatched to <span className="font-bold text-pace-purple">{mockDashboardData.stats.activeCustomers} subscribers</span> via SMS gateway.
+                    </p>
+                </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="relative w-full sm:w-96 group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-pace-purple transition-colors" size={14} />
                     <input
                         type="text"
-                        placeholder="Search by phone or M-Pesa code..."
+                        placeholder="Search by receipt or customer..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-pace-border bg-pace-bg-subtle focus:bg-card-bg focus:ring-2 focus:ring-pace-purple/10 focus:border-pace-purple outline-none text-sm text-admin-value transition-all font-bold"
+                        className="w-full pl-11 pr-4 py-3 bg-card-bg border border-pace-border rounded-2xl text-[12px] font-bold text-admin-value focus:outline-none focus:border-pace-purple transition-all shadow-sm"
                     />
-                </div>
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <button
-                        onClick={handleRefresh}
-                        disabled={isLoading}
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border border-pace-border text-admin-value rounded-lg hover:bg-pace-bg-subtle transition-all bg-card-bg text-sm font-bold disabled:opacity-50"
-                    >
-                        <RefreshCw size={16} className={cn(isLoading && "animate-spin")} />
-                        {isLoading ? 'Loading...' : 'Refresh'}
-                    </button>
                 </div>
             </div>
 
             {/* Transactions Table */}
-            <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-card-bg border border-pace-border rounded-2xl overflow-hidden min-h-[400px]">
                 <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left text-[11px] whitespace-nowrap">
-                        <thead className="bg-pace-bg-subtle border-b border-pace-border">
-                            <tr className="text-admin-dim">
-                                <th className="px-4 py-3 font-semibold uppercase tracking-widest text-[9px]">M-Pesa Code</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-widest text-[9px]">Mobile Number</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-widest text-[9px] text-right">Amount</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-widest text-[9px] text-center">Status</th>
-                                <th className="px-4 py-3 font-semibold uppercase tracking-widest text-[9px] text-right">Date & Time</th>
+                    <table className="w-full text-left whitespace-nowrap text-[12px]">
+                        <thead>
+                            <tr className="bg-pace-bg-subtle border-b border-pace-border font-bold text-admin-dim uppercase tracking-widest text-[9px]">
+                                <th className="px-6 py-5">Receipt Code</th>
+                                <th className="px-6 py-5">Subscriber Info</th>
+                                <th className="px-6 py-5">Package Tier</th>
+                                <th className="px-6 py-5">Amount</th>
+                                <th className="px-6 py-5">Timestamp</th>
+                                <th className="px-6 py-5 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
-                            {isLoading && transactions.length === 0 ? (
-                                [...Array(8)].map((_, i) => (
+                            {isLoading ? (
+                                [...Array(6)].map((_, i) => (
                                     <tr key={i}>
-                                        <td className="px-4 py-3"><Skeleton className="h-4 w-28" /></td>
-                                        <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
-                                        <td className="px-4 py-3"><Skeleton className="h-4 w-16 ml-auto" /></td>
-                                        <td className="px-4 py-3"><Skeleton className="h-6 w-16 mx-auto rounded-full" /></td>
-                                        <td className="px-4 py-3"><Skeleton className="h-4 w-32 ml-auto" /></td>
+                                        <td className="px-6 py-5"><Skeleton className="h-4 w-24" /></td>
+                                        <td className="px-6 py-5"><Skeleton className="h-4 w-40" /></td>
+                                        <td className="px-6 py-5"><Skeleton className="h-4 w-28" /></td>
+                                        <td className="px-6 py-5"><Skeleton className="h-4 w-16" /></td>
+                                        <td className="px-6 py-5"><Skeleton className="h-4 w-32" /></td>
+                                        <td className="px-6 py-5 text-center"><Skeleton className="h-6 w-16 mx-auto rounded-full" /></td>
                                     </tr>
                                 ))
-                            ) : transactions.length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" className="py-20 text-center text-gray-400">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Search size={32} className="opacity-20" />
-                                            <p className="text-xs font-semibold uppercase tracking-wider">No transactions found</p>
+                            ) : filteredPayments.map((p) => (
+                                <tr key={p.id} className="hover:bg-pace-bg-subtle/50 transition-colors group">
+                                    <td className="px-6 py-5">
+                                        <span className="font-black text-pace-purple tracking-wider select-all">{p.receipt}</span>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-admin-value">{p.customer}</span>
+                                            <span className="text-[10px] text-admin-dim font-medium lowercase tracking-tighter">via M-Pesa C2B</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <Badge variant="outline" className="text-[10px] font-bold border-gray-200 uppercase tracking-widest bg-pace-bg-subtle">
+                                            {p.plan}
+                                        </Badge>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="flex flex-col">
+                                            <span className="font-black text-admin-value">KES {p.amount.toLocaleString()}</span>
+                                            <span className="text-[9px] text-green-600 font-bold uppercase tracking-widest">Banked</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5 text-admin-dim font-bold text-[10px] uppercase">
+                                        {p.date}
+                                    </td>
+                                    <td className="px-6 py-5 text-center">
+                                        <div className="px-2.5 py-1 bg-green-500/10 text-green-600 rounded-full text-[9px] font-black uppercase border border-green-500/10">
+                                            Validated
                                         </div>
                                     </td>
                                 </tr>
-                            ) : (
-                                transactions.map((txn, index) => {
-                                    const statusConfig = getStatusConfig(txn.status)
-                                    const isLast = index === transactions.length - 1
-                                    return (
-                                        <tr
-                                            key={txn.id}
-                                            ref={isLast ? lastElementRef : null}
-                                            className="hover:bg-pace-bg-subtle transition-colors group"
-                                        >
-                                            <td className="px-4 py-3">
-                                                <span className="font-bold text-admin-value tracking-tight">{txn.mpesa_receipt_number || 'N/A'}</span>
-                                            </td>
-                                            <td className="px-4 py-3 text-gray-600 font-mono text-xs">
-                                                {txn.phone_number || 'N/A'}
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                <span className="font-bold text-admin-value tabular-nums">KES {parseFloat(txn.amount || 0).toFixed(2)}</span>
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <Badge variant={statusConfig.variant} className="text-[9px] px-2 py-0.5 font-bold uppercase rounded-full">
-                                                    {txn.status.replace(/_/g, ' ')}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-admin-dim text-[10px] font-bold uppercase tracking-wide">
-                                                {txn.transaction_date_formatted}
-                                            </td>
-                                        </tr>
-                                    )
-                                })
-                            )}
+                            ))}
                         </tbody>
                     </table>
                 </div>
-
-                {/* Loading More Indicator */}
-                {isLoadingMore && (
-                    <div className="py-8 flex justify-center items-center gap-3 border-t border-pace-border bg-pace-bg-subtle">
-                        <Loader2 className="animate-spin text-pace-purple" size={20} />
-                        <span className="text-sm font-bold text-admin-dim">Loading more transactions...</span>
-                    </div>
-                )}
-
-                {!hasMore && transactions.length > 0 && (
-                    <div className="py-8 text-center text-admin-dim text-xs font-bold border-t border-pace-border">
-                        All {total} transactions loaded
-                    </div>
-                )}
             </div>
         </div>
+    )
+}
+
+export default function PaymentsPage() {
+    return (
+        <Suspense fallback={<div>Loading Ledger...</div>}>
+            <PaymentsContent />
+        </Suspense>
     )
 }

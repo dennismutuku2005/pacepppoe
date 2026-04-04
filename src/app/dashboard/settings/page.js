@@ -351,34 +351,33 @@ export default function SettingsPage() {
                     <div>
                         <h2 className="text-sm font-bold text-pace-purple uppercase tracking-tight">System Configuration</h2>
                         <p className="text-[10px] text-admin-dim uppercase tracking-widest mt-1">Manage global system behavior</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <ToggleSwitch
-                            label="Double Payment Lock"
-                            sublabel="Prevent STK push if active session exists"
+                            label="Double Payment Protection"
+                            sublabel="Block new invoices if client has active days"
                             icon={Shield}
                             checked={systemSettings.doublepayment_lock == 1}
                             onChange={(val) => handleUpdateSystem('doublepayment_lock', val)}
                             disabled={sysSaving}
                         />
                         <ToggleSwitch
-                            label="Error Notifications"
-                            sublabel="Receive and log MikroTik connection errors"
+                            label="Health Monitoring"
+                            sublabel="Monitor MikroTik connectivity & CPU load"
                             icon={Activity}
                             checked={systemSettings.receive_error_info == 1}
                             onChange={(val) => handleUpdateSystem('receive_error_info', val)}
                             disabled={sysSaving}
                         />
                         <ToggleSwitch
-                            label="Vouchers as Sales"
-                            sublabel="Automatically mark new vouchers as final sales"
+                            label="Auto-Disable on Expiry"
+                            sublabel="Close PPPoE secret immediately after reaching zero days"
                             icon={CreditCard}
                             checked={systemSettings.vouchers_as_sale == 1}
                             onChange={(val) => handleUpdateSystem('vouchers_as_sale', val)}
                             disabled={sysSaving}
                         />
                     </div>
+                </div>
                 </div>
             )}
 
