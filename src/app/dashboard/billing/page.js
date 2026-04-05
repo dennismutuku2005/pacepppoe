@@ -1,233 +1,186 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
-import { Receipt, Users, Calendar, AlertCircle, ShieldCheck, Info, TrendingUp, Wallet, ArrowRight, Printer } from 'lucide-react'
-import { accountService } from '@/services/account'
+import React, { useState, useEffect, Suspense } from 'react'
+import { CreditCard, History, Wallet, Smartphone, ShieldCheck, Download, RefreshCw, Send, CheckCircle2, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/Badge'
+import { Modal } from '@/components/Modal'
+import Swal from 'sweetalert2'
 
-import { Skeleton } from '@/components/Skeleton'
-
-export default function BillingPage() {
-    const [account, setAccount] = useState(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
+function BillingContent() {
+    const [isLoading, setIsLoading] = useState(true)
+    const [isStkLoading, setIsStkLoading] = useState(false)
+    const [isAddCardOpen, setIsAddCardOpen] = useState(false)
+    const [balance, setBalance] = useState(2450.50)
+    const [phone, setPhone] = useState('0712345678')
 
     useEffect(() => {
-        fetchBillingData()
+        const timer = setTimeout(() => setIsLoading(false), 800)
+        return () => clearTimeout(timer)
     }, [])
 
-    const fetchBillingData = async () => {
-        setLoading(true)
-        try {
-            const result = await accountService.getAccountDetails()
-            if (result.status === 'success') {
-                setAccount(result.data)
-            } else {
-                throw new Error(result.message)
-            }
-        } catch (err) {
-            setError(err.message)
-        }
-        setLoading(false)
+    const handleStkPush = () => {
+        setIsStkLoading(true)
+        setTimeout(() => {
+            setIsStkLoading(false)
+            Swal.fire({
+                title: 'STK PUSH SENT',
+                text: 'Please enter your M-Pesa PIN on your phone to complete the transaction.',
+                icon: 'success',
+                confirmButtonColor: '#4B1D8F'
+            })
+        }, 1500)
     }
 
-    if (loading) {
-        return (
-            <div className="space-y-6 animate-in fade-in duration-500 pb-10 font-figtree max-w-[1400px] mx-auto px-4 sm:px-0">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-pace-border pb-3">
-                    <div className="space-y-2">
-                        <Skeleton className="h-6 w-32 bg-gray-100 dark:bg-gray-800" />
-                        <Skeleton className="h-3 w-64 bg-gray-100 dark:bg-gray-800" />
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-2 space-y-4">
-                        <Skeleton className="h-40 w-full rounded-xl bg-gray-100 dark:bg-gray-800" />
-                        <Skeleton className="h-64 w-full rounded-xl bg-gray-100 dark:bg-gray-800" />
-                    </div>
-                    <div className="space-y-4">
-                        <Skeleton className="h-24 w-full rounded-xl bg-gray-100 dark:bg-gray-800" />
-                        <Skeleton className="h-32 w-full rounded-xl bg-gray-100 dark:bg-gray-800" />
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
-    if (error) {
-        return (
-            <div className="p-8 flex flex-col items-center justify-center text-center">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-4">
-                    <AlertCircle size={20} />
-                </div>
-                <h2 className="text-sm font-semibold text-admin-value">Connection Issue</h2>
-                <p className="text-xs text-admin-dim mt-2 max-w-sm">{error}</p>
-                <button
-                    onClick={fetchBillingData}
-                    className="mt-6 px-4 py-2 bg-pace-purple text-white rounded text-xs font-medium"
-                >
-                    Retry
-                </button>
-            </div>
-        )
-    }
-
-    const { billing, subscription } = account;
+    const transactions = [
+        { id: 'TRX_001', date: 'Oct 24, 2023', type: 'System Fee', amount: 1500, status: 'Completed', method: 'M-Pesa STK' },
+        { id: 'TRX_002', date: 'Sep 24, 2023', type: 'Infrastructure', amount: 950.50, status: 'Completed', method: 'M-Pesa C2B' },
+        { id: 'TRX_003', date: 'Aug 24, 2023', type: 'System Fee', amount: 1500, status: 'Completed', method: 'M-Pesa STK' }
+    ]
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 pb-20 font-figtree text-left max-w-[1400px] mx-auto px-4 sm:px-0">
-            {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-pace-border pb-3">
+        <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-lg font-semibold text-admin-value tracking-tight">Your Bill</h1>
-                    <p className="text-xs text-admin-dim mt-0.5">Live usage cycle summary.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button className="p-1.5 hover:bg-pace-bg-subtle rounded-md transition-all text-admin-dim hover:text-admin-value" title="Print Receipt">
-                        <Printer size={16} />
-                    </button>
-                    <div className="h-4 w-px bg-pace-border mx-1"></div>
-                    <p className="text-[10px] text-admin-dim font-medium uppercase tracking-wider">Account ID: {account.customer_id}</p>
+                    <h1 className="text-lg font-bold text-admin-value flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
+                            <CreditCard size={20} className="text-pace-purple" />
+                        </div>
+                        My Subscription & Billing
+                    </h1>
+                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest uppercase italic">Manage system licensing and operational recurring costs</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Main Receipt-style Card */}
-                <div className="md:col-span-2 space-y-4">
-                    <div className="bg-card-bg border border-pace-border rounded-xl shadow-sm overflow-hidden border-t-4 border-t-pace-purple">
-                        <div className="p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-[10px] text-admin-dim font-semibold uppercase tracking-widest">Amount Due to Date</span>
-                                <Receipt className="text-admin-dim" size={16} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Balance Card */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-6 rounded-3xl bg-pace-purple text-white relative overflow-hidden shadow-2xl shadow-pace-purple/20 group">
+                            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-125 transition-transform">
+                                <Wallet size={80} />
                             </div>
-
-                            <div className="flex items-baseline gap-1.5">
-                                <span className="text-base font-medium text-admin-dim">KSH</span>
-                                <h2 className="text-3xl font-semibold text-admin-value tracking-tight">
-                                    {billing.current_estimated_bill.toLocaleString()}
-                                </h2>
-                            </div>
-
-                            <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1">
-                                <div className="flex items-center gap-1.5 text-[11px] text-admin-dim font-medium">
-                                    <Calendar size={12} />
-                                    <span>Cycle Ends in {subscription.days_left} days</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 text-[11px] text-admin-dim font-medium">
-                                    <Users size={12} />
-                                    <span>{billing.user_count} Total Clients</span>
-                                </div>
+                            <div className="relative z-10">
+                                <p className="text-[11px] font-black uppercase tracking-widest opacity-60">Pending Balance</p>
+                                <h2 className="text-3xl font-black mt-2">KES {balance.toLocaleString()}</h2>
+                                <p className="text-[10px] mt-4 font-bold bg-white/20 inline-block px-2 py-0.5 rounded-lg border border-white/10 uppercase italic">Renewal Date: Nov 24, 2023</p>
                             </div>
                         </div>
 
-                        {/* Progress */}
-                        <div className="px-6 py-3 bg-pace-bg-subtle border-t border-pace-border flex items-center justify-between gap-4">
-                            <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-pace-purple transition-all duration-700 ease-out"
-                                    style={{ width: `${billing.cycle_progress}%` }}
-                                ></div>
+                        <div className="p-6 rounded-3xl bg-white dark:bg-card-bg border border-pace-border shadow-sm flex flex-col justify-between">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-[11px] font-bold text-admin-dim uppercase tracking-widest">Active Plan</p>
+                                    <h3 className="text-xl font-black text-admin-value mt-1">Enterprise Hub</h3>
+                                </div>
+                                <div className="p-2 bg-pace-green/10 text-pace-green rounded-xl">
+                                    <ShieldCheck size={20} />
+                                </div>
                             </div>
-                            <span className="text-[10px] font-semibold text-pace-purple whitespace-nowrap">{billing.cycle_progress}% Cycle</span>
+                            <div className="flex items-center gap-2 mt-4">
+                                <Badge variant="success" className="text-[9px] uppercase px-3 py-1 font-black italic">Verified</Badge>
+                                <span className="text-[10px] text-admin-dim font-bold uppercase tracking-widest">Unlimited Nodes</span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Breakdown Algorithm */}
-                    <div className="bg-card-bg border border-pace-border rounded-xl p-5 shadow-sm">
-                        <h3 className="text-xs font-semibold text-admin-value uppercase tracking-wider mb-4">Calculation Detail</h3>
-
-                        <div className="space-y-2.5">
-                            {/* Base Tier */}
-                            <div className="flex items-center justify-between py-2 border-b border-dashed border-pace-border">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-7 h-7 rounded bg-pace-bg-subtle text-admin-dim flex items-center justify-center font-bold text-[9px] border border-pace-border">
-                                        BASE
+                    {/* Pay Area */}
+                    <div className="p-8 rounded-3xl bg-white dark:bg-card-bg border border-pace-border shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                            <Smartphone size={24} className="text-pace-purple" />
+                            <h4 className="text-[15px] font-black text-admin-value uppercase tracking-tight">Pay Instantly via STK Push</h4>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-4 items-end">
+                            <div className="flex-1 space-y-2">
+                                <label className="text-[10px] font-black text-admin-dim uppercase tracking-widest pl-1">Target Phone Number</label>
+                                <input 
+                                    type="text"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="e.g. 0712345678"
+                                    className="w-full px-5 py-4 bg-pace-bg-subtle border border-transparent focus:border-pace-purple rounded-2xl text-lg font-black text-admin-value outline-none transition-all tabular-nums"
+                                />
+                            </div>
+                            <button 
+                                onClick={handleStkPush}
+                                disabled={isStkLoading}
+                                className={cn(
+                                    "px-10 py-5 bg-pace-purple text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-pace-purple/20 transition-all active:scale-95 flex items-center gap-3 h-[60px]",
+                                    isStkLoading ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
+                                )}
+                            >
+                                {isStkLoading ? <RefreshCw className="animate-spin" size={16} /> : <Send size={16} />}
+                                {isStkLoading ? "Processing" : "Charge M-Pesa"}
+                            </button>
+                        </div>
+                        
+                        <div className="mt-10 pt-8 border-t border-pace-border border-dashed grid grid-cols-1 sm:grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                                <p className="text-[10px] font-bold text-admin-dim uppercase tracking-widest">Alternative: Pay via Paybill</p>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 bg-pace-bg-subtle rounded-2xl border border-pace-border/50">
+                                        <span className="text-[11px] font-bold text-admin-dim uppercase">Business Number</span>
+                                        <span className="text-lg font-black text-pace-purple tracking-widest">4081078</span>
                                     </div>
-                                    <div className="space-y-0.5">
-                                        <h4 className="text-xs font-medium text-admin-value leading-none">Starter Plan (Pro-rated)</h4>
-                                        <p className="text-[9px] text-admin-dim font-medium tracking-tight">KSH 1,499 &times; {billing.cycle_progress}% cycle time elapsed.</p>
+                                    <div className="flex items-center justify-between p-4 bg-pace-bg-subtle rounded-2xl border border-pace-border/50">
+                                        <span className="text-[11px] font-bold text-admin-dim uppercase">Account Number</span>
+                                        <span className="text-lg font-black text-admin-value tracking-widest">PACE-7708</span>
                                     </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xs font-medium text-admin-value">KSH {Math.round(billing.base_fee * billing.cycle_progress / 100).toLocaleString()}</p>
                                 </div>
                             </div>
-
-                            {/* Additional Clients */}
-                            <div className="flex items-center justify-between py-2 border-b border-dashed border-pace-border">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-7 h-7 rounded bg-orange-500/5 text-orange-600 flex items-center justify-center font-bold text-[9px] border border-orange-200/50">
-                                        ADD
-                                    </div>
-                                    <div className="space-y-0.5">
-                                        <h4 className="text-xs font-medium text-admin-value leading-none">Extra Clients Surcharge</h4>
-                                        <p className="text-[9px] text-admin-dim font-medium tracking-tight">{billing.additional_users} clients above the 110-client base limit.</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xs font-medium text-admin-value">KSH {billing.extra_fee.toLocaleString()}</p>
-                                </div>
-                            </div>
-
-                            {/* Current Total */}
-                            <div className="flex items-center justify-between pt-1 font-semibold text-admin-value text-xs uppercase tracking-tight">
-                                <span>Running Total Due</span>
-                                <span>KSH {billing.current_estimated_bill.toLocaleString()}</span>
-                            </div>
-
-                            {/* Monthly Projection */}
-                            <div className="mt-4 pt-4 border-t border-pace-border flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Info size={12} className="text-admin-dim" />
-                                    <span className="text-[10px] font-semibold text-admin-dim uppercase tracking-wider">End of Month Estimate</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-base font-semibold text-pace-purple tracking-tight">KSH {billing.total_monthly_projection.toLocaleString()}</span>
-                                    <ArrowRight size={14} className="text-admin-dim" />
-                                </div>
+                            <div className="bg-pace-purple/5 p-6 rounded-2xl border border-pace-purple/10 flex flex-col justify-center">
+                                <p className="text-[10px] font-bold text-pace-purple uppercase tracking-widest text-center mb-2">Automated Activation</p>
+                                <p className="text-xs text-admin-dim text-center font-medium leading-relaxed italic">Once payment is completed via M-Pesa, the system will automatically reconcile and extend your subscription license within 60 seconds.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Sidebar Info Section */}
-                <div className="space-y-3">
-                    {/* Active Clients Stat */}
-                    <div className="bg-card-bg border border-pace-border rounded-xl p-4 shadow-sm">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-8 h-8 rounded bg-pace-purple/5 flex items-center justify-center text-pace-purple opacity-70">
-                                <Users size={16} />
+                {/* History */}
+                <div className="space-y-6">
+                    <div className="p-6 rounded-3xl bg-white dark:bg-card-bg border border-pace-border shadow-sm flex flex-col h-full overflow-hidden">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-3">
+                                <History size={20} className="text-admin-dim" />
+                                <h4 className="text-[13px] font-black text-admin-value uppercase tracking-tight">Recent Ledger</h4>
                             </div>
-                            <h4 className="text-[10px] text-admin-dim font-semibold uppercase tracking-wider leading-none pt-1">Current Clients</h4>
+                            <button className="text-[10px] font-black text-pace-purple uppercase tracking-widest hover:underline">Full Audit</button>
                         </div>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-semibold text-admin-value leading-none">{billing.user_count}</span>
-                            <span className="text-[9px] text-admin-dim font-semibold uppercase">Total</span>
+                        <div className="space-y-4 flex-1">
+                            {transactions.map((trx) => (
+                                <div key={trx.id} className="p-4 rounded-2xl border border-pace-border hover:bg-pace-bg-subtle transition-all group flex flex-col gap-3">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-[12px] font-bold text-admin-value group-hover:text-pace-purple transition-colors">{trx.type}</p>
+                                            <p className="text-[9px] text-admin-dim font-bold uppercase mt-0.5">{trx.id} • {trx.date}</p>
+                                        </div>
+                                        <span className="text-[13px] font-black text-admin-value tabular-nums">KES {trx.amount.toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-pace-border/50">
+                                        <Badge variant="success" className="text-[8px] font-bold uppercase border-none px-2 py-0.5">{trx.status}</Badge>
+                                        <span className="text-[9px] text-admin-dim font-bold lowercase italic">{trx.method}</span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    </div>
-
-                    {/* Policy Card */}
-                    <div className="bg-pace-bg-subtle border border-pace-border rounded-xl p-4 shadow-sm">
-                        <div className="flex items-center gap-2 mb-2">
-                            <ShieldCheck className="text-admin-dim" size={14} />
-                            <h4 className="text-[10px] text-admin-dim font-semibold uppercase tracking-wider pt-0.5">Billing Policy</h4>
+                        <div className="mt-8">
+                            <button className="w-full py-4 border-2 border-dashed border-pace-border text-admin-dim hover:text-pace-purple hover:border-pace-purple/50 rounded-2xl transition-all flex items-center justify-center gap-2">
+                                <Download size={14} />
+                                <span className="text-[11px] font-bold uppercase tracking-widest">Download E-Receipt</span>
+                            </button>
                         </div>
-                        <p className="text-[11px] text-admin-value font-medium leading-relaxed">
-                            KSH 1,499 (110 clients).
-                            <br />
-                            KSH 8 per client beyond that.
-                        </p>
-                    </div>
-
-                    {/* Next Payment */}
-                    <div className="bg-pace-bg-subtle border border-pace-border rounded-xl p-4 shadow-sm">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Calendar size={14} className="text-admin-dim" />
-                            <span className="text-[10px] font-semibold text-admin-dim uppercase tracking-wider pt-0.5">Next Invoice</span>
-                        </div>
-                        <p className="text-xs font-semibold text-admin-value">{new Date(subscription.next_payment).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     </div>
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function BillingPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-admin-dim animate-pulse uppercase text-[10px] font-bold tracking-widest italic">Syncing Ledger Credentials...</div>}>
+            <BillingContent />
+        </Suspense>
     )
 }
