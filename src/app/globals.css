@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 :root {
   --background: #FFFFFF;
   --foreground: #111827;
@@ -189,3 +190,29 @@ button {
   backdrop-filter: blur(8px);
   border: 1px solid rgba(209, 213, 219, 0.3);
 }
+
+/* SweetAlert2 Theme Scaling */
+.dark .swal2-popup {
+  background: var(--card-bg) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--pace-border) !important;
+}
+
+.dark .swal2-title, .dark .swal2-content, .dark .swal2-html-container {
+  color: var(--foreground) !important;
+}
+
+.dark .swal2-footer {
+  border-top: 1px solid var(--pace-border) !important;
+  color: var(--admin-dim) !important;
+}
+
+.dark .swal2-timer-progress-bar {
+  background: var(--pace-purple) !important;
+}
+
+.dark .swal2-success-circular-line-left,
+.dark .swal2-success-circular-line-right,
+.dark .swal2-success-fix {
+  background-color: var(--card-bg) !important;
+}
