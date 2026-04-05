@@ -346,38 +346,68 @@ export default function SettingsPage() {
             </div>
 
             {/* System Settings for Admin Only */}
+            {/* Payment Gateway Settings for Admin Only */}
             {user && ['admin', 'superadmin'].includes(user.type) && (
-                <div className="bg-card-bg border border-pace-border rounded-xl p-6 sm:p-8 space-y-6 mt-6">
-                    <div>
-                        <h2 className="text-sm font-bold text-pace-purple uppercase tracking-tight">System Configuration</h2>
-                        <p className="text-[10px] text-admin-dim uppercase tracking-widest mt-1">Manage global system behavior</p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <ToggleSwitch
-                            label="Double Payment Protection"
-                            sublabel="Block new invoices if client has active days"
-                            icon={Shield}
-                            checked={systemSettings.doublepayment_lock == 1}
-                            onChange={(val) => handleUpdateSystem('doublepayment_lock', val)}
-                            disabled={sysSaving}
-                        />
-                        <ToggleSwitch
-                            label="Health Monitoring"
-                            sublabel="Monitor MikroTik connectivity & CPU load"
-                            icon={Activity}
-                            checked={systemSettings.receive_error_info == 1}
-                            onChange={(val) => handleUpdateSystem('receive_error_info', val)}
-                            disabled={sysSaving}
-                        />
-                        <ToggleSwitch
-                            label="Auto-Disable on Expiry"
-                            sublabel="Close PPPoE secret immediately after reaching zero days"
-                            icon={CreditCard}
-                            checked={systemSettings.vouchers_as_sale == 1}
-                            onChange={(val) => handleUpdateSystem('vouchers_as_sale', val)}
-                            disabled={sysSaving}
-                        />
+                <div className="bg-card-bg border border-pace-border rounded-xl p-6 sm:p-8 space-y-6 mt-6 shadow-sm border-t-4 border-t-pace-purple">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-sm font-bold text-pace-purple uppercase tracking-tight flex items-center gap-2">
+                                <CreditCard size={18} />
+                                M-Pesa Gateway Integration
+                            </h2>
+                            <p className="text-[10px] text-admin-dim uppercase tracking-widest mt-1">Configure your STK Push & C2B credentials</p>
+                        </div>
+                        <Badge className="bg-pace-purple/10 text-pace-purple border-none uppercase font-black tracking-tighter text-[9px]">Daraja API v2</Badge>
                     </div>
-                </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-widest pl-1">Business Shortcode (Paybill)</label>
+                            <input 
+                                type="text"
+                                defaultValue="400200"
+                                className="w-full px-4 py-3 bg-pace-bg-subtle border border-pace-border rounded-xl text-[12px] font-bold text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                                placeholder="e.g. 174379"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-widest pl-1">Store / Till Number</label>
+                            <input 
+                                type="text"
+                                defaultValue="987654"
+                                className="w-full px-4 py-3 bg-pace-bg-subtle border border-pace-border rounded-xl text-[12px] font-bold text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                                placeholder="e.g. 522522"
+                            />
+                        </div>
+                        <div className="space-y-1.5 md:col-span-2">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-widest pl-1">Consumer Key</label>
+                            <div className="relative">
+                                <input 
+                                    type="password"
+                                    defaultValue="••••••••••••••••••••••••••••••••"
+                                    className="w-full px-4 py-3 bg-pace-bg-subtle border border-pace-border rounded-xl text-[12px] font-bold text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                                />
+                                <button className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-pace-purple uppercase">Reveal</button>
+                            </div>
+                        </div>
+                        <div className="space-y-1.5 md:col-span-2">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-widest pl-1">Consumer Secret</label>
+                            <div className="relative">
+                                <input 
+                                    type="password"
+                                    defaultValue="••••••••••••••••••••••••••••••••"
+                                    className="w-full px-4 py-3 bg-pace-bg-subtle border border-pace-border rounded-xl text-[12px] font-bold text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                                />
+                                <button className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-pace-purple uppercase">Reveal</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4 border-t border-pace-border mt-2">
+                        <button className="px-6 py-2.5 bg-pace-purple text-white rounded-xl text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-pace-purple/20">
+                            Update Gateway
+                        </button>
+                    </div>
                 </div>
             )}
 
