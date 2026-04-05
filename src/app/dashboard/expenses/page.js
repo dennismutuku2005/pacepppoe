@@ -85,20 +85,22 @@ function ExpensesContent() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-pace-purple uppercase tracking-tight flex items-center gap-3">
-                        <Wallet size={24} />
+                    <h1 className="text-lg font-bold text-pace-purple dark:text-pace-purple-light flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
+                            <Wallet size={20} className="text-pace-purple" />
+                        </div>
                         Expense Ledger
                     </h1>
-                    <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-widest uppercase">Track business operational costs and hardware investments</p>
+                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest uppercase">Track business operational costs and hardware investments</p>
                 </div>
-                <div className="flex gap-4">
-                    <div className="px-4 py-2 bg-red-500/5 border border-red-500/10 rounded-xl text-center">
+                <div className="flex gap-4 items-center">
+                    <div className="px-5 py-2.5 bg-red-500/5 border border-red-500/10 rounded-xl text-center shadow-sm">
                         <p className="text-sm font-bold text-red-600 leading-none">KES {totalSpent.toLocaleString()}</p>
-                        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">Filtered Total</p>
+                        <p className="text-[8px] font-bold text-admin-dim uppercase tracking-widest mt-1">Filtered Total</p>
                     </div>
                     <button 
                         onClick={handleAddExpense}
-                        className="flex items-center gap-2 px-4 py-2 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-bold uppercase tracking-widest"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-bold uppercase tracking-widest shadow-xl shadow-pace-purple/20 active:scale-95"
                     >
                         <Plus size={14} /> Record Cost
                     </button>
@@ -170,14 +172,9 @@ function ExpensesContent() {
                                     </tr>
                                 ))
                             ) : filteredExpenses.map((exp) => (
-                                <tr key={exp.id} className="hover:bg-pace-bg-subtle/50 transition-colors group">
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 flex items-center justify-center">
-                                                <FileText size={14} />
-                                            </div>
-                                            <span className="font-bold text-admin-value tracking-tight">{exp.title}</span>
-                                        </div>
+                                <tr key={exp.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group cursor-default">
+                                    <td className="px-6 py-3">
+                                        <span className="text-[13px] font-bold text-admin-value tracking-tight group-hover:text-pace-purple transition-colors">{exp.title}</span>
                                     </td>
                                     <td className="px-6 py-5">
                                         <Badge variant="outline" className="text-[9px] font-bold border-gray-200 uppercase tracking-widest">
