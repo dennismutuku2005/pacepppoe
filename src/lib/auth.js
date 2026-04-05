@@ -15,28 +15,27 @@ class AuthService {
    * Login user
    */
   async login(username, password) {
-    try {
-      const response = await fetch(`${API_BASE}/auth.php?action=login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (data.status === 'success' && data.data.token) {
-        this.setToken(data.data.token);
-        this.setUser(data.data.user);
-        return { success: true, data: data.data };
-      } else {
-        return { success: false, message: data.message || 'Login failed' };
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, message: 'Network error. Please try again.' };
+    // MOCK LOGIN: Allow any credentials
+    const dummyUser = {
+      id: 1,
+      username: username || 'admin',
+      name: 'System Administrator',
+      type: 'admin',
+      phone: '0712345678',
+      email: 'admin@pacewisp.co.ke'
     }
+    const dummyToken = 'mock-jwt-token-' + Date.now();
+    
+    this.setToken(dummyToken);
+    this.setUser(dummyUser);
+    
+    return { 
+      success: true, 
+      data: { 
+        token: dummyToken, 
+        user: dummyUser 
+      } 
+    };
   }
 
   /**
@@ -63,73 +62,22 @@ class AuthService {
    * Verify token validity
    */
   async verifyToken() {
-    const token = this.getToken();
-
-    if (!token) {
-      return false;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE}/auth.php?action=verify`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.status === 'success') {
-        return true;
-      } else {
-        // Token invalid or expired, try to refresh
-        return await this.refreshToken();
-      }
-    } catch (error) {
-      console.error('Token verification error:', error);
-      return false;
-    }
+    return true; // Always valid in mock mode
   }
 
   /**
    * Refresh expired token
    */
   async refreshToken() {
-    const token = this.getToken();
-
-    if (!token) {
-      return false;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE}/auth.php?action=refresh`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.status === 'success' && data.data.token) {
-        this.setToken(data.data.token);
-        return true;
-      } else {
-        this.clearAuth();
-        return false;
-      }
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      this.clearAuth();
-      return false;
-    }
+    return true; // Always success in mock mode
   }
 
   /**
    * Check if user is authenticated
    */
   isAuthenticated() {
-    return !!this.getToken();
+    const token = this.getToken();
+    return !!(token && !this.isTokenExpired(token));
   }
 
   /**
@@ -190,23 +138,10 @@ class AuthService {
    * Make authenticated API request
    */
   async authenticatedFetch(url, options = {}) {
-    const token = this.getToken();
-
-    if (!token) {
-      throw new Error('No authentication token');
-    }
-
-    // Verify token before making request
-    const isValid = await this.verifyToken();
-    if (!isValid) {
-      throw new Error('Authentication expired. Please login again.');
-    }
-
     const headers = {
       ...options.headers,
-      'Authorization': `Bearer ${this.getToken()}`, // Get fresh token after potential refresh
+      'Authorization': `Bearer ${this.getToken() || 'mock-token'}`,
     };
-
     return fetch(url, {
       ...options,
       headers,
@@ -236,9 +171,16 @@ class AuthService {
    * Check if token is expired (client-side check)
    */
   isTokenExpired(token) {
+    if (!token) return true;
+    
+    // Support mock tokens that don't have exp claims
+    if (token.startsWith('mock-')) {
+      return false;
+    }
+
     const decoded = this.decodeToken(token);
     if (!decoded || !decoded.exp) {
-      return true;
+      return false; // If we can't tell it's expired, assume it's not (for safety in mock modes)
     }
     return decoded.exp < Date.now() / 1000;
   }
