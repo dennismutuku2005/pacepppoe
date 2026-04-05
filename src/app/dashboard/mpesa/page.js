@@ -31,11 +31,13 @@ function PaymentsContent() {
             {/* Header with Paybill Info */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-admin-value uppercase tracking-tight flex items-center gap-3">
-                        <CreditCard size={24} className="text-pace-purple" />
+                    <h1 className="text-lg font-bold text-admin-value flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
+                            <CreditCard size={20} className="text-pace-purple" />
+                        </div>
                         Collection Ledger
                     </h1>
-                    <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-widest uppercase">M-Pesa C2B reconciliation and real-time payment feed</p>
+                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest uppercase">M-Pesa C2B reconciliation and real-time payment feed</p>
                 </div>
                 
                 <div className="flex items-center gap-6 bg-card-bg border border-pace-border p-4 rounded-2xl shadow-sm">
@@ -108,12 +110,12 @@ function PaymentsContent() {
                     <table className="w-full text-left whitespace-nowrap text-[12px]">
                         <thead>
                             <tr className="bg-pace-bg-subtle border-b border-pace-border font-bold text-admin-dim uppercase tracking-widest text-[9px]">
-                                <th className="px-6 py-5">Receipt Code</th>
-                                <th className="px-6 py-5">Subscriber Info</th>
-                                <th className="px-6 py-5">Package Tier</th>
-                                <th className="px-6 py-5">Amount</th>
-                                <th className="px-6 py-5">Timestamp</th>
-                                <th className="px-6 py-5 text-center">Status</th>
+                                <th className="px-6 py-4">Receipt Code</th>
+                                <th className="px-6 py-4">Subscriber Info</th>
+                                <th className="px-6 py-4">Package Tier</th>
+                                <th className="px-6 py-4">Amount</th>
+                                <th className="px-6 py-4">Timestamp</th>
+                                <th className="px-6 py-4 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
@@ -129,12 +131,12 @@ function PaymentsContent() {
                                     </tr>
                                 ))
                             ) : filteredPayments.map((p) => (
-                                <tr key={p.id} className="hover:bg-pace-bg-subtle/50 transition-colors group">
-                                    <td className="px-6 py-5">
+                                <tr key={p.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group cursor-default">
+                                    <td className="px-6 py-3 text-[11px]">
                                         <span className="font-black text-pace-purple tracking-wider select-all">{p.receipt}</span>
                                     </td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex flex-col">
+                                    <td className="px-6 py-3">
+                                        <div className="flex flex-col text-[12px]">
                                             <span className="font-bold text-admin-value">{p.customer}</span>
                                             <span className="text-[10px] text-admin-dim font-medium lowercase tracking-tighter">via M-Pesa C2B</span>
                                         </div>
