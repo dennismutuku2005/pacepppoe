@@ -65,13 +65,18 @@ function DashboardContent() {
     return (
         <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0">
             {/* Title Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pace-border pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-pace-purple uppercase tracking-tight">PPPoE Control Center</h1>
-                    <p className="text-[10px] font-bold text-gray-400 mt-0.5 tracking-widest uppercase">Network Performance & Revenue Overview</p>
+                    <h1 className="text-lg font-bold text-admin-value flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
+                            <Activity size={20} className="text-pace-purple" />
+                        </div>
+                        PPPoE Control Center
+                    </h1>
+                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest uppercase italic">Network Performance & Revenue Overview</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-bold uppercase tracking-widest shadow-lg shadow-pace-purple/10">
+                    <button className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-bold uppercase tracking-widest shadow-xl shadow-pace-purple/20 active:scale-95">
                         <Plus size={14} /> New Customer
                     </button>
                 </div>
