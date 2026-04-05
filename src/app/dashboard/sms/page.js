@@ -79,21 +79,23 @@ function SMSContent() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-pace-purple uppercase tracking-tight flex items-center gap-3">
-                        <MessageSquare size={24} />
+                    <h1 className="text-lg font-bold text-pace-purple dark:text-pace-purple-light flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
+                            <MessageSquare size={20} className="text-pace-purple" />
+                        </div>
                         Communications Hub
                     </h1>
-                    <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-widest uppercase">Manage automated alerts and custom client messages</p>
+                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest uppercase">Manage automated alerts and custom client messages</p>
                 </div>
-                <div className="flex gap-4">
-                    <div className="px-4 py-2 bg-pace-purple/5 border border-pace-purple/10 rounded-xl text-center">
+                <div className="flex gap-4 items-center">
+                    <div className="px-5 py-2.5 bg-pace-purple/5 border border-pace-purple/10 rounded-xl text-center shadow-sm">
                         <p className="text-sm font-bold text-pace-purple leading-none">{mockDashboardData.stats.smsBalance}</p>
-                        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">SMS Balance</p>
+                        <p className="text-[8px] font-bold text-admin-dim uppercase tracking-widest mt-1">SMS Balance</p>
                     </div>
                     <button 
                         onClick={handleSendSMS}
                         disabled={isSending}
-                        className="flex items-center gap-2 px-4 py-2 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-bold uppercase tracking-widest shadow-lg shadow-pace-purple/20"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-bold uppercase tracking-widest shadow-xl shadow-pace-purple/20 active:scale-95 disabled:opacity-50"
                     >
                         {isSending ? <Clock size={14} className="animate-spin" /> : <Plus size={14} />} 
                         Send SMS
