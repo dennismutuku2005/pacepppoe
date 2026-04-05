@@ -24,18 +24,20 @@ function ReportsContent() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-admin-value uppercase tracking-tight flex items-center gap-3">
-                        <FileText size={24} className="text-pace-purple" />
+                    <h1 className="text-lg font-bold text-pace-purple dark:text-pace-purple-light flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
+                            <FileText size={20} className="text-pace-purple" />
+                        </div>
                         Intelligence Reports
                     </h1>
-                    <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-widest uppercase">Deep analytics on bandwidth usage, revenue, and package performance</p>
+                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest uppercase">Deep analytics on bandwidth usage, revenue, and package performance</p>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                    <button className="px-4 py-2 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-card-bg transition-all flex items-center gap-2">
+                <div className="flex items-center gap-4">
+                    <button className="px-5 py-2.5 bg-card-bg border border-pace-border rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-pace-bg-subtle transition-all flex items-center gap-2 active:scale-95 shadow-sm">
                         <Calendar size={14} /> This Month
                     </button>
-                    <button className="px-4 py-2 bg-pace-purple text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-pace-purple/90 transition-all flex items-center gap-2 shadow-lg shadow-pace-purple/20">
+                    <button className="px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2 shadow-xl shadow-pace-purple/20 active:scale-95">
                         <Download size={14} /> Export XLS
                     </button>
                 </div>
