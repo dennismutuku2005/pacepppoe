@@ -60,6 +60,11 @@ export const mockDashboardData = {
         { month: "Feb", income: 410000, expenses: 145000 },
         { month: "Mar", income: 435000, expenses: 130000 },
         { month: "Apr", income: 452000, expenses: 128000 },
+    ],
+    smsProviders: [
+        { id: 1, name: "Advanta", balance: "KES 5,400", status: "Connected", api_key: "ADV-XXXX-XXXX" },
+        { id: 2, name: "AfricasTalking", balance: "KES 1,200", status: "Connected", api_key: "AT-XXXX-XXXX" },
+        { id: 3, name: "Sema", balance: "KES 0", status: "Disconnected", api_key: "SEMA-XXXX-XXXX" },
     ]
 };
 
