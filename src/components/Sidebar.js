@@ -1,15 +1,19 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useSearchParams, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import {
-    LayoutDashboard, Ticket, CreditCard, Users, Network, 
-    Settings, Activity, LogOut, ChevronDown, MessageSquare, BookOpen, Wallet
+    Users, CreditCard, Ticket, Settings,
+    Activity, FileText, Network, Receipt,
+    UserRoundCheck, MessageSquare, Globe, ChevronDown,
+    LogOut, LayoutDashboard, Clock, Smartphone, Bell,
+    Wallet, ShieldCheck, LifeBuoy
 } from 'lucide-react'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
+
 import authService from '@/lib/auth'
 
 export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
@@ -23,39 +27,113 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
         setMounted(true)
     }, [])
 
+    // Helper to persist query params
     const createHref = (href) => {
         if (!searchParams) return href
         const params = new URLSearchParams(searchParams)
+
+        // Remove specific identifiers that shouldn't persist across different pages
         const keysToClear = ['phone', 'mac', 'id', 'code', 'v']
         keysToClear.forEach(key => params.delete(key))
+
         const queryString = params.toString()
         return queryString ? `${href}?${queryString}` : href
     }
 
-    const user = mounted ? authService.getUser() : null
+    const toggleMenu = (id) => {
+        setOpenMenus(prev =>
+            prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
+        )
+    }
 
-    const navigation = [
-        { id: 'dashboard', name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { id: 'customers', name: 'Customers', href: '/dashboard/customers', icon: Users },
-        { id: 'packages', name: 'Service Packages', href: '/dashboard/packages', icon: Ticket },
-        { id: 'routers', name: 'MikroTik Hub', href: '/dashboard/routers', icon: Network },
-        { id: 'billing', name: 'My Subscription', href: '/dashboard/billing', icon: CreditCard }, // New
-        { id: 'mpesa', name: 'Payments Ledger', href: '/dashboard/mpesa', icon: Wallet },
-        { id: 'staff', name: 'Staff & Policy', href: '/dashboard/staff', icon: Users },
-        { id: 'expenses', name: 'Expenses Ledger', href: '/dashboard/expenses', icon: Activity },
-        { id: 'reports', name: 'Intelligence Reports', href: '/dashboard/reports', icon: BookOpen },
-        { id: 'logs', name: 'System Logs', href: '/dashboard/logs', icon: Activity },
-        { id: 'sms', name: 'SMS Hub', href: '/dashboard/sms', icon: MessageSquare },
-        { id: 'settings', name: 'System Settings', href: '/dashboard/settings', icon: Settings },
-    ]
+    // Move navigation logic to useMemo and ensure it's stable during hydration
+    const navigation = useMemo(() => {
+        // Return only shared/public items if not mounted to avoid hydration mismatch
+        if (!mounted) return [
+            { id: 'profile', name: 'My Profile', href: '/dashboard/profile', icon: UserRoundCheck },
+        ]
+
+        const user = authService.getUser()
+        const isAdmin = user?.type === 'admin' || user?.type === 'superadmin'
+        const hasPolicy = (policy) => authService.hasPolicy(policy);
+
+        return [
+            ...(hasPolicy('view_dashboard') ? [{ id: 'dashboard', name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }] : []),
+            
+            ...((hasPolicy('manage_customers') || hasPolicy('view_active_users')) ? [{
+                id: 'subscribers',
+                name: 'Subscribers',
+                icon: Users,
+                children: [
+                    ...(hasPolicy('manage_customers') ? [{ name: 'Subscriber List', href: '/dashboard/customers' }] : []),
+                    ...(hasPolicy('view_active_users') ? [{ name: 'Active Connections', href: '/dashboard/customers/active' }] : []),
+                ]
+            }] : []),
+
+            ...(hasPolicy('view_routers') ? [
+                { id: 'routers', name: 'Routers', href: '/dashboard/routers', icon: Network },
+            ] : []),
+
+            ...(hasPolicy('manage_packages') ? [
+                { id: 'packages', name: 'Service Plans', href: '/dashboard/packages', icon: Ticket },
+            ] : []),
+
+            ...((hasPolicy('view_payments') || hasPolicy('view_mpesa') || hasPolicy('manage_expenses') || hasPolicy('view_reports')) ? [{
+                id: 'finance',
+                name: 'Financials',
+                icon: CreditCard,
+                children: [
+                    ...(hasPolicy('view_payments') ? [{ name: 'Transactions', href: '/dashboard/payments' }] : []),
+                    ...(hasPolicy('view_mpesa') ? [{ name: 'M-Pesa Ledger', href: '/dashboard/mpesa' }] : []),
+                    ...(hasPolicy('view_reports') ? [{ name: 'Financial Reports', href: '/dashboard/reports' }] : []),
+                    ...(hasPolicy('manage_expenses') ? [{ name: 'Expenses', href: '/dashboard/expenses' }] : []),
+                ]
+            }] : []),
+
+            ...((hasPolicy('view_tickets') || hasPolicy('view_sms')) ? [{
+                id: 'support',
+                name: 'Support Hub',
+                icon: LifeBuoy,
+                children: [
+                    ...(hasPolicy('view_tickets') ? [{ name: 'Helpdesk Tickets', href: '/dashboard/tickets' }] : []),
+                    ...(hasPolicy('view_sms') ? [{ name: 'SMS Center', href: '/dashboard/sms' }] : []),
+                ]
+            }] : []),
+
+            ...((isAdmin || hasPolicy('system_config')) ? [{
+                id: 'system',
+                name: 'System Core',
+                icon: Settings,
+                children: [
+                    ...(hasPolicy('system_config') ? [{ name: 'Gateway Config', href: '/dashboard/payment-config' }] : []),
+                    ...(hasPolicy('view_logs') ? [{ name: 'Activity Logs', href: '/dashboard/logs' }] : []),
+                    ...(hasPolicy('system_config') ? [{ name: 'System Settings', href: '/dashboard/settings' }] : []),
+                ]
+            }] : []),
+
+            { id: 'profile', name: 'My Profile', href: '/dashboard/profile', icon: UserRoundCheck },
+        ]
+    }, [mounted])
+
+    // Add body scroll lock when mobile sidebar is open
+    useEffect(() => {
+        if (isMobile && isSidebarOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isMobile, isSidebarOpen]);
 
     const sidebarClass = isMobile
         ? cn(
-            "fixed inset-y-0 left-0 z-50 bg-card-bg border-r border-pace-border transition-transform duration-300 w-64 shadow-2xl flex flex-col",
+            "fixed inset-y-0 left-0 z-50 bg-card-bg border-r border-pace-border transition-transform duration-300 w-64 flex flex-col font-figtree shadow-sm",
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )
         : cn(
-            "fixed inset-y-0 left-0 z-50 bg-card-bg border-r border-pace-border transition-all duration-300 flex flex-col",
+            "fixed inset-y-0 left-0 z-50 bg-card-bg border-r border-pace-border transition-all duration-300 flex flex-col font-figtree shadow-sm",
             isSidebarOpen ? "w-60" : "w-16"
         );
 
@@ -66,41 +144,100 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
             <aside className={sidebarClass}>
                 {/* Logo Section */}
                 <div className="h-16 flex items-center justify-center border-b border-pace-border">
-                    <Link href="/dashboard" className="flex items-center justify-center gap-2">
+                    <Link href={createHref("/dashboard")} className="flex items-center justify-center gap-2">
                         {showText ? (
-                            <Image src="/logoc.png" alt="Pace" width={32} height={32} className="h-8 w-auto object-contain" priority />
+                            <Image
+                                src="/logoc.png"
+                                alt="Pace"
+                                width={120}
+                                height={40}
+                                className="h-7 w-auto object-contain"
+                                priority
+                            />
                         ) : (
-                            <span className="text-xl font-black text-pace-purple">P</span>
+                            <Image
+                                src="/logoc.png"
+                                alt="Pace"
+                                width={32}
+                                height={32}
+                                className="h-6 w-auto object-contain"
+                                priority
+                            />
                         )}
                     </Link>
                 </div>
 
-                {/* Navigation */}
+                {/* Navigation - Flex-1 with scroll */}
                 <nav className={cn(
                     "flex-1 overflow-y-auto custom-scrollbar space-y-1",
                     showText ? "p-3" : "px-2 py-3"
                 )}>
                     {navigation.map((item) => {
-                        const isActive = pathname === item.href;
+                        const isActive = pathname === item.href || item.children?.some(child => child.href === pathname);
+                        const isExpanded = openMenus.includes(item.id);
 
                         return (
                             <div key={item.id} className="space-y-0.5">
-                                <Link
-                                    href={createHref(item.href)}
-                                    className={cn(
-                                        "flex items-center rounded-xl transition-all group relative text-[13px] py-2.5 px-4 gap-3",
-                                        isActive
-                                            ? "bg-pace-purple text-white shadow-sm font-semibold"
-                                            : "text-admin-label hover:bg-pace-bg-subtle hover:text-foreground"
-                                    )}
-                                >
-                                    {showText && (
-                                        <div className="flex-1 flex items-center justify-between whitespace-nowrap overflow-hidden transition-opacity duration-200">
-                                            <span>{item.name}</span>
-                                        </div>
-                                    )}
-                                    {!showText && <span className={cn("text-[10px] font-black uppercase", isActive ? "text-white" : "text-pace-purple")}>{item.name[0]}</span>}
-                                </Link>
+                                {item.children ? (
+                                    <div className="space-y-0.5">
+                                        <button
+                                            onClick={() => toggleMenu(item.id)}
+                                            className={cn(
+                                                "w-full flex items-center rounded-xl transition-all group relative text-[13px] cursor-pointer py-2",
+                                                showText ? "px-3 gap-3" : "px-0 justify-center",
+                                                isActive && !isExpanded ? "bg-pace-purple/5 text-pace-purple font-medium" : "text-admin-label hover:bg-pace-bg-subtle hover:text-foreground"
+                                            )}
+                                        >
+                                            <item.icon size={18} className={cn("shrink-0 transition-colors", isActive ? "text-pace-purple" : "text-admin-dim group-hover:text-admin-label")} />
+                                            {showText && (
+                                                <div className="flex-1 flex items-center justify-between transition-opacity duration-200">
+                                                    <span className="truncate">{item.name}</span>
+                                                    <ChevronDown size={14} className={cn("transition-transform duration-200 text-admin-dim", isExpanded ? "rotate-180" : "")} />
+                                                </div>
+                                            )}
+                                        </button>
+                                        {/* Submenu */}
+                                        {showText && isExpanded && (
+                                            <div className="ml-4 space-y-0.5 border-l border-pace-border pl-2 my-1">
+                                                {item.children.map((child) => {
+                                                    const isChildActive = pathname === child.href;
+                                                    return (
+                                                        <Link
+                                                            key={child.name}
+                                                            href={createHref(child.href)}
+                                                            className={cn(
+                                                                "block px-3 py-1.5 rounded-lg text-[12px] transition-all",
+                                                                isChildActive
+                                                                    ? "text-pace-purple font-medium bg-pace-purple/10"
+                                                                    : "text-admin-dim hover:text-foreground hover:bg-pace-bg-subtle"
+                                                            )}
+                                                        >
+                                                            {child.name}
+                                                        </Link>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <Link
+                                        href={createHref(item.href)}
+                                        className={cn(
+                                            "flex items-center rounded-xl transition-all group relative text-[13px] py-2",
+                                            showText ? "px-3 gap-3" : "px-0 justify-center",
+                                            isActive
+                                                ? "bg-pace-purple text-white shadow-sm font-medium"
+                                                : "text-admin-label hover:bg-pace-bg-subtle hover:text-foreground"
+                                        )}
+                                    >
+                                        <item.icon size={18} className={cn("shrink-0 transition-colors", isActive ? "text-white" : "text-admin-dim group-hover:text-admin-label")} />
+                                        {showText && (
+                                            <div className="flex-1 flex items-center justify-between whitespace-nowrap overflow-hidden transition-opacity duration-200">
+                                                <span>{item.name}</span>
+                                            </div>
+                                        )}
+                                    </Link>
+                                )}
                             </div>
                         )
                     })}
@@ -114,21 +251,25 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
                     <button
                         onClick={() => setShowLogoutModal(true)}
                         className={cn(
-                            "w-full flex items-center text-admin-dim hover:text-red-500 transition-all rounded-xl hover:bg-red-500/10 text-[13px] font-semibold group cursor-pointer py-2.5",
+                            "w-full flex items-center text-admin-dim hover:text-red-500 transition-all rounded-xl hover:bg-red-500/10 text-[13px] font-medium group cursor-pointer py-2.5",
                             showText ? "px-3 gap-3" : "px-0 justify-center"
                         )}
                     >
-                        {showText ? <span>Sign Out</span> : <span className="text-red-500 font-bold">X</span>}
+                        <LogOut size={18} className="transition-transform group-hover:translate-x-1" />
+                        {showText && <span>Sign Out</span>}
                     </button>
                 </div>
             </aside>
 
+            {/* Standardized Logout Modal */}
             <Modal
                 isOpen={showLogoutModal}
                 onClose={() => setShowLogoutModal(false)}
-                title="Confirm Logout"
-                description="Are you sure you want to sign out of the Sovereignty Hub?"
+                title="Sign Out"
+                description="Are you sure you want to terminate your session?"
                 type="danger"
+                icon={LogOut}
+                confirmText="Sign Out"
                 onConfirm={() => {
                     authService.logout();
                     window.location.href = '/login';

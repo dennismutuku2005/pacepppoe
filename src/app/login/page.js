@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import authService from '@/lib/auth'
+import { APP_VERSION } from '@/lib/version'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -19,7 +20,6 @@ export default function LoginPage() {
     })
 
     useEffect(() => {
-        // Check if already logged in
         if (authService.isAuthenticated()) {
             router.push('/dashboard')
         }
@@ -49,57 +49,52 @@ export default function LoginPage() {
                     router.push(`/dashboard`)
                 }, 400)
             } else {
-                setError(result.message || 'Login failed. Please check your credentials.')
+                setError(result.message || 'Verification failed.')
                 setIsAuthenticating(false)
             }
         } catch (err) {
-            setError('Network error. Please try again.')
-            console.error('Login error:', err)
+            setError('Connection failure.')
             setIsAuthenticating(false)
         }
     }
 
     if (isRedirecting) {
         return (
-            <div className="h-screen w-screen flex items-center justify-center bg-background font-figtree transition-colors duration-300">
-                <div className="flex flex-col items-center gap-5">
-                    <div className="relative w-14 h-14">
-                        <div className="absolute inset-0 rounded-full border-4 border-pace-border" />
-                        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-pace-purple animate-spin" />
-                        <div className="absolute inset-2 rounded-full bg-pace-purple/10 animate-pulse" />
-                    </div>
+            <div className="h-screen w-screen flex items-center justify-center bg-pace-purple font-figtree">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="h-screen w-screen flex bg-background font-figtree text-[13px] overflow-hidden transition-colors duration-300">
-
-            {/* Login Container */}
-            <div className="w-full lg:w-[500px] h-full bg-card-bg border-r border-pace-border flex flex-col justify-center px-12 lg:px-20 relative">
+        <div className="h-screen w-screen flex bg-white font-figtree text-sm overflow-hidden">
+            {/* Login Form Side */}
+            <div className="w-full lg:w-[480px] h-full flex flex-col justify-center px-12 lg:px-20 relative z-10 bg-white shadow-xl">
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
                     className="w-full"
                 >
-                    <div className="mb-12 flex flex-col items-center">
-                        <div className="flex mb-10 justify-center">
-                            <Image src="/logoc.png" alt="Pace Wisp" width={130} height={42} className="h-11 w-auto object-contain" priority />
+                    <div className="mb-10">
+                        <div className="mb-8">
+                            <Image src="/logoc.png" alt="Pace" width={110} height={36} className="h-8 w-auto object-contain" priority />
                         </div>
-                        <h1 className="text-[26px] font-bold text-admin-value leading-none tracking-tight text-center">Pace Wisp Portal</h1>
+                        <h1 className="text-2xl font-semibold text-admin-value tracking-tight">PPPoE Portal</h1>
+                        <p className="text-xs font-medium text-admin-dim mt-1">Administrative Node Management</p>
                     </div>
 
                     <form onSubmit={enterDashboard} className="space-y-5">
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded flex items-center gap-2 text-[12px] font-bold animate-in fade-in zoom-in-95 duration-300">
-                                <AlertCircle size={16} />
+                            <div className="bg-red-500/5 border border-red-500/10 text-red-500 px-4 py-3 rounded-xl flex items-center gap-3 text-[11px] font-medium">
+                                <AlertCircle size={14} />
                                 {error}
                             </div>
                         )}
 
-                        <div>
-                            <label className="block text-[10px] font-bold text-admin-label mb-2 uppercase tracking-[2px]">Username</label>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Username</label>
                             <input
                                 type="text"
                                 name="username"
@@ -107,16 +102,13 @@ export default function LoginPage() {
                                 onChange={handleChange}
                                 required
                                 disabled={isAuthenticating}
-                                className="w-full px-4 py-3 rounded-lg border border-pace-border bg-pace-bg-subtle focus:bg-card-bg focus:border-pace-purple outline-none transition-all placeholder:text-admin-dim/40 font-bold text-admin-value disabled:opacity-50 disabled:cursor-not-allowed"
-                                placeholder="paceadmin"
-                                autoComplete="username"
+                                className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value disabled:opacity-50"
+                                placeholder="Enter username"
                             />
                         </div>
 
-                        <div>
-                            <div className="flex justify-between items-center mb-2">
-                                <label className="block text-[10px] font-bold text-admin-label uppercase tracking-[2px]">Password</label>
-                            </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Password</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
@@ -125,14 +117,13 @@ export default function LoginPage() {
                                     onChange={handleChange}
                                     required
                                     disabled={isAuthenticating}
-                                    className="w-full px-4 py-3 pr-12 rounded-lg border border-pace-border bg-pace-bg-subtle focus:bg-card-bg focus:border-pace-purple outline-none transition-all placeholder:text-admin-dim/40 font-bold text-admin-value disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full px-4 py-3 pr-12 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value disabled:opacity-50"
                                     placeholder="••••••••"
-                                    autoComplete="current-password"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-dim hover:text-admin-value transition-colors p-2"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -142,35 +133,39 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={isAuthenticating}
-                            className="w-full bg-pace-purple text-white py-3.5 rounded font-bold text-[12px] uppercase tracking-[3px] hover:bg-[#3d1a75] transition-all active:scale-[0.99] mt-6 shadow-none disabled:opacity-50 flex items-center justify-center"
+                            className="w-full bg-pace-purple text-white py-3.5 rounded-xl font-medium text-sm hover:opacity-95 transition-all active:scale-[0.98] mt-4 shadow-sm disabled:opacity-50 flex items-center justify-center"
                         >
                             {isAuthenticating ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                             ) : (
-                                'Login'
+                                <span>Sign In</span>
                             )}
                         </button>
                     </form>
 
-                    <div className="mt-16 pt-10 border-t border-pace-border">
-                        <p className="text-[10px] text-admin-dim font-bold leading-relaxed uppercase tracking-widest">
-                            © 2026 Pace Wisp. All rights reserved.
-                        </p>
+                    <div className="mt-12 pt-8 border-t border-pace-border">
+                        <div className="flex items-center justify-between">
+                            <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">
+                                Pace Networks © 2026
+                            </p>
+                            <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">
+                                Build {APP_VERSION}
+                            </p>
+                        </div>
                     </div>
                 </motion.div>
             </div>
 
-            {/* Hero Side */}
-            <div className="hidden lg:flex flex-1 bg-pace-bg-subtle items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 z-0">
-                    <Image 
-                        src="/sidesvg.svg" 
-                        alt="Side Background" 
-                        fill
-                        className="object-cover"
-                        priority
-                    />
-                </div>
+            {/* Visual Side */}
+            <div className="hidden lg:block flex-1 relative bg-pace-bg-subtle">
+                <Image 
+                    src="/sidesvg.svg" 
+                    alt="Side" 
+                    fill
+                    className="object-cover opacity-80"
+                    priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-pace-purple/5 to-transparent z-0" />
             </div>
         </div>
     )

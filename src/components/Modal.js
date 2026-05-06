@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect } from 'react'
-import { X, AlertCircle, CheckCircle2, Info, AlertTriangle, Fingerprint } from 'lucide-react'
+import { X, AlertCircle, CheckCircle2, Info, AlertTriangle, Fingerprint, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function Modal({
@@ -32,40 +32,47 @@ export function Modal({
     if (!isOpen) return null
 
     const typeConfig = {
+        primary: {
+            icon: ShieldCheck,
+            color: 'text-pace-purple',
+            bg: 'bg-pace-purple/10',
+            border: 'border-pace-purple/20',
+            btn: 'bg-pace-purple hover:bg-pace-purple/90 shadow-sm'
+        },
         info: {
             icon: Info,
             color: 'text-blue-500',
             bg: 'bg-blue-500/10',
             border: 'border-blue-500/20',
-            btn: 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+            btn: 'bg-blue-600 hover:bg-blue-700 shadow-sm'
         },
         success: {
             icon: CheckCircle2,
             color: 'text-green-500',
             bg: 'bg-green-500/10',
             border: 'border-green-500/20',
-            btn: 'bg-green-600 hover:bg-green-700 shadow-green-500/20'
+            btn: 'bg-green-600 hover:bg-green-700 shadow-sm'
         },
         error: {
             icon: AlertCircle,
             color: 'text-red-500',
             bg: 'bg-red-500/10',
             border: 'border-red-500/20',
-            btn: 'bg-red-600 hover:bg-red-700 shadow-red-500/20'
+            btn: 'bg-red-600 hover:bg-red-700 shadow-sm'
         },
         warning: {
             icon: AlertTriangle,
             color: 'text-orange-500',
             bg: 'bg-orange-500/10',
             border: 'border-orange-500/20',
-            btn: 'bg-orange-600 hover:bg-orange-700 shadow-orange-500/20'
+            btn: 'bg-orange-600 hover:bg-orange-700 shadow-sm'
         },
         danger: {
             icon: Fingerprint,
             color: 'text-red-500',
             bg: 'bg-red-500/10',
             border: 'border-red-500/20',
-            btn: 'bg-red-600 hover:bg-red-700 shadow-red-500/20'
+            btn: 'bg-red-600 hover:bg-red-700 shadow-sm'
         }
     }
 
@@ -73,7 +80,7 @@ export function Modal({
     const Icon = CustomIcon || config.icon
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8">
+        <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 sm:p-8">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-300"
@@ -81,17 +88,17 @@ export function Modal({
             />
 
             {/* Modal Content */}
-            <div className={cn("relative bg-card-bg w-full rounded-3xl shadow-2xl border border-pace-border animate-in zoom-in-95 fade-in duration-300 max-h-[calc(100vh-4rem)] flex flex-col transition-colors duration-300", maxWidth)}>
+            <div className={cn("relative bg-card-bg w-full rounded-2xl border border-pace-border animate-in zoom-in-95 fade-in duration-300 max-h-[calc(100vh-4rem)] flex flex-col transition-colors duration-300", maxWidth)}>
                 <div className="p-8 overflow-y-auto custom-scrollbar">
                     <div className="flex items-start justify-between mb-4">
                         <div className="flex flex-col gap-1">
                             {CustomIcon && (
-                                <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 mb-4 border transition-colors", config.bg, config.color, config.border)}>
+                                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mb-4 border transition-colors", config.bg, config.color, config.border)}>
                                     <Icon size={20} />
                                 </div>
                             )}
-                            <h3 className="text-base font-bold text-foreground uppercase tracking-tight">{title}</h3>
-                            {description && <p className="text-[10px] font-semibold text-admin-dim uppercase tracking-widest italic">{description}</p>}
+                            <h3 className="text-lg font-semibold text-admin-value tracking-tight">{title}</h3>
+                            {description && <p className="text-xs font-medium text-admin-dim mt-0.5">{description}</p>}
                         </div>
                         <button
                             onClick={onClose}
@@ -103,12 +110,12 @@ export function Modal({
 
                     {/* Children Content */}
                     {children && (
-                        <div className="mt-4">
+                        <div className="mt-6">
                             {children}
                         </div>
                     )}
 
-                    {/* Footer / Actions - Only show if footer is provided or onConfirm is defined and NOT explicitly hidden */}
+                    {/* Footer / Actions */}
                     {footer !== null && (footer || onConfirm) && (
                         <div className="mt-8 flex items-center gap-3">
                             {footer ? footer : (
@@ -117,7 +124,7 @@ export function Modal({
                                         <button
                                             onClick={onClose}
                                             disabled={isLoading}
-                                            className="flex-1 px-4 py-3 bg-card-bg border border-pace-border text-admin-dim rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-pace-bg-subtle transition-all disabled:opacity-50"
+                                            className="flex-1 px-4 py-2.5 bg-card-bg border border-pace-border text-admin-dim rounded-xl text-sm font-medium hover:bg-pace-bg-subtle transition-all disabled:opacity-50"
                                         >
                                             {cancelText}
                                         </button>
@@ -126,7 +133,7 @@ export function Modal({
                                         onClick={onConfirm}
                                         disabled={isLoading}
                                         className={cn(
-                                            "flex-1 px-4 py-3 text-white rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2",
+                                            "flex-[2] px-4 py-2.5 text-white rounded-xl text-sm font-medium transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2",
                                             config.btn
                                         )}
                                     >

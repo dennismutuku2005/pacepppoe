@@ -1,17 +1,23 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Wallet, Plus, Search, Trash2, Calendar, FileText, TrendingDown, DollarSign } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Plus, Search, Filter, Trash2, Edit2, DollarSign, Calendar, Tag, Activity } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { Skeleton } from '@/components/Skeleton'
+import { TableRowSkeleton } from '@/components/Skeleton'
 import { mockDashboardData } from '@/services/mockData'
-import Swal from 'sweetalert2'
+import { toast } from 'sonner'
+import { Modal } from '@/components/Modal'
+import { cn } from '@/lib/utils'
 
 function ExpensesContent() {
     const [isLoading, setIsLoading] = useState(true)
-    const [searchTerm, setSearchTerm] = useState('')
     const [expenses, setExpenses] = useState([])
+    const [search, setSearch] = useState('')
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [currentExpense, setCurrentExpense] = useState(null)
+    const [formData, setFormData] = useState({ 
+        title: '', amount: '', category: 'Bandwidth', date: new Date().toISOString().split('T')[0], status: 'Paid'
+    })
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -21,193 +27,228 @@ function ExpensesContent() {
         return () => clearTimeout(timer)
     }, [])
 
-    const handleAddExpense = () => {
-        Swal.fire({
-            title: 'Record Expense',
-            html: `
-                <div class="space-y-4 text-left">
-                    <div>
-                        <label class="text-[10px] font-bold uppercase text-gray-400">Title / Description</label>
-                        <input id="exp-title" class="w-full mt-1 p-2 border border-gray-200 rounded-lg text-sm" placeholder="e.g. Node B Maintenance">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-[10px] font-bold uppercase text-gray-400">Amount (KES)</label>
-                            <input id="exp-amount" type="number" class="w-full mt-1 p-2 border border-gray-200 rounded-lg text-sm" placeholder="1500">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold uppercase text-gray-400">Category</label>
-                            <select id="exp-category" class="w-full mt-1 p-2 border border-gray-200 rounded-lg text-sm">
-                                <option>Utilities</option>
-                                <option>Bandwidth</option>
-                                <option>Rent</option>
-                                <option>Hardware</option>
-                                <option>Other</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonColor: '#4B1D8F',
-            confirmButtonText: 'Record Expense',
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const title = document.getElementById('exp-title').value
-                const amount = document.getElementById('exp-amount').value
-                const category = document.getElementById('exp-category').value
-                
-                if (title && amount) {
-                    const newExp = {
-                        id: Date.now(),
-                        title,
-                        amount: parseFloat(amount),
-                        category,
-                        date: new Date().toISOString().split('T')[0],
-                        status: 'Paid'
-                    }
-                    setExpenses(prev => [newExp, ...prev])
-                    Swal.fire('Success!', 'Expense recorded.', 'success')
-                }
-            }
-        })
+    const handleOpenModal = (e = null) => {
+        if (e) {
+            setCurrentExpense(e)
+            setFormData({ ...e })
+        } else {
+            setCurrentExpense(null)
+            setFormData({ 
+                title: '', amount: '', category: 'Bandwidth', 
+                date: new Date().toISOString().split('T')[0], status: 'Paid'
+            })
+        }
+        setIsModalOpen(true)
     }
 
-    const filteredExpenses = expenses.filter(e => 
-        e.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        e.category.toLowerCase().includes(searchTerm.toLowerCase())
+    const handleSave = (e) => {
+        e.preventDefault()
+        if (!formData.title || !formData.amount) {
+            toast.error('Validation Failed', { description: 'Expense title and amount are required.' })
+            return
+        }
+
+        if (currentExpense) {
+            setExpenses(prev => prev.map(ex => ex.id === currentExpense.id ? { ...ex, ...formData } : ex))
+            toast.success('Record Updated', { description: 'Expense entry has been modified.' })
+        } else {
+            const newEx = { ...formData, id: Date.now() }
+            setExpenses(prev => [newEx, ...prev])
+            toast.success('Record Created', { description: 'New expense has been logged.' })
+        }
+        setIsModalOpen(false)
+    }
+
+    const handleDelete = (id) => {
+        setExpenses(prev => prev.filter(ex => ex.id !== id))
+        toast.error('Record Removed', { description: 'Expense entry deleted from ledger.' })
+    }
+
+    const filteredExpenses = expenses.filter(ex => 
+        ex.title?.toLowerCase().includes(search.toLowerCase()) ||
+        ex.category?.toLowerCase().includes(search.toLowerCase())
     )
 
-    const totalSpent = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0)
-
     return (
-        <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0">
+        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0 font-figtree uppercase">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-lg font-bold text-pace-purple dark:text-pace-purple-light flex items-center gap-3">
+                    <h1 className="text-lg font-bold text-admin-value flex items-center gap-3 tracking-tight">
                         <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
-                            <Wallet size={20} className="text-pace-purple" />
+                            <DollarSign size={20} className="text-pace-purple" />
                         </div>
-                        Expense Ledger
+                        Operational Ledger
                     </h1>
-                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest uppercase">Track business operational costs and hardware investments</p>
+                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest italic">Infrastructure Costs & Overhead Tracking</p>
                 </div>
-                <div className="flex gap-4 items-center">
-                    <div className="px-5 py-2.5 bg-red-500/5 border border-red-500/10 rounded-xl text-center shadow-sm">
-                        <p className="text-sm font-bold text-red-600 leading-none">KES {totalSpent.toLocaleString()}</p>
-                        <p className="text-[8px] font-bold text-admin-dim uppercase tracking-widest mt-1">Filtered Total</p>
-                    </div>
-                    <button 
-                        onClick={handleAddExpense}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-bold uppercase tracking-widest shadow-xl shadow-pace-purple/20 active:scale-95"
-                    >
-                        <Plus size={14} /> Record Cost
-                    </button>
-                </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-card-bg border border-pace-border p-6 rounded-2xl">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center">
-                            <TrendingDown size={20} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Burn Rate (Today)</p>
-                            <h3 className="text-lg font-bold text-admin-value mt-1">KES {mockDashboardData.stats.totalExpensesToday.toLocaleString()}</h3>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-card-bg border border-pace-border p-6 rounded-2xl">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-600 flex items-center justify-center">
-                            <DollarSign size={20} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Net Revenue (Today)</p>
-                            <h3 className="text-lg font-bold text-admin-value mt-1">KES {(mockDashboardData.stats.totalRevenueToday - mockDashboardData.stats.totalExpensesToday).toLocaleString()}</h3>
-                        </div>
-                    </div>
-                </div>
+                <button 
+                    onClick={() => handleOpenModal()}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-bold tracking-widest shadow-xl shadow-pace-purple/20 active:scale-95"
+                >
+                    <Plus size={14} /> Log Expense
+                </button>
             </div>
 
             {/* Controls */}
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="relative w-full sm:w-96 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-pace-purple transition-colors" size={14} />
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="relative w-full sm:w-80 group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
                     <input
                         type="text"
-                        placeholder="Search by description or category..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3 bg-card-bg border border-pace-border rounded-2xl text-[12px] font-bold text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                        placeholder="Search ledger..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-11 pr-4 py-2.5 bg-card-bg border border-pace-border rounded-xl text-[12px] font-bold text-admin-value focus:outline-none focus:border-pace-purple transition-all uppercase"
                     />
                 </div>
             </div>
 
-            {/* Expenses List */}
-            <div className="bg-card-bg border border-pace-border rounded-2xl overflow-hidden min-h-[400px]">
-                <div className="overflow-x-auto custom-scrollbar">
+            {/* Expense Matrix */}
+            <div className="overflow-hidden bg-white dark:bg-card-bg border border-pace-border rounded-2xl shadow-sm">
+                <div className="overflow-x-auto">
                     <table className="w-full text-left whitespace-nowrap text-[12px]">
                         <thead>
-                            <tr className="bg-pace-bg-subtle border-b border-pace-border font-bold text-admin-dim uppercase tracking-widest text-[9px]">
-                                <th className="px-6 py-5">Expense Title</th>
-                                <th className="px-6 py-5">Category</th>
-                                <th className="px-6 py-5">Amount</th>
-                                <th className="px-6 py-5">Date</th>
-                                <th className="px-6 py-5 text-right">Action</th>
+                            <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim tracking-widest text-[9px]">
+                                <th className="px-6 py-4">Expense Particulars</th>
+                                <th className="px-6 py-4">Category</th>
+                                <th className="px-6 py-4">Filing Date</th>
+                                <th className="px-6 py-4">Valuation</th>
+                                <th className="px-6 py-4">State</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
                             {isLoading ? (
-                                [...Array(5)].map((_, i) => (
-                                    <tr key={i}>
-                                        <td className="px-6 py-5"><Skeleton className="h-4 w-48" /></td>
-                                        <td className="px-6 py-5"><Skeleton className="h-4 w-20" /></td>
-                                        <td className="px-6 py-5"><Skeleton className="h-4 w-24" /></td>
-                                        <td className="px-6 py-5"><Skeleton className="h-4 w-24" /></td>
-                                        <td className="px-6 py-5 text-right"><Skeleton className="h-4 w-8 ml-auto" /></td>
+                                <TableRowSkeleton cols={6} rows={8} />
+                            ) : filteredExpenses.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="py-24 text-center text-admin-dim text-[10px] font-bold tracking-widest italic uppercase">Zero records in ledger</td>
+                                </tr>
+                            ) : (
+                                filteredExpenses.map((ex) => (
+                                    <tr key={ex.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group cursor-default">
+                                        <td className="px-6 py-3">
+                                            <span className="text-[13px] font-bold text-admin-value">{ex.title}</span>
+                                        </td>
+                                        <td className="px-6 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <Tag size={12} className="text-pace-purple" />
+                                                <span className="text-[10px] font-bold text-admin-dim">{ex.category}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar size={12} className="text-admin-dim" />
+                                                <span className="text-[10px] font-bold text-admin-value">{ex.date}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-3 font-mono">
+                                            <span className="text-[12px] font-black text-admin-value tabular-nums">KES {Number(ex.amount).toLocaleString()}</span>
+                                        </td>
+                                        <td className="px-6 py-3">
+                                            <Badge className={cn(
+                                                "border-none px-2 py-0.5 text-[8px] font-black tracking-widest",
+                                                ex.status === 'Paid' ? "bg-green-500/10 text-green-600" : "bg-amber-500/10 text-amber-600"
+                                            )}>
+                                                {ex.status}
+                                            </Badge>
+                                        </td>
+                                        <td className="px-6 py-3 text-right">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <button onClick={() => handleOpenModal(ex)} className="p-1.5 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/10 rounded-lg transition-all"><Edit2 size={13} /></button>
+                                                <button onClick={() => handleDelete(ex.id)} className="p-1.5 text-admin-dim hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"><Trash2 size={13} /></button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))
-                            ) : filteredExpenses.map((exp) => (
-                                <tr key={exp.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group cursor-default">
-                                    <td className="px-6 py-3">
-                                        <span className="text-[13px] font-bold text-admin-value tracking-tight group-hover:text-pace-purple transition-colors">{exp.title}</span>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <Badge variant="outline" className="text-[9px] font-bold border-gray-200 uppercase tracking-widest">
-                                            {exp.category}
-                                        </Badge>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <span className="font-black text-red-600 tabular-nums">KES {exp.amount.toLocaleString()}</span>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center gap-2 text-admin-dim font-bold text-[10px] uppercase">
-                                            <Calendar size={10} />
-                                            {exp.date}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5 text-right">
-                                        <button className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            {/* Expense Modal */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={currentExpense ? 'Edit Ledger Entry' : 'Log Operational Expense'}
+                description={currentExpense ? `Synchronizing record for ${currentExpense.title}` : 'Record a new infrastructure or operational cost.'}
+                maxWidth="max-w-md"
+            >
+                <form onSubmit={handleSave} className="p-6 space-y-4">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-admin-dim tracking-widest pl-1">Expense Title</label>
+                        <input 
+                            type="text" required
+                            value={formData.title}
+                            onChange={(e) => setFormData({...formData, title: e.target.value})}
+                            placeholder="e.g. KPLC Power - Station A"
+                            className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-admin-value outline-none focus:border-pace-purple transition-all uppercase"
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim tracking-widest pl-1">Amount (KES)</label>
+                            <input 
+                                type="number" required
+                                value={formData.amount}
+                                onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                                placeholder="0.00"
+                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim tracking-widest pl-1">Category</label>
+                            <select 
+                                value={formData.category}
+                                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
+                            >
+                                <option>Bandwidth</option>
+                                <option>Utilities</option>
+                                <option>Rent</option>
+                                <option>Hardware</option>
+                                <option>Staff Salary</option>
+                                <option>Marketing</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim tracking-widest pl-1">Date</label>
+                            <input 
+                                type="date" required
+                                value={formData.date}
+                                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-admin-value outline-none focus:border-pace-purple transition-all"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim tracking-widest pl-1">Status</label>
+                            <select 
+                                value={formData.status}
+                                onChange={(e) => setFormData({...formData, status: e.target.value})}
+                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
+                            >
+                                <option>Paid</option>
+                                <option>Pending</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="pt-4 flex gap-3">
+                        <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-bold text-admin-dim tracking-widest hover:bg-pace-bg-subtle transition-all">Abort</button>
+                        <button type="submit" className="flex-3 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-bold tracking-widest hover:opacity-90 shadow-xl shadow-pace-purple/20 transition-all active:scale-95">Commit Entry</button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     )
 }
 
 export default function ExpensesPage() {
     return (
-        <Suspense fallback={<div>Loading Ledger...</div>}>
+        <Suspense fallback={<div className="p-8 text-center text-admin-dim animate-pulse uppercase text-[10px] font-bold tracking-widest italic">Syncing Ledger...</div>}>
             <ExpensesContent />
         </Suspense>
     )

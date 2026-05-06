@@ -1,137 +1,71 @@
-import authService from '@/lib/auth';
-import { API_BASE } from '@/lib/api-config';
+import { mockDashboardData, mockRouters } from './mockData';
 
 export const dashboardService = {
-    /**
-     * Fetch dashboard data using authenticated user token
-     * @param {Object} filters - Optional filters { startDate, endDate, router, action, page, limit }
-     */
     async getDashboardData(filters = {}) {
-        const queryParams = new URLSearchParams();
-
-        if (filters.startDate) queryParams.append('startDate', filters.startDate);
-        if (filters.endDate) queryParams.append('endDate', filters.endDate);
-        if (filters.router && filters.router !== 'All Routers') queryParams.append('router', filters.router);
-        if (filters.action) queryParams.append('action', filters.action);
-        if (filters.page) queryParams.append('page', filters.page);
-        if (filters.limit) queryParams.append('limit', filters.limit);
-
-        const url = `${API_BASE}/dashboard.php?${queryParams.toString()}`;
-
-        try {
-            const response = await authService.authenticatedFetch(url);
-            if (!response.ok) {
-                if (response.status === 401) {
-                    await authService.logout();
-                    window.location.href = '/login';
-                    return null;
-                }
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to fetch dashboard data');
-            }
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error("Dashboard Service Error:", error);
-            throw error;
-        }
+        // Mock implementation
+        return {
+            status: 'success',
+            data: {
+                widgets: {
+                    active_users: { value: mockDashboardData.stats.activeCustomers },
+                    todays_earnings: { value: mockDashboardData.stats.totalRevenueToday },
+                    sms_balance: { value: mockDashboardData.stats.smsBalance },
+                    system_health: { value: '98%' },
+                    customers_month: { value: 1240 },
+                    online_customers: { value: 856 }
+                },
+                charts: {
+                    revenue_over_time: [
+                        { day: 'Mon', amount: 4000, entries: 240 },
+                        { day: 'Tue', amount: 3000, entries: 198 },
+                        { day: 'Wed', amount: 2000, entries: 380 },
+                        { day: 'Thu', amount: 2780, entries: 308 },
+                        { day: 'Fri', amount: 1890, entries: 480 },
+                        { day: 'Sat', amount: 2390, entries: 380 },
+                        { day: 'Sun', amount: 3490, entries: 430 },
+                    ]
+                },
+                recent_transactions: mockDashboardData.recentPayments.map(p => ({
+                    id: p.id,
+                    user_phone: p.phone || '0712345678',
+                    plan_name: p.plan || 'Bronze',
+                    time_ago: '2 mins ago',
+                    amount: p.amount,
+                    mpesa_code: p.receipt
+                })),
+                router_status: mockRouters.map(r => ({
+                    name: r.name,
+                    ip: r.ip,
+                    status: r.status === 'online' ? 'Online' : 'Offline',
+                    load: '24%',
+                    uptime: r.uptime
+                }))
+            },
+            pagination: { page: 1, has_more: false }
+        };
     },
 
-    /**
-     * Specifically fetch widgets (cards)
-     */
     async getWidgets(filters = {}) {
-        return this.getDashboardData({ ...filters, action: 'widgets' });
+        const res = await this.getDashboardData(filters);
+        return res;
     },
 
-    /**
-     * Specifically fetch charts
-     */
     async getCharts(filters = {}) {
-        return this.getDashboardData({ ...filters, action: 'charts' });
+        const res = await this.getDashboardData(filters);
+        return res;
     },
 
-    /**
-     * Specifically fetch recent transactions
-     */
     async getRecentTransactions(filters = {}) {
-        return this.getDashboardData({ ...filters, action: 'recent_transactions', limit: 5 });
+        const res = await this.getDashboardData(filters);
+        return res;
     },
 
-    /**
-     * Specifically fetch router status
-     */
     async getRouterStatus(filters = {}) {
-        return this.getDashboardData({ ...filters, action: 'router_status', limit: 5 });
+        const res = await this.getDashboardData(filters);
+        return res;
     },
 
-
-    /**
-     * Fetch list of routers
-     */
     async getRouters() {
-        const url = `${API_BASE}/dashboard.php?action=get_routers`;
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Failed to fetch routers');
-            const data = await response.json();
-            return data.data;
-        } catch (error) {
-            console.error("Get Routers Error:", error);
-            return ['All Routers'];
-        }
-    },
-
-    /**
-     * Staff Management APIs
-     */
-    async getStaff() {
-        try {
-            const response = await authService.authenticatedFetch(`${API_BASE}/staff.php`);
-            return await response.json();
-        } catch (error) {
-            console.error("Staff Management Error:", error);
-            throw error;
-        }
-    },
-
-    async createStaff(formData) {
-        try {
-            const response = await authService.authenticatedFetch(`${API_BASE}/staff.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error("Staff Creation Error:", error);
-            throw error;
-        }
-    },
-
-    async updateStaff(id, formData) {
-        try {
-            const response = await authService.authenticatedFetch(`${API_BASE}/staff.php?id=${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error("Staff Update Error:", error);
-            throw error;
-        }
-    },
-
-    async deleteStaff(id) {
-        try {
-            const response = await authService.authenticatedFetch(`${API_BASE}/staff.php?id=${id}`, {
-                method: 'DELETE'
-            });
-            return await response.json();
-        } catch (error) {
-            console.error("Staff Deletion Error:", error);
-            throw error;
-        }
+        return ['All Routers', ...mockRouters.map(r => r.name)];
     }
 };

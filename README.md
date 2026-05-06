@@ -1,9 +1,13 @@
-# PaceWisp | Advanced ISP Management Hub
+<p align="center">
+  <img src="public/logoc.png" alt="PaceWisp Logo" width="300" />
+</p>
 
-A high-performance management interface designed for ISPs to orchestrate PPPoE subscribers, MikroTik infrastructure, and financial operations. Developed by **[pacewisp.co.ke](https://pacewisp.co.ke)**.
-
-## 🚀 Overview
-**PaceWisp** is a premium management platform that centralizes the operation of a modern ISP. It provides professional tools for subscriber lifecycle management, bandwidth tiering, and financial reconciliation within a unified, high-fidelity UI.
+# PaceWisp | Advanced PPPoE Management
+PaceWisp is a specialized ISP management orchestration hub designed to streamline PPPoE subscriber lifecycles and MikroTik network infrastructure. 
+The system provides a high-fidelity interface for real-time bandwidth tiering, automated M-Pesa payment reconciliation, and operational expense tracking. 
+Engineered for modern WISPs, it features a robust SMS notification engine for automated client communication and expiration alerts. 
+With integrated health monitoring for network nodes and a centralized support ticketing system, it ensures maximum uptime and subscriber satisfaction. 
+This portal is built for visual excellence and administrative efficiency, centralizing all critical ISP operations within a single, secure sovereignty hub.
 
 ## 📋 Core Capabilities
 

@@ -1,29 +1,13 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Plus, Search, Filter, Download, MoreHorizontal, UserPlus, ShieldCheck, Edit2, Trash2, Smartphone, Globe, Activity, CheckCircle2, X } from 'lucide-react'
+import { Plus, Search, Filter, UserPlus, Edit2, Trash2, Smartphone, Network, ShieldCheck, Activity, X, Database } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { Skeleton } from '@/components/Skeleton'
-import { mockDashboardData } from '@/services/mockData'
-import Swal from 'sweetalert2'
+import { Skeleton, TableRowSkeleton } from '@/components/Skeleton'
+import { mockCustomers, mockRouters, mockPackages } from '@/services/mockData'
+import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
-
-function TableRowSkeleton({ cols, rows }) {
-    return (
-        <>
-            {[...Array(rows)].map((_, i) => (
-                <tr key={i} className="animate-pulse">
-                    {[...Array(cols)].map((_, j) => (
-                        <td key={j} className="px-6 py-3">
-                            <div className="h-2.5 bg-pace-bg-subtle rounded w-full" />
-                        </td>
-                    ))}
-                </tr>
-            ))}
-        </>
-    )
-}
 
 function CustomersContent() {
     const [isLoading, setIsLoading] = useState(true)
@@ -31,11 +15,15 @@ function CustomersContent() {
     const [search, setSearch] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [currentCustomer, setCurrentCustomer] = useState(null)
-    const [formData, setFormData] = useState({ name: '', phone: '', plan: '', price: '', username: '', password: '', status: 'enabled' })
+    const [formData, setFormData] = useState({ 
+        name: '', phone: '', plan: '', price: '', 
+        username: '', password: '', status: 'enabled',
+        router: '' 
+    })
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            setCustomers(mockDashboardData.subscribers)
+            setCustomers(mockCustomers)
             setIsLoading(false)
         }, 800)
         return () => clearTimeout(timer)
@@ -47,175 +35,165 @@ function CustomersContent() {
             setFormData({ ...c })
         } else {
             setCurrentCustomer(null)
-            setFormData({ name: '', phone: '', plan: '', price: '', username: '', password: '', status: 'enabled' })
+            setFormData({ 
+                name: '', phone: '', plan: '', price: '', 
+                username: '', password: '', status: 'enabled',
+                router: '' 
+            })
         }
         setIsModalOpen(true)
     }
 
     const handleSave = (e) => {
         e.preventDefault()
-        if (!formData.name || !formData.phone || !formData.username) {
-            Swal.fire('Error', 'Please fill all required fields', 'error')
+        if (!formData.name || !formData.phone || !formData.username || !formData.router) {
+            toast.error('Missing Required Parameters', {
+                description: 'Please select a router and fill all identity fields.'
+            })
             return
         }
 
         if (currentCustomer) {
             setCustomers(prev => prev.map(c => c.id === currentCustomer.id ? { ...c, ...formData } : c))
-            Swal.fire('Updated!', 'Subscriber profile has been synchronized.', 'success')
+            toast.success('Identity Synchronized', {
+                description: `PPPoE profile for ${formData.username} has been updated.`
+            })
         } else {
-            const newCust = { ...formData, id: Date.now(), nextPayment: 'Nov 12, 2023', lastActive: '2m ago' }
+            const newCust = { ...formData, id: Date.now() }
             setCustomers(prev => [newCust, ...prev])
-            Swal.fire('Provisioned!', 'New subscriber is now active in PPPoE pool.', 'success')
+            toast.success('Node Provisioned', {
+                description: `New PPPoE identity authorized on ${formData.router}.`
+            })
         }
         setIsModalOpen(false)
     }
 
-    const handleDelete = (id) => {
-        Swal.fire({
-            title: 'Revoke Access?',
-            text: "This will terminate all active PPPoE sessions for this user.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#E11D48',
-            confirmButtonText: 'Yes, Revoke'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                setCustomers(prev => prev.filter(c => c.id !== id))
-                Swal.fire('Revoked!', 'Subscriber access has been terminated.', 'success')
-            }
+    const handleDelete = (id, name) => {
+        setCustomers(prev => prev.filter(c => c.id !== id))
+        toast.error('Identity Revoked', {
+            description: `PPPoE access for ${name} has been terminated.`
         })
     }
 
     const handleToggleStatus = (id, currentStatus) => {
         const newStatus = currentStatus === 'enabled' ? 'disabled' : 'enabled'
         setCustomers(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c))
-        Swal.fire({
-            title: newStatus === 'enabled' ? 'Access Restored' : 'Access Suspended',
-            text: `Subscriber is now ${newStatus}.`,
-            icon: 'info',
-            timer: 1500,
-            showConfirmButton: false
+        toast.info(newStatus === 'enabled' ? 'Access Restored' : 'Access Suspended', {
+            description: `Subscriber state set to ${newStatus}.`
         })
     }
 
     const filteredCustomers = customers.filter(c => 
         c.name?.toLowerCase().includes(search.toLowerCase()) ||
-        c.username?.toLowerCase().includes(search.toLowerCase())
+        c.username?.toLowerCase().includes(search.toLowerCase()) ||
+        c.phone?.includes(search)
     )
 
     return (
-        <div className="space-y-4 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0">
+        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-lg font-bold text-admin-value flex items-center gap-3 tracking-tight">
-                        <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
-                            <Users size={20} className="text-pace-purple" />
-                        </div>
-                        Subscribers Matrix
-                    </h1>
-                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest uppercase italic">Provisioning and Real-time Policy Management</p>
+                    <h1 className="text-xl font-medium text-admin-value tracking-tight">Subscribers Matrix</h1>
+                    <p className="text-xs font-medium text-gray-400 mt-1">PPPoE node authentication and session control</p>
                 </div>
                 <button 
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-bold uppercase tracking-widest shadow-xl shadow-pace-purple/20 active:scale-95"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95"
                 >
-                    <UserPlus size={14} /> New Subscriber
+                    <UserPlus size={16} />
+                    <span>Provision Node</span>
                 </button>
             </div>
 
             {/* Controls */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="relative w-full sm:w-80 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={16} />
                     <input
                         type="text"
-                        placeholder="Search matrix..."
+                        placeholder="Search identity pool..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2 bg-card-bg border border-pace-border rounded-xl text-[11px] font-bold text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                        className="w-full pl-11 pr-4 py-2.5 bg-card-bg border border-pace-border rounded-xl text-sm font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
                     />
                 </div>
             </div>
 
-            {/* Ultra High Density Table */}
-            <div className="bg-white dark:bg-card-bg border border-pace-border rounded-2xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left whitespace-nowrap text-[11px]">
+            {/* Matrix Table */}
+            <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left whitespace-nowrap">
                         <thead>
-                            <tr className="bg-pace-bg-subtle border-b border-pace-border font-bold text-admin-dim uppercase tracking-widest text-[8px]">
-                                <th className="px-6 py-3">Identity</th>
-                                <th className="px-6 py-3">PPPoE Logic</th>
-                                <th className="px-6 py-3">Service Tier</th>
-                                <th className="px-6 py-3">Renewal</th>
-                                <th className="px-6 py-3 text-center">Connectivity</th>
-                                <th className="px-6 py-3 text-right">Actions</th>
+                            <tr className="bg-pace-bg-subtle/50 border-b border-pace-border">
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Identity</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">PPPoE Credentials</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">NAS / Router</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Service Tier</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Status</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
                             {isLoading ? (
-                                <TableRowSkeleton cols={6} rows={12} />
+                                <TableRowSkeleton cols={6} rows={10} />
                             ) : filteredCustomers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="py-24 text-center text-admin-dim uppercase text-[9px] font-bold tracking-widest italic">No matching records</td>
+                                    <td colSpan="6" className="py-24 text-center text-admin-dim text-sm font-medium">No records found in identity pool</td>
                                 </tr>
                             ) : (
                                 filteredCustomers.map((c) => (
-                                    <tr key={c.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group cursor-default">
-                                        <td className="px-6 py-2.5">
+                                    <tr key={c.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
+                                        <td className="px-6 py-2">
                                             <div className="flex flex-col">
-                                                <span className="font-bold text-admin-value text-[11px] group-hover:text-pace-purple transition-colors">{c.name}</span>
-                                                <span className="text-[9px] text-admin-dim font-bold lowercase italic tracking-tight">{c.phone}</span>
+                                                <span className="font-semibold text-admin-value text-xs group-hover:text-pace-purple transition-colors">{c.name}</span>
+                                                <span className="text-[10px] text-admin-dim font-medium">{c.phone}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-2.5">
+                                        <td className="px-6 py-2">
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-mono font-bold text-pace-purple lowercase">{c.username}</span>
-                                                <span className="text-[8px] text-gray-400 font-mono tracking-tighter">SECURED-MD5</span>
+                                                <span className="text-[11px] font-semibold text-pace-purple font-mono">{c.username}</span>
+                                                <span className="text-[9px] text-gray-400 font-medium">Secured CHAP</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-2.5">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-admin-value text-[10px] uppercase tracking-tighter">{c.plan}</span>
-                                                <span className="text-[9px] text-admin-dim font-black italic">KES {c.price.toLocaleString()}</span>
+                                        <td className="px-6 py-2">
+                                            <div className="flex items-center gap-2">
+                                                <Network size={13} className="text-admin-dim" />
+                                                <span className="text-xs font-semibold text-admin-value">{c.router || 'Unassigned'}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-2.5">
-                                            <span className={cn(
-                                                "font-black text-[9px] uppercase tracking-tighter",
-                                                new Date(c.nextPayment) < new Date() ? "text-red-500" : "text-admin-dim"
-                                            )}>
-                                                {c.nextPayment}
-                                            </span>
+                                        <td className="px-6 py-2">
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold text-admin-value text-[11px]">{c.plan}</span>
+                                                <span className="text-[10px] text-admin-dim font-medium tabular-nums">KES {Number(c.price).toLocaleString()}</span>
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-2.5 text-center">
+                                        <td className="px-6 py-2 text-center">
                                             <button 
                                                 onClick={() => handleToggleStatus(c.id, c.status)}
                                                 className={cn(
-                                                    "px-2.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest transition-all active:scale-95",
+                                                    "px-2 py-0.5 rounded-full text-[10px] font-medium transition-all min-w-[64px]",
                                                     c.status === 'enabled' 
-                                                        ? "bg-green-500/10 text-green-600 border border-green-500/20" 
-                                                        : "bg-red-500/10 text-red-600 border border-red-500/20"
+                                                        ? "bg-green-500/10 text-green-600 hover:bg-green-500/20" 
+                                                        : "bg-red-500/10 text-red-600 hover:bg-red-500/20"
                                                 )}
                                             >
-                                                {c.status}
+                                                {c.status === 'enabled' ? 'Enabled' : 'Disabled'}
                                             </button>
                                         </td>
-                                        <td className="px-6 py-2.5 text-right">
-                                            <div className="flex justify-end items-center gap-1.5">
+                                        <td className="px-6 py-2 text-right">
+                                            <div className="flex justify-end items-center gap-1">
                                                 <button 
                                                     onClick={() => handleOpenModal(c)}
-                                                    className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/10 rounded transition-all"
-                                                    title="Modify Profile"
+                                                    className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
                                                 >
-                                                    <Edit2 size={12} />
+                                                    <Edit2 size={13} />
                                                 </button>
                                                 <button 
-                                                    onClick={() => handleDelete(c.id)}
-                                                    className="p-1 text-admin-dim hover:text-red-500 hover:bg-red-500/10 rounded transition-all"
-                                                    title="Revoke Node"
+                                                    onClick={() => handleDelete(c.id, c.name)}
+                                                    className="p-1 text-admin-dim hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
                                                 >
-                                                    <Trash2 size={12} />
+                                                    <Trash2 size={13} />
                                                 </button>
                                             </div>
                                         </td>
@@ -227,69 +205,90 @@ function CustomersContent() {
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Provisioning Modal */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={currentCustomer ? 'Update Subscriber' : 'Provision Access'}
-                description={currentCustomer ? `Synchronizing credentials for ${currentCustomer.name}` : 'Construct a new pppoe identity for network access.'}
+                title={currentCustomer ? 'Update Identity' : 'Authorize PPPoE Node'}
+                description={currentCustomer ? `Synchronizing credentials for ${currentCustomer.username}` : 'Provisioning a new encrypted tunnel session.'}
                 maxWidth="max-w-md"
             >
-                <form onSubmit={handleSave} className="p-6 space-y-4">
+                <form onSubmit={handleSave} className="p-6 space-y-5 font-figtree">
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-widest pl-1">Legal Identity</label>
+                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Subscriber Identity</label>
                         <input 
                             type="text" required
                             value={formData.name}
                             onChange={(e) => setFormData({...formData, name: e.target.value})}
                             placeholder="Full Subscriber Name"
-                            className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-admin-value outline-none focus:border-pace-purple transition-all"
+                            className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
                         />
                     </div>
+                    
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-widest pl-1">Mobile Ledger</label>
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Mobile Contact</label>
                             <input 
                                 type="text" required
                                 value={formData.phone}
                                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
                                 placeholder="07XXXXXXXX"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-admin-value outline-none focus:border-pace-purple transition-all"
+                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-widest pl-1">Service Plan</label>
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Target NAS</label>
                             <select 
-                                value={formData.plan}
-                                onChange={(e) => setFormData({...formData, plan: e.target.value, price: e.target.options[e.target.selectedIndex].dataset.price})}
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
+                                required
+                                value={formData.router}
+                                onChange={(e) => setFormData({...formData, router: e.target.value})}
+                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
                             >
-                                <option value="">Select Plan</option>
-                                <option value="Bronze 5Mbps" data-price="1500">Bronze 5Mbps</option>
-                                <option value="Silver 10Mbps" data-price="2500">Silver 10Mbps</option>
-                                <option value="Gold 20Mbps" data-price="4500">Gold 20Mbps</option>
+                                <option value="">Select Router</option>
+                                {mockRouters.map(r => (
+                                    <option key={r.id} value={r.name}>{r.name}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 border-t border-pace-border pt-4">
+
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Service QoS Plan</label>
+                        <select 
+                            required
+                            value={formData.plan}
+                            onChange={(e) => {
+                                const pkg = mockPackages.find(p => p.name === e.target.value || p.limit === e.target.value);
+                                setFormData({...formData, plan: e.target.value, price: pkg?.price || 0});
+                            }}
+                            className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
+                        >
+                            <option value="">Select QoS Profile</option>
+                            {mockPackages.map(p => (
+                                <option key={p.id} value={p.limit}>{p.name} ({p.limit}) - KES {p.price}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 border-t border-pace-border pt-5">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-pace-purple uppercase tracking-widest pl-1">PPPoE User</label>
+                            <label className="text-[10px] font-bold text-pace-purple uppercase tracking-wider pl-1">PPPoE User</label>
                             <input 
                                 type="text" required
                                 value={formData.username}
                                 onChange={(e) => setFormData({...formData, username: e.target.value})}
-                                placeholder="secret-user"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
+                                placeholder="pppoe_user"
+                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-pace-purple uppercase tracking-widest pl-1">PPPoE Secret</label>
+                            <label className="text-[10px] font-bold text-pace-purple uppercase tracking-wider pl-1">PPPoE Secret</label>
                             <input 
                                 type="password" required
                                 value={formData.password}
                                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                                 placeholder="••••••••"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
+                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
                             />
                         </div>
                     </div>
@@ -298,15 +297,15 @@ function CustomersContent() {
                         <button 
                             type="button" 
                             onClick={() => setIsModalOpen(false)}
-                            className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-bold text-admin-dim uppercase tracking-widest hover:bg-pace-bg-subtle transition-all"
+                            className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all"
                         >
-                            Abort
+                            Cancel
                         </button>
                         <button 
                             type="submit"
-                            className="flex-3 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 shadow-xl shadow-pace-purple/20 transition-all active:scale-95"
+                            className="flex-[2] px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:opacity-90 shadow-sm transition-all active:scale-95"
                         >
-                            {currentCustomer ? 'Modify Identity' : 'Authorize Node'}
+                            {currentCustomer ? 'Save Changes' : 'Authorize Node'}
                         </button>
                     </div>
                 </form>
@@ -317,7 +316,7 @@ function CustomersContent() {
 
 export default function CustomersPage() {
     return (
-        <Suspense fallback={<div className="p-8 text-center text-admin-dim animate-pulse uppercase text-[10px] font-bold tracking-widest italic">Syncing Identity Pool...</div>}>
+        <Suspense fallback={<div className="p-8 text-center text-admin-dim animate-pulse text-sm font-medium">Mapping subscriber matrix...</div>}>
             <CustomersContent />
         </Suspense>
     )
