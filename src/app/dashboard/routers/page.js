@@ -1,18 +1,25 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Plus, Search, Router, Activity, RefreshCw, Power, Settings, ShieldCheck, Network, MoreVertical, List } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Plus, Search, Router as RouterIcon, Activity, RefreshCw, Power, Settings, ShieldCheck, Network, MoreVertical, List } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, CardSkeleton, TableRowSkeleton } from '@/components/Skeleton'
 import { mockRouters } from '@/services/mockData'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
+import { Cpu, HardDrive, CpuIcon } from 'lucide-react'
 
 function RoutersContent() {
+    const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
     const [routers, setRouters] = useState([])
     const [search, setSearch] = useState('')
+
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+    const [selectedRouter, setSelectedRouter] = useState(null)
+    const [isSystemInfoOpen, setIsSystemInfoOpen] = useState(false)
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -21,6 +28,11 @@ function RoutersContent() {
         }, 800)
         return () => clearTimeout(timer)
     }, [])
+
+    const handleOpenSystemInfo = (r) => {
+        setSelectedRouter(r)
+        setIsSystemInfoOpen(true)
+    }
 
     const handleReboot = (name) => {
         toast.promise(new Promise(res => setTimeout(res, 2000)), {
@@ -42,8 +54,12 @@ function RoutersContent() {
                 <Skeleton className="h-10 w-48" />
             </div>
             <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm">
-                <div className="p-10 text-center">
-                    <TableRowSkeleton cols={6} rows={8} />
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left whitespace-nowrap">
+                        <tbody className="divide-y divide-pace-border">
+                            <TableRowSkeleton cols={8} rows={8} />
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -57,9 +73,12 @@ function RoutersContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Routers</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Manage and monitor your network infrastructure</p>
                 </div>
-                <button className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95">
-                    <Plus size={16} />
-                    <span>Add Router</span>
+                <button 
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-pace-purple text-white rounded-xl hover:opacity-95 transition-all text-sm font-medium shadow-sm active:scale-[0.98]"
+                >
+                    <Plus size={18} />
+                    <span>Authorize Node</span>
                 </button>
             </div>
 
@@ -84,8 +103,10 @@ function RoutersContent() {
                         <thead>
                             <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
                                 <th className="px-6 py-3">Node Identity</th>
+                                <th className="px-6 py-3">Hardware Model</th>
                                 <th className="px-6 py-3 text-center">Status</th>
-                                <th className="px-6 py-3">Utilization</th>
+                                <th className="px-6 py-3">CPU Usage</th>
+                                <th className="px-6 py-3">RAM Usage</th>
                                 <th className="px-6 py-3 text-center">Sessions</th>
                                 <th className="px-6 py-3">Uptime</th>
                                 <th className="px-6 py-3 text-right">Operations</th>
@@ -100,41 +121,53 @@ function RoutersContent() {
                                 filteredRouters.map((r) => (
                                     <tr key={r.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
                                         <td className="px-6 py-2">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-8 h-8 rounded-lg bg-pace-bg-subtle border border-pace-border flex items-center justify-center text-admin-dim group-hover:text-pace-purple transition-colors">
-                                                    <Router size={14} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-semibold text-admin-value">{r.name}</p>
-                                                    <p className="text-[10px] text-admin-dim font-mono">{r.ip}</p>
-                                                </div>
+                                            <div 
+                                                className="cursor-pointer group/node"
+                                                onClick={() => router.push(`/dashboard/routers/details?id=${r.id}`)}
+                                            >
+                                                <p className="text-xs font-semibold text-admin-value group-hover/node:text-pace-purple transition-colors">{r.name}</p>
+                                                <p className="text-[10px] text-admin-dim font-mono">{r.ip}</p>
                                             </div>
                                         </td>
+                                        <td className="px-6 py-2">
+                                            <span className="text-[11px] font-bold text-admin-dim uppercase tracking-tight">{r.model}</span>
+                                        </td>
                                         <td className="px-6 py-2 text-center">
-                                            <Badge variant={r.status === 'online' ? 'success' : 'error'} className="text-[10px] font-medium border-none">
-                                                {r.status === 'online' ? 'Online' : 'Offline'}
+                                            <Badge variant={r.status === 'online' ? 'success' : 'error'} className="text-[8px] font-black border-none px-2 py-0.5 uppercase tracking-widest">
+                                                {r.status}
                                             </Badge>
                                         </td>
                                         <td className="px-6 py-2">
-                                            <div className="flex items-center gap-3 w-32">
-                                                <div className="flex-1 h-1 bg-pace-bg-subtle rounded-full overflow-hidden">
-                                                    <div className="h-full bg-pace-purple w-[24%]" />
+                                            <div className="flex items-center gap-3 w-28">
+                                                <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
+                                                    <div className={cn(
+                                                        "h-full transition-all duration-1000",
+                                                        r.cpu > 70 ? "bg-red-500" : r.cpu > 40 ? "bg-amber-500" : "bg-pace-purple"
+                                                    )} style={{ width: `${r.cpu}%` }} />
                                                 </div>
-                                                <span className="text-[10px] font-semibold text-admin-value tabular-nums">24%</span>
+                                                <span className="text-[10px] font-bold text-admin-value tabular-nums">{r.cpu}%</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-2 text-center text-xs font-semibold text-admin-value">{r.users}</td>
-                                        <td className="px-6 py-2 text-xs font-semibold text-pace-purple">{r.uptime}</td>
+                                        <td className="px-6 py-2">
+                                            <div className="flex items-center gap-3 w-28">
+                                                <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
+                                                    <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${r.ram}%` }} />
+                                                </div>
+                                                <span className="text-[10px] font-bold text-admin-value tabular-nums">{r.ram}%</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-2 text-center text-xs font-semibold text-admin-value tabular-nums">{r.users}</td>
+                                        <td className="px-6 py-2 text-xs font-semibold text-pace-purple tabular-nums">{r.uptime}</td>
                                         <td className="px-6 py-2 text-right">
-                                            <div className="flex justify-end gap-1">
+                                            <div className="flex justify-end gap-2">
                                                 <button 
                                                     onClick={() => handleReboot(r.name)}
-                                                    className="p-1 text-admin-dim hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
-                                                    title="Reboot"
+                                                    className="p-2 text-admin-dim hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all active:scale-90"
+                                                    title="Emergency Reboot"
                                                 >
                                                     <Power size={14} />
                                                 </button>
-                                                <button className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all">
+                                                <button className="p-2 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-xl transition-all active:scale-90">
                                                     <Settings size={14} />
                                                 </button>
                                             </div>
@@ -146,6 +179,108 @@ function RoutersContent() {
                     </table>
                 </div>
             </div>
+
+            {/* System Info Modal */}
+            <Modal
+                isOpen={isSystemInfoOpen}
+                onClose={() => setIsSystemInfoOpen(false)}
+                title="Node System Identity"
+                description={`Hardware specifications and performance metrics for ${selectedRouter?.name}`}
+                maxWidth="max-w-md"
+            >
+                {selectedRouter && (
+                    <div className="p-6 space-y-6 font-figtree">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-2">
+                                <div className="flex items-center gap-2 text-admin-dim">
+                                    <CpuIcon size={14} />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">CPU Load</span>
+                                </div>
+                                <p className="text-2xl font-bold text-admin-value tabular-nums">{selectedRouter.cpu}%</p>
+                                <div className="h-1 bg-pace-border rounded-full overflow-hidden">
+                                    <div className="h-full bg-pace-purple" style={{ width: `${selectedRouter.cpu}%` }} />
+                                </div>
+                            </div>
+                            <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-2">
+                                <div className="flex items-center gap-2 text-admin-dim">
+                                    <HardDrive size={14} />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">RAM Memory</span>
+                                </div>
+                                <p className="text-2xl font-bold text-admin-value tabular-nums">{selectedRouter.ram}%</p>
+                                <div className="h-1 bg-pace-border rounded-full overflow-hidden">
+                                    <div className="h-full bg-blue-500" style={{ width: `${selectedRouter.ram}%` }} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 bg-pace-bg-subtle border border-pace-border rounded-xl p-4">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">Model Identifier</span>
+                                <span className="font-bold text-admin-value">{selectedRouter.model}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs border-t border-pace-border pt-3">
+                                <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">Management IP</span>
+                                <span className="font-mono font-bold text-pace-purple">{selectedRouter.ip}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs border-t border-pace-border pt-3">
+                                <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">System Uptime</span>
+                                <span className="font-bold text-admin-value">{selectedRouter.uptime}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs border-t border-pace-border pt-3">
+                                <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">Active Sessions</span>
+                                <span className="font-bold text-admin-value">{selectedRouter.users} Subscribers</span>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => setIsSystemInfoOpen(false)}
+                            className="w-full bg-pace-purple text-white py-3.5 rounded-xl font-medium text-sm hover:opacity-95 transition-all active:scale-[0.98] shadow-sm flex items-center justify-center"
+                        >
+                            Dismiss Identity
+                        </button>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Add Router Modal */}
+            <Modal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                title="Authorize Network Node"
+                description="Establish a secure connection with a new MikroTik or Ubiquiti router."
+                maxWidth="max-w-md"
+            >
+                <div className="p-6 space-y-4 font-figtree">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Node Label</label>
+                        <input type="text" className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value" placeholder="e.g. West-Station-01" />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Management IP</label>
+                        <input type="text" className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-mono font-bold text-admin-value" placeholder="192.168.x.x" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">API Username</label>
+                            <input type="text" className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value" placeholder="admin" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">API Password</label>
+                            <input type="password" className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value" placeholder="••••••••" />
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => {
+                            toast.success("Node Initialized", { description: "Infrastructure handshake completed successfully." });
+                            setIsAddModalOpen(false);
+                        }}
+                        className="w-full bg-pace-purple text-white py-3.5 rounded-xl font-medium text-sm hover:opacity-95 transition-all active:scale-[0.98] mt-4 shadow-sm flex items-center justify-center gap-2"
+                    >
+                        <ShieldCheck size={18} />
+                        Authorize Connection
+                    </button>
+                </div>
+            </Modal>
         </div>
     )
 }

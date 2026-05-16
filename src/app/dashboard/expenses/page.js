@@ -8,6 +8,10 @@ import { mockDashboardData } from '@/services/mockData'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
+import { 
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+    Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend 
+} from 'recharts'
 
 function ExpensesContent() {
     const [isLoading, setIsLoading] = useState(true)
@@ -21,11 +25,27 @@ function ExpensesContent() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            setExpenses(mockDashboardData.expenses)
+            setExpenses(mockDashboardData.expenses || [])
             setIsLoading(false)
         }, 800)
         return () => clearTimeout(timer)
     }, [])
+
+    const chartData = [
+        { name: 'Jan', amount: 45000 },
+        { name: 'Feb', amount: 52000 },
+        { name: 'Mar', amount: 48000 },
+        { name: 'Apr', amount: 61000 },
+        { name: 'May', amount: 55000 },
+        { name: 'Jun', amount: 67000 },
+    ]
+
+    const pieData = [
+        { name: 'Bandwidth', value: 45, color: '#6366f1' },
+        { name: 'Utilities', value: 15, color: '#10b981' },
+        { name: 'Staff', value: 25, color: '#f59e0b' },
+        { name: 'Other', value: 15, color: '#64748b' },
+    ]
 
     const handleOpenModal = (e = null) => {
         if (e) {
@@ -70,24 +90,81 @@ function ExpensesContent() {
     )
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0 font-figtree uppercase">
+        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0 font-figtree">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-lg font-bold text-admin-value flex items-center gap-3 tracking-tight">
-                        <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
-                            <DollarSign size={20} className="text-pace-purple" />
-                        </div>
-                        Operational Ledger
-                    </h1>
-                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest italic">Infrastructure Costs & Overhead Tracking</p>
+                    <h1 className="text-xl font-semibold text-admin-value tracking-tight">Operational Ledger</h1>
+                    <p className="text-xs text-gray-500 mt-1">Infrastructure costs and overhead tracking</p>
                 </div>
                 <button 
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-bold tracking-widest shadow-xl shadow-pace-purple/20 active:scale-95"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-pace-purple text-white rounded-xl hover:opacity-95 transition-all text-sm font-medium shadow-sm active:scale-[0.98]"
                 >
                     <Plus size={14} /> Log Expense
                 </button>
+            </div>
+
+            {/* Analytics Dashboard */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-card-bg border border-pace-border rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-xs font-bold text-admin-dim uppercase tracking-wider">Expenditure Velocity</h3>
+                        <Activity size={14} className="text-pace-purple" />
+                    </div>
+                    <div className="h-[240px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <XAxis 
+                                    dataKey="name" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }} 
+                                    dy={10}
+                                />
+                                <YAxis 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }} 
+                                />
+                                <Tooltip 
+                                    cursor={{ fill: 'transparent' }}
+                                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                />
+                                <Bar dataKey="amount" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={32} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className="bg-card-bg border border-pace-border rounded-2xl p-6 shadow-sm flex flex-col">
+                    <h3 className="text-xs font-bold text-admin-dim uppercase tracking-wider mb-8">Category Allocation</h3>
+                    <div className="flex-1 h-[240px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={pieData}
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {pieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend 
+                                    verticalAlign="bottom" 
+                                    align="center"
+                                    iconType="circle"
+                                    wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
             </div>
 
             {/* Controls */}
@@ -132,16 +209,10 @@ function ExpensesContent() {
                                             <span className="text-[13px] font-bold text-admin-value">{ex.title}</span>
                                         </td>
                                         <td className="px-6 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <Tag size={12} className="text-pace-purple" />
-                                                <span className="text-[10px] font-bold text-admin-dim">{ex.category}</span>
-                                            </div>
+                                            <span className="text-[10px] font-bold text-admin-dim">{ex.category}</span>
                                         </td>
                                         <td className="px-6 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar size={12} className="text-admin-dim" />
-                                                <span className="text-[10px] font-bold text-admin-value">{ex.date}</span>
-                                            </div>
+                                            <span className="text-[10px] font-bold text-admin-value">{ex.date}</span>
                                         </td>
                                         <td className="px-6 py-3 font-mono">
                                             <span className="text-[12px] font-black text-admin-value tabular-nums">KES {Number(ex.amount).toLocaleString()}</span>

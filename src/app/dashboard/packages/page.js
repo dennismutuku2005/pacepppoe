@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Plus, Package, Edit3, Trash2, Zap, Search, Activity, Sliders, DollarSign, Shield, Network } from 'lucide-react'
+import { Plus, Package, Edit3, Trash2, Zap, Search, Activity, Sliders, DollarSign, Shield, Network, Layers } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, TableRowSkeleton } from '@/components/Skeleton'
 import { mockPackages } from '@/services/mockData'
@@ -87,7 +87,7 @@ function PackagesContent() {
                 </div>
                 <button 
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95"
                 >
                     <Plus size={16} />
                     <span>Create Plan</span>
@@ -133,12 +133,7 @@ function PackagesContent() {
                                 filteredPackages.map((p) => (
                                     <tr key={p.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
                                         <td className="px-6 py-2">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-pace-purple/5 flex items-center justify-center text-pace-purple border border-pace-purple/10">
-                                                    <Zap size={14} />
-                                                </div>
-                                                <span className="text-xs font-semibold text-admin-value">{p.name}</span>
-                                            </div>
+                                            <span className="text-xs font-semibold text-admin-value">{p.name}</span>
                                         </td>
                                         <td className="px-6 py-2 text-center">
                                             <Badge variant="success" className="text-[10px] font-medium border-none">

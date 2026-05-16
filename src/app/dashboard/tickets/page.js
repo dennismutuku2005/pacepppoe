@@ -27,6 +27,15 @@ function TicketsContent() {
         return () => clearTimeout(timer)
     }, [])
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const customer = params.get('customer')
+        if (customer) {
+            handleOpenModal()
+            setFormData(prev => ({ ...prev, customer }))
+        }
+    }, [])
+
     const handleOpenModal = (t = null) => {
         if (t) {
             setCurrentTicket(t)
@@ -70,21 +79,16 @@ function TicketsContent() {
     )
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0 font-figtree uppercase">
+        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0 font-figtree">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-lg font-bold text-admin-value flex items-center gap-3 tracking-tight">
-                        <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
-                            <LifeBuoy size={20} className="text-pace-purple" />
-                        </div>
-                        Support Operations Hub
-                    </h1>
-                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest italic">Incident Tracking & Resolution Pipeline</p>
+                    <h1 className="text-xl font-semibold text-admin-value tracking-tight">Support Tickets</h1>
+                    <p className="text-xs text-gray-500 mt-1">Incident tracking and resolution pipeline</p>
                 </div>
                 <button 
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-bold tracking-widest shadow-xl shadow-pace-purple/20 active:scale-95"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-xl shadow-pace-purple/20 active:scale-95"
                 >
                     <MessageSquare size={14} /> Initialize Ticket
                 </button>
@@ -132,10 +136,7 @@ function TicketsContent() {
                                             <span className="text-[13px] font-bold text-admin-value">{t.subject}</span>
                                         </td>
                                         <td className="px-6 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <User size={12} className="text-pace-purple" />
-                                                <span className="text-[11px] font-bold text-admin-dim">{t.customer}</span>
-                                            </div>
+                                            <span className="text-[11px] font-bold text-admin-dim">{t.customer}</span>
                                         </td>
                                         <td className="px-6 py-3">
                                             <Badge className={cn(

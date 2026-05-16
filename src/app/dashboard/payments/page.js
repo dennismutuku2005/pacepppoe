@@ -109,15 +109,7 @@ function PaymentsContent() {
                             ) : filtered.map((t) => (
                                 <tr key={t.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
                                     <td className="px-6 py-2">
-                                        <div className="flex items-center gap-3">
-                                            <div className={cn(
-                                                "w-7 h-7 rounded-lg flex items-center justify-center",
-                                                t.amount > 0 ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-500"
-                                            )}>
-                                                {t.amount > 0 ? <ArrowUpRight size={13} /> : <ArrowDownLeft size={13} />}
-                                            </div>
-                                            <span className="font-semibold text-admin-value text-xs tabular-nums">{t.date}</span>
-                                        </div>
+                                        <span className="font-semibold text-admin-value text-xs tabular-nums">{t.date}</span>
                                     </td>
                                     <td className="px-6 py-2">
                                         <div className="flex flex-col">

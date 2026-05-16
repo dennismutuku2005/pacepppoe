@@ -79,7 +79,7 @@ export default function LoginPage() {
                 >
                     <div className="mb-10">
                         <div className="mb-8">
-                            <Image src="/logoc.png" alt="Pace" width={110} height={36} className="h-8 w-auto object-contain" priority />
+                            <Image src="/logoc.png" alt="Pace" width={140} height={46} className="h-10 w-auto object-contain" priority />
                         </div>
                         <h1 className="text-2xl font-semibold text-admin-value tracking-tight">PPPoE Portal</h1>
                         <p className="text-xs font-medium text-admin-dim mt-1">Administrative Node Management</p>
@@ -149,7 +149,7 @@ export default function LoginPage() {
                                 Pace Networks © 2026
                             </p>
                             <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">
-                                Build {APP_VERSION}
+                                Version {APP_VERSION}
                             </p>
                         </div>
                     </div>
@@ -157,15 +157,15 @@ export default function LoginPage() {
             </div>
 
             {/* Visual Side */}
-            <div className="hidden lg:block flex-1 relative bg-pace-bg-subtle">
+            <div className="hidden lg:block flex-1 relative bg-[#501DAA]">
                 <Image 
                     src="/sidesvg.svg" 
                     alt="Side" 
                     fill
-                    className="object-cover opacity-80"
+                    className="object-contain opacity-90 p-12"
                     priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-pace-purple/5 to-transparent z-0" />
+                <div className="absolute inset-0 bg-black/5 pointer-events-none" />
             </div>
         </div>
     )

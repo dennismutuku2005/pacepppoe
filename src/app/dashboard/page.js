@@ -80,8 +80,8 @@ function DashboardContent() {
 
     const metrics = widgets ? [
         { label: "Active Subscribers", value: widgets.active_users.value.toLocaleString(), note: 'Live Sessions', icon: Users, color: 'text-pace-purple', bg: 'bg-pace-purple/10', href: '/dashboard/customers' },
+        { label: "Monthly Users", value: (widgets.monthly_users?.value || 0).toLocaleString(), note: 'Total unique users', icon: Network, color: 'text-blue-500', bg: 'bg-blue-500/10' },
         { label: "Today's Revenue", value: `KSH ${widgets.todays_earnings.value.toLocaleString()}`, note: 'M-Pesa Ledger', icon: Wallet, color: 'text-green-500', bg: 'bg-green-500/10', isRevenue: true },
-        { label: "Infrastructure", value: `${routers.filter(r => r.status === 'Online').length}/${routers.length}`, note: 'Nodes Online', icon: Network, color: 'text-blue-500', bg: 'bg-blue-500/10', href: '/dashboard/routers' },
         { label: "SMS Balance", value: `KES ${widgets.sms_balance.value.toLocaleString()}`, note: 'Credit Nexus', icon: MessageSquare, color: 'text-orange-500', bg: 'bg-orange-500/10', href: '/dashboard/sms' },
     ] : []
 
@@ -93,22 +93,27 @@ function DashboardContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Dashboard</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Infrastructure orchestration and performance summary</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <GlobalFilters onFilterChange={(f) => setFilters(prev => ({ ...prev, ...f }))} />
-                    <button
-                        onClick={fetchData}
-                        disabled={isRefreshing}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-sm font-medium disabled:opacity-50"
-                    >
-                        <RefreshCw size={16} className={cn(isRefreshing && "animate-spin")} />
-                    </button>
-                    <Link
-                        href="/dashboard/customers"
-                        className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-sm font-medium shadow-sm active:scale-95"
-                    >
-                        <Plus size={16} />
-                        <span>Provision Subscriber</span>
-                    </Link>
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                    <div className="w-full sm:w-auto">
+                        <GlobalFilters onFilterChange={(f) => setFilters(prev => ({ ...prev, ...f }))} />
+                    </div>
+                    <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
+                        <button
+                            onClick={fetchData}
+                            disabled={isRefreshing}
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-sm font-medium disabled:opacity-50"
+                        >
+                            <RefreshCw size={16} className={cn(isRefreshing && "animate-spin")} />
+                            <span className="sm:hidden">Refresh Data</span>
+                        </button>
+                        <Link
+                            href="/dashboard/customers"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-sm font-medium shadow-sm active:scale-95"
+                        >
+                            <Plus size={16} />
+                            <span>Provision Subscriber</span>
+                        </Link>
+                    </div>
                 </div>
             </div>
 
@@ -310,11 +315,11 @@ function DashboardContent() {
                                 <p className="text-[10px] text-gray-400 font-medium uppercase mt-0.5 tracking-wider">Active Tickets</p>
                             </div>
                             <Badge variant="info" className="px-2 py-0.5 text-[8px] font-bold">
-                                {mockDashboardData.tickets.length} Pending
+                                {mockDashboardData.tickets.filter(t => t.status !== 'Resolved').length} Active
                             </Badge>
                         </div>
                         <div className="space-y-3">
-                            {mockDashboardData.tickets.map((ticket) => (
+                            {mockDashboardData.tickets.filter(t => t.status !== 'Resolved').map((ticket) => (
                                 <div key={ticket.id} className="p-3 border border-pace-border rounded-xl hover:bg-pace-bg-subtle transition-colors">
                                     <p className="text-xs font-semibold text-admin-value">{ticket.subject}</p>
                                     <div className="flex justify-between items-center mt-2">

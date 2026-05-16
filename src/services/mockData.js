@@ -37,7 +37,7 @@ export const mockDashboardData = {
     ],
     tickets: [
         { id: 1, customer: "John Doe", subject: "Slow connection", priority: "High", status: "Open", date: "2026-05-06 10:00" },
-        { id: 2, customer: "Jane Smith", subject: "Router configuration", priority: "Medium", status: "In Progress", date: "2026-05-06 11:30" },
+        { id: 2, customer: "Jane Smith", subject: "Router configuration", priority: "Medium", status: "Resolved", date: "2026-05-06 11:30" },
         { id: 3, customer: "Alice Wanjiku", subject: "Payment not reflecting", priority: "High", status: "Resolved", date: "2026-05-05 09:15" },
     ],
     packagePopularity: [
@@ -65,15 +65,22 @@ export const mockDashboardData = {
         { id: 1, name: "Advanta", balance: "KES 5,400", status: "Connected", api_key: "ADV-XXXX-XXXX" },
         { id: 2, name: "AfricasTalking", balance: "KES 1,200", status: "Connected", api_key: "AT-XXXX-XXXX" },
         { id: 3, name: "Sema", balance: "KES 0", status: "Disconnected", api_key: "SEMA-XXXX-XXXX" },
+    ],
+    hotspotLogs: [
+        { id: 1, entry_id: "TX-9921", stk_sent: "Yes", callback: "Yes", connected: "Yes", mac: "DE:AD:BE:EF:01:23", timestamp: "2026-05-06 14:20:11", reason: "-" },
+        { id: 2, entry_id: "TX-9922", stk_sent: "Yes", callback: "No", connected: "No", mac: "AA:BB:CC:DD:EE:FF", timestamp: "2026-05-06 14:22:45", reason: "Callback Timeout (Last 3 checked)" },
+        { id: 3, entry_id: "TX-9923", stk_sent: "Yes", callback: "Yes", connected: "No", mac: "11:22:33:44:55:66", timestamp: "2026-05-06 14:25:02", reason: "MikroTik Auth Refused" },
+        { id: 4, entry_id: "TX-9924", stk_sent: "No", callback: "No", connected: "No", mac: "77:88:99:AA:BB:CC", timestamp: "2026-05-06 14:28:15", reason: "STK Push Denied" },
+        { id: 5, entry_id: "TX-9925", stk_sent: "Yes", callback: "Yes", connected: "Yes", mac: "00:11:22:33:44:55", timestamp: "2026-05-06 14:30:59", reason: "-" },
     ]
 };
 
 export const mockCustomers = [
-    { id: 1, name: "John Doe", username: "john_pppoe", phone: "0711223344", plan: "5M/5M", price: 1500, nextPayment: "2026-06-06", status: "enabled", secret: "p@ss123", router: "Main Tower A" },
-    { id: 2, name: "Jane Smith", username: "jane_wifi", phone: "0722334455", plan: "10M/10M", price: 2500, nextPayment: "2026-06-02", status: "enabled", secret: "secret99", router: "Main Tower A" },
-    { id: 3, name: "Robert Ngugi", username: "rob_ngugi", phone: "0733445566", plan: "20M/20M", price: 3500, nextPayment: "2026-04-10", status: "disabled", secret: "rob66", router: "Backup Site B" },
-    { id: 4, name: "Alice Wanjiku", username: "ali_wanj", phone: "0744556677", plan: "5M/5M", price: 1500, nextPayment: "2026-06-15", status: "enabled", secret: "ali77", router: "Corporate Link" },
-    { id: 5, name: "Mercy Mwangi", username: "mercy_m", phone: "0755667788", plan: "10M/10M", price: 2500, nextPayment: "2026-06-12", status: "enabled", secret: "mmm88", router: "Main Tower A" },
+    { id: 1, name: "John Doe", username: "john_pppoe", phone: "0711223344", accountNumber: "0711223344", plan: "5M/5M", price: 1500, nextPayment: "2026-06-06", status: "enabled", secret: "p@ss123", router: "Main Tower A" },
+    { id: 2, name: "Jane Smith", username: "jane_wifi", phone: "0722334455", accountNumber: "4455", plan: "10M/10M", price: 2500, nextPayment: "2026-06-02", status: "enabled", secret: "secret99", router: "Main Tower A" },
+    { id: 3, name: "Robert Ngugi", username: "rob_ngugi", phone: "0733445566", accountNumber: "0733445566", plan: "20M/20M", price: 3500, nextPayment: "2026-04-10", status: "disabled", secret: "rob66", router: "Backup Site B" },
+    { id: 4, name: "Alice Wanjiku", username: "ali_wanj", phone: "0744556677", accountNumber: "6677", plan: "5M/5M", price: 1500, nextPayment: "2026-06-15", status: "enabled", secret: "ali77", router: "Corporate Link" },
+    { id: 5, name: "Mercy Mwangi", username: "mercy_m", phone: "0755667788", accountNumber: "0755667788", plan: "10M/10M", price: 2500, nextPayment: "2026-06-12", status: "enabled", secret: "mmm88", router: "Main Tower A" },
 ];
 
 export const mockPackages = [
@@ -84,8 +91,8 @@ export const mockPackages = [
 ];
 
 export const mockRouters = [
-    { id: 1, name: "Main Tower A", ip: "192.168.10.1", status: "online", users: 45, uptime: "15d 4h", model: "MikroTik RB5009" },
-    { id: 2, name: "Backup Site B", ip: "192.168.20.1", status: "online", users: 22, uptime: "42d 12h", model: "MikroTik CCR2004" },
-    { id: 3, name: "Residential Node 1", ip: "10.0.5.1", status: "offline", users: 0, uptime: "0d 0h", model: "MikroTik RB4011" },
-    { id: 4, name: "Corporate Link", ip: "172.16.0.10", status: "online", users: 18, uptime: "128d 1h", model: "MikroTik CCR2116" },
+    { id: 1, name: "Main Tower A", ip: "192.168.10.1", status: "online", users: 45, uptime: "15d 4h", model: "MikroTik RB5009", cpu: 12, ram: 45 },
+    { id: 2, name: "Backup Site B", ip: "192.168.20.1", status: "online", users: 22, uptime: "42d 12h", model: "MikroTik CCR2004", cpu: 28, ram: 62 },
+    { id: 3, name: "Residential Node 1", ip: "10.0.5.1", status: "offline", users: 0, uptime: "0d 0h", model: "MikroTik RB4011", cpu: 0, ram: 0 },
+    { id: 4, name: "Corporate Link", ip: "172.16.0.10", status: "online", users: 18, uptime: "128d 1h", model: "MikroTik CCR2116", cpu: 8, ram: 34 },
 ];

@@ -1,13 +1,19 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Plus, Search, Filter, UserPlus, Edit2, Trash2, Smartphone, Network, ShieldCheck, Activity, X, Database } from 'lucide-react'
+import { Plus, Search, Filter, UserPlus, Edit2, Trash2, Smartphone, Network, ShieldCheck, Activity, X, Database, MapPin, LifeBuoy } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, TableRowSkeleton } from '@/components/Skeleton'
 import { mockCustomers, mockRouters, mockPackages } from '@/services/mockData'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
+import dynamic from 'next/dynamic'
+
+const MapView = dynamic(() => import('@/components/MapView'), { 
+    ssr: false,
+    loading: () => <div className="h-[200px] w-full bg-pace-bg-subtle animate-pulse rounded-xl border border-pace-border flex items-center justify-center text-[10px] font-bold uppercase text-admin-dim tracking-widest">Loading Mapping...</div>
+})
 
 function CustomersContent() {
     const [isLoading, setIsLoading] = useState(true)
@@ -15,10 +21,11 @@ function CustomersContent() {
     const [search, setSearch] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [currentCustomer, setCurrentCustomer] = useState(null)
+    const [accountType, setAccountType] = useState('phone')
     const [formData, setFormData] = useState({ 
         name: '', phone: '', plan: '', price: '', 
         username: '', password: '', status: 'enabled',
-        router: '' 
+        router: '', accountNumber: ''
     })
 
     useEffect(() => {
@@ -33,13 +40,15 @@ function CustomersContent() {
         if (c) {
             setCurrentCustomer(c)
             setFormData({ ...c })
+            setAccountType(c.accountNumber === c.phone ? 'phone' : 'generate')
         } else {
             setCurrentCustomer(null)
             setFormData({ 
                 name: '', phone: '', plan: '', price: '', 
                 username: '', password: '', status: 'enabled',
-                router: '' 
+                router: '', accountNumber: ''
             })
+            setAccountType('phone')
         }
         setIsModalOpen(true)
     }
@@ -94,12 +103,12 @@ function CustomersContent() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-xl font-medium text-admin-value tracking-tight">Subscribers Matrix</h1>
+                    <h1 className="text-xl font-medium text-admin-value tracking-tight">Subscriber List</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">PPPoE node authentication and session control</p>
                 </div>
                 <button 
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95"
                 >
                     <UserPlus size={16} />
                     <span>Provision Node</span>
@@ -126,7 +135,7 @@ function CustomersContent() {
                     <table className="w-full text-left whitespace-nowrap">
                         <thead>
                             <tr className="bg-pace-bg-subtle/50 border-b border-pace-border">
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Identity</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Subscriber / Account</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">PPPoE Credentials</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">NAS / Router</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Service Tier</th>
@@ -143,13 +152,13 @@ function CustomersContent() {
                                 </tr>
                             ) : (
                                 filteredCustomers.map((c) => (
-                                    <tr key={c.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
-                                        <td className="px-6 py-2">
-                                            <div className="flex flex-col">
-                                                <span className="font-semibold text-admin-value text-xs group-hover:text-pace-purple transition-colors">{c.name}</span>
-                                                <span className="text-[10px] text-admin-dim font-medium">{c.phone}</span>
-                                            </div>
-                                        </td>
+                                <tr key={c.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
+                                    <td className="px-6 py-2">
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold text-admin-value text-xs group-hover:text-pace-purple transition-colors">{c.name}</span>
+                                            <span className="text-[10px] text-admin-dim font-medium uppercase tracking-tighter">Acc: {c.accountNumber}</span>
+                                        </div>
+                                    </td>
                                         <td className="px-6 py-2">
                                             <div className="flex flex-col">
                                                 <span className="text-[11px] font-semibold text-pace-purple font-mono">{c.username}</span>
@@ -157,10 +166,7 @@ function CustomersContent() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-2">
-                                            <div className="flex items-center gap-2">
-                                                <Network size={13} className="text-admin-dim" />
-                                                <span className="text-xs font-semibold text-admin-value">{c.router || 'Unassigned'}</span>
-                                            </div>
+                                            <span className="text-xs font-semibold text-admin-value">{c.router || 'Unassigned'}</span>
                                         </td>
                                         <td className="px-6 py-2">
                                             <div className="flex flex-col">
@@ -171,14 +177,16 @@ function CustomersContent() {
                                         <td className="px-6 py-2 text-center">
                                             <button 
                                                 onClick={() => handleToggleStatus(c.id, c.status)}
-                                                className={cn(
-                                                    "px-2 py-0.5 rounded-full text-[10px] font-medium transition-all min-w-[64px]",
+                                                className="transition-transform active:scale-95"
+                                            >
+                                                <Badge className={cn(
+                                                    "border-none px-2 py-0.5 text-[8px] font-black tracking-widest uppercase min-w-[58px] block text-center transition-all",
                                                     c.status === 'enabled' 
                                                         ? "bg-green-500/10 text-green-600 hover:bg-green-500/20" 
                                                         : "bg-red-500/10 text-red-600 hover:bg-red-500/20"
-                                                )}
-                                            >
-                                                {c.status === 'enabled' ? 'Enabled' : 'Disabled'}
+                                                )}>
+                                                    {c.status}
+                                                </Badge>
                                             </button>
                                         </td>
                                         <td className="px-6 py-2 text-right">
@@ -186,8 +194,28 @@ function CustomersContent() {
                                                 <button 
                                                     onClick={() => handleOpenModal(c)}
                                                     className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
+                                                    title="View Location & Edit"
+                                                >
+                                                    <MapPin size={13} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleOpenModal(c)}
+                                                    className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
                                                 >
                                                     <Edit2 size={13} />
+                                                </button>
+                                                <button 
+                                                    className="p-1 text-admin-dim hover:text-green-500 hover:bg-green-500/5 rounded-lg transition-all"
+                                                    title="Quick SMS"
+                                                >
+                                                    <Smartphone size={13} />
+                                                </button>
+                                                <button 
+                                                    className="p-1 text-admin-dim hover:text-orange-500 hover:bg-orange-500/5 rounded-lg transition-all"
+                                                    title="Log Incident"
+                                                    onClick={() => router.push(`/dashboard/tickets?customer=${c.name}`)}
+                                                >
+                                                    <LifeBuoy size={13} />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDelete(c.id, c.name)}
@@ -214,6 +242,12 @@ function CustomersContent() {
                 maxWidth="max-w-md"
             >
                 <form onSubmit={handleSave} className="p-6 space-y-5 font-figtree">
+                    {currentCustomer && (
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Last Reported Location</label>
+                            <MapView lat={currentCustomer.lat || -1.286389} lng={currentCustomer.lng || 36.817223} />
+                        </div>
+                    )}
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Subscriber Identity</label>
                         <input 
@@ -250,6 +284,42 @@ function CustomersContent() {
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-2">
+                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Billing Account Number</label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setAccountType('phone')
+                                    setFormData({...formData, accountNumber: formData.phone})
+                                }}
+                                className={cn(
+                                    "py-2 px-3 rounded-xl border text-[11px] font-bold transition-all",
+                                    accountType === 'phone' ? "bg-pace-purple text-white border-pace-purple" : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:bg-pace-purple/5"
+                                )}
+                            >
+                                Use Phone Number
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setAccountType('generate')
+                                    const rand = Math.floor(1000 + Math.random() * 9000).toString()
+                                    setFormData({...formData, accountNumber: rand})
+                                }}
+                                className={cn(
+                                    "py-2 px-3 rounded-xl border text-[11px] font-bold transition-all",
+                                    accountType === 'generate' ? "bg-pace-purple text-white border-pace-purple" : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:bg-pace-purple/5"
+                                )}
+                            >
+                                Generate 4-Digit
+                            </button>
+                        </div>
+                        {formData.accountNumber && (
+                            <p className="text-[10px] font-bold text-pace-purple mt-1 pl-1">Assigned: {formData.accountNumber}</p>
+                        )}
                     </div>
 
                     <div className="space-y-1.5">

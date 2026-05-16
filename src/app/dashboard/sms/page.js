@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { Smartphone, Search, Filter, Send, Settings, CheckCircle2, XCircle, Clock, Database, ShieldCheck, Activity } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { TableRowSkeleton } from '@/components/Skeleton'
+import { Skeleton, TableRowSkeleton } from '@/components/Skeleton'
 import { mockDashboardData } from '@/services/mockData'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
@@ -17,6 +17,9 @@ function SMSContent() {
     const [isConfigOpen, setIsConfigOpen] = useState(false)
     const [currentProvider, setCurrentProvider] = useState(null)
     const [formData, setFormData] = useState({ name: '', api_key: '', balance: '', status: 'Connected' })
+    const [isSendModalOpen, setIsSendModalOpen] = useState(false)
+    const [newMessage, setNewMessage] = useState({ recipient: '', content: '' })
+    const [isSending, setIsSending] = useState(false)
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -42,6 +45,19 @@ function SMSContent() {
         setIsConfigOpen(false)
     }
 
+    const handleSendMessage = (e) => {
+        e.preventDefault()
+        setIsSending(true)
+        setTimeout(() => {
+            toast.success('Message Dispatched', {
+                description: `SMS successfully sent to ${newMessage.recipient}`
+            })
+            setIsSending(false)
+            setIsSendModalOpen(false)
+            setNewMessage({ recipient: '', content: '' })
+        }, 1500)
+    }
+
     const filteredLogs = smsLogs.filter(log => 
         log.recipient?.includes(search) || 
         log.message?.toLowerCase().includes(search.toLowerCase())
@@ -55,6 +71,12 @@ function SMSContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">SMS Center</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Manage automated notifications and carrier gateways</p>
                 </div>
+                <button 
+                    onClick={() => setIsSendModalOpen(true)}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95"
+                >
+                    <Send size={14} /> Dispatch Message
+                </button>
             </div>
 
             {/* Provider Grid */}
@@ -120,7 +142,7 @@ function SMSContent() {
                                     <TableRowSkeleton cols={5} rows={10} />
                                 ) : filteredLogs.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="py-24 text-center text-admin-dim text-xs font-medium italic">No dispatch records found</td>
+                                        <td colSpan="5" className="py-24 text-center text-admin-dim text-xs font-medium">No dispatch records found</td>
                                     </tr>
                                 ) : (
                                     filteredLogs.map((log) => (
@@ -132,10 +154,7 @@ function SMSContent() {
                                                 <span className="text-[11px] font-medium text-admin-dim">"{log.message}"</span>
                                             </td>
                                             <td className="px-6 py-2">
-                                                <div className="flex items-center gap-2">
-                                                    <Clock size={12} className="text-admin-dim" />
-                                                    <span className="text-[11px] font-medium text-admin-value tabular-nums">{log.date}</span>
-                                                </div>
+                                                <span className="text-[11px] font-medium text-admin-value tabular-nums">{log.date}</span>
                                             </td>
                                             <td className="px-6 py-2">
                                                 <span className="text-[10px] font-bold text-pace-purple uppercase tracking-wider">{log.provider}</span>
@@ -187,6 +206,47 @@ function SMSContent() {
                     <div className="pt-4 flex gap-3">
                         <button type="button" onClick={() => setIsConfigOpen(false)} className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all">Cancel</button>
                         <button type="submit" className="flex-[2] px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:opacity-90 shadow-sm transition-all active:scale-95">Update Gateway</button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Send Message Modal */}
+            <Modal
+                isOpen={isSendModalOpen}
+                onClose={() => setIsSendModalOpen(false)}
+                title="Dispatch Manual SMS"
+                description="Broadcast a direct message to a subscriber. Usage will be billed to the default gateway."
+                maxWidth="max-w-md"
+            >
+                <form onSubmit={handleSendMessage} className="p-6 space-y-5">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Recipient Identity</label>
+                        <input 
+                            type="text" required
+                            value={newMessage.recipient}
+                            onChange={(e) => setNewMessage({...newMessage, recipient: e.target.value})}
+                            placeholder="Mobile Number (e.g. 254712345678)"
+                            className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-admin-value outline-none focus:border-pace-purple transition-all"
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between px-1">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider">Communication Payload</label>
+                            <span className="text-[9px] font-mono text-admin-dim">{newMessage.content.length}/160</span>
+                        </div>
+                        <textarea 
+                            required rows={4}
+                            value={newMessage.content}
+                            onChange={(e) => setNewMessage({...newMessage, content: e.target.value})}
+                            placeholder="Type your message here..."
+                            className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-medium text-admin-value outline-none focus:border-pace-purple transition-all resize-none"
+                        />
+                    </div>
+                    <div className="pt-4 flex gap-3">
+                        <button type="button" onClick={() => setIsSendModalOpen(false)} className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-bold text-admin-dim tracking-widest hover:bg-pace-bg-subtle transition-all uppercase">Abort</button>
+                        <button type="submit" disabled={isSending} className="flex-[2] px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-bold tracking-widest hover:opacity-90 shadow-xl shadow-pace-purple/20 transition-all active:scale-95 uppercase flex items-center justify-center gap-2">
+                            {isSending ? 'Transmitting...' : <><Send size={14} /> Commit Dispatch</>}
+                        </button>
                     </div>
                 </form>
             </Modal>

@@ -40,25 +40,20 @@ function PaymentConfigContent() {
         }, 1500)
     }
 
-    if (isLoading) return <div className="p-8 text-center text-admin-dim animate-pulse uppercase text-[10px] font-bold tracking-widest italic">Decrypting Financial Core...</div>
+    if (isLoading) return <div className="p-8 text-center text-admin-dim animate-pulse uppercase text-[10px] font-bold tracking-widest">Decrypting Financial Core...</div>
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1200px] mx-auto pb-10 px-4 sm:px-0 font-figtree uppercase">
+        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1200px] mx-auto pb-10 px-4 sm:px-0 font-figtree">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-lg font-bold text-admin-value flex items-center gap-3 tracking-tight">
-                        <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center">
-                            <CreditCard size={20} className="text-pace-purple" />
-                        </div>
-                        Payment Gateway Core
-                    </h1>
-                    <p className="text-[10px] font-bold text-admin-dim mt-1 tracking-widest italic">M-Pesa Daraja API & Automation Topology</p>
+                    <h1 className="text-xl font-semibold text-admin-value tracking-tight">Payment Gateway Core</h1>
+                    <p className="text-xs text-gray-500 mt-1">M-Pesa Daraja API and automation topology</p>
                 </div>
                 <button 
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-bold tracking-widest shadow-xl shadow-pace-purple/20 active:scale-95 disabled:opacity-50"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-xl shadow-pace-purple/20 active:scale-95 disabled:opacity-50"
                 >
                     {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
                     {isSaving ? 'Syncing...' : 'Commit Changes'}
@@ -180,7 +175,7 @@ function PaymentConfigContent() {
                             />
                         </div>
                         <div className="p-3 bg-pace-purple/5 border border-pace-purple/10 rounded-xl">
-                            <p className="text-[9px] text-pace-purple font-bold italic leading-relaxed uppercase">
+                            <p className="text-[9px] text-pace-purple font-bold leading-relaxed">
                                 This endpoint must be publicly accessible and protected by TLS/SSL to receive M-Pesa push notifications.
                             </p>
                         </div>
@@ -220,7 +215,7 @@ function PaymentConfigContent() {
 
 export default function PaymentConfigPage() {
     return (
-        <Suspense fallback={<div className="p-8 text-center text-admin-dim animate-pulse uppercase text-[10px] font-bold tracking-widest italic">Syncing Gateway Topology...</div>}>
+        <Suspense fallback={<div className="p-8 text-center text-admin-dim animate-pulse uppercase text-[10px] font-bold tracking-widest">Syncing Gateway Topology...</div>}>
             <PaymentConfigContent />
         </Suspense>
     )

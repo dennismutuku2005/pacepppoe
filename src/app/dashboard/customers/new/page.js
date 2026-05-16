@@ -3,6 +3,12 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import dynamic from 'next/dynamic'
+
+const MapPicker = dynamic(() => import('@/components/MapPicker'), { 
+    ssr: false,
+    loading: () => <div className="h-[300px] w-full bg-pace-bg-subtle animate-pulse rounded-xl border border-pace-border flex items-center justify-center text-[10px] font-bold uppercase text-admin-dim tracking-widest">Loading Satellite Mapping...</div>
+})
 import {
     User, Network, CreditCard, ChevronRight,
     ChevronLeft, CheckCircle2, Building2,
@@ -38,7 +44,11 @@ export default function NewClientPage() {
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
-        })()
+        })(),
+
+        // Location
+        latitude: '',
+        longitude: ''
     })
 
     const handleNext = () => setStep(s => s + 1)
@@ -153,9 +163,29 @@ export default function NewClientPage() {
                                         <input
                                             value={formData.phone}
                                             onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                            className="w-full px-4 py-3 rounded border border-pace-border focus:border-pace-purple outline-none font-bold text-admin-value"
+                                            className="w-full px-4 py-3 rounded-xl border border-pace-border focus:border-pace-purple outline-none font-bold text-admin-value bg-card-bg"
                                             placeholder="+254..."
                                         />
+                                    </div>
+
+                                    {/* Geolocation Integration */}
+                                    <div className="space-y-3 col-span-2 pt-2">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-bold text-admin-label uppercase tracking-widest flex items-center gap-2">
+                                                <MapPin size={14} className="text-pace-purple" />
+                                                Installation Site Geolocation
+                                            </label>
+                                            {formData.latitude && (
+                                                <span className="text-[9px] font-mono text-green-600 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20 uppercase font-black">
+                                                    Coordinates Locked
+                                                </span>
+                                            )}
+                                        </div>
+                                        <MapPicker 
+                                            value={formData.latitude ? { lat: formData.latitude, lng: formData.longitude } : null}
+                                            onChange={(pos) => setFormData({ ...formData, latitude: pos.lat, longitude: pos.lng })}
+                                        />
+                                        <p className="text-[9px] text-admin-dim font-bold uppercase tracking-widest italic">Note: Pin the exact building location for maintenance routing.</p>
                                     </div>
                                 </div>
                             </motion.div>

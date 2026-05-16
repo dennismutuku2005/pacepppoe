@@ -9,7 +9,7 @@ import {
     Activity, FileText, Network, Receipt,
     UserRoundCheck, MessageSquare, Globe, ChevronDown,
     LogOut, LayoutDashboard, Clock, Smartphone, Bell,
-    Wallet, ShieldCheck, LifeBuoy
+    Wallet, ShieldCheck, LifeBuoy, Layers
 } from 'lucide-react'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
@@ -59,7 +59,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
 
         return [
             ...(hasPolicy('view_dashboard') ? [{ id: 'dashboard', name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }] : []),
-            
+
             ...((hasPolicy('manage_customers') || hasPolicy('view_active_users')) ? [{
                 id: 'subscribers',
                 name: 'Subscribers',
@@ -76,6 +76,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
 
             ...(hasPolicy('manage_packages') ? [
                 { id: 'packages', name: 'Service Plans', href: '/dashboard/packages', icon: Ticket },
+                { id: 'pools', name: 'PPPoE Pools', href: '/dashboard/pools', icon: Layers },
             ] : []),
 
             ...((hasPolicy('view_payments') || hasPolicy('view_mpesa') || hasPolicy('manage_expenses') || hasPolicy('view_reports')) ? [{
@@ -90,24 +91,21 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
                 ]
             }] : []),
 
-            ...((hasPolicy('view_tickets') || hasPolicy('view_sms')) ? [{
-                id: 'support',
-                name: 'Support Hub',
-                icon: LifeBuoy,
-                children: [
-                    ...(hasPolicy('view_tickets') ? [{ name: 'Helpdesk Tickets', href: '/dashboard/tickets' }] : []),
-                    ...(hasPolicy('view_sms') ? [{ name: 'SMS Center', href: '/dashboard/sms' }] : []),
-                ]
-            }] : []),
+            ...(hasPolicy('view_tickets') ? [
+                { id: 'tickets', name: 'Support Tickets', href: '/dashboard/tickets', icon: LifeBuoy },
+            ] : []),
+
+            ...(hasPolicy('view_sms') ? [
+                { id: 'sms', name: 'SMS Center', href: '/dashboard/sms', icon: MessageSquare },
+            ] : []),
 
             ...((isAdmin || hasPolicy('system_config')) ? [{
                 id: 'system',
-                name: 'System Core',
+                name: 'System',
                 icon: Settings,
                 children: [
                     ...(hasPolicy('system_config') ? [{ name: 'Gateway Config', href: '/dashboard/payment-config' }] : []),
                     ...(hasPolicy('view_logs') ? [{ name: 'Activity Logs', href: '/dashboard/logs' }] : []),
-                    ...(hasPolicy('system_config') ? [{ name: 'System Settings', href: '/dashboard/settings' }] : []),
                 ]
             }] : []),
 
@@ -149,18 +147,18 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
                             <Image
                                 src="/logoc.png"
                                 alt="Pace"
-                                width={120}
-                                height={40}
-                                className="h-7 w-auto object-contain"
+                                width={140}
+                                height={46}
+                                className="h-8 w-auto object-contain"
                                 priority
                             />
                         ) : (
                             <Image
                                 src="/logoc.png"
                                 alt="Pace"
-                                width={32}
-                                height={32}
-                                className="h-6 w-auto object-contain"
+                                width={40}
+                                height={40}
+                                className="h-7 w-auto object-contain"
                                 priority
                             />
                         )}

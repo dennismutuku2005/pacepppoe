@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Users, Mail, Phone, Shield, Camera, Lock, CheckCircle2, AlertCircle, Save } from 'lucide-react'
+import { 
+    Users, Mail, Phone, Shield, Camera, Lock, 
+    CheckCircle2, AlertCircle, Save, Smartphone, 
+    Globe, ChevronRight, User, Key, Bell, CreditCard, Settings
+} from 'lucide-react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import authService from '@/lib/auth'
 import { toast } from 'sonner'
@@ -21,122 +26,223 @@ function ProfileContent() {
         e.preventDefault()
         setIsSaving(true)
         setTimeout(() => {
-            toast.success('Identity Updated', {
-                description: 'Administrative profile parameters synchronized successfully.'
+            toast.success('Identity Synchronized', {
+                description: 'Your administrative profile has been updated successfully.'
             })
             setIsSaving(false)
         }, 1000)
     }
 
-    if (isLoading || !user) return <div className="p-8 text-center animate-pulse text-sm font-medium text-admin-dim">Authenticating Profile...</div>
+    if (isLoading || !user) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-pace-purple border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm font-semibold text-admin-dim animate-pulse">Authenticating Profile...</p>
+                </div>
+            </div>
+        )
+    }
+
+    const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl mx-auto pb-20 font-figtree">
-            {/* Header */}
-            <div className="text-center space-y-4 border-b border-pace-border pb-10">
-                <div className="relative inline-block group">
-                    <div className="w-20 h-20 rounded-3xl bg-pace-purple/5 border border-pace-purple/20 flex items-center justify-center text-2xl font-bold text-pace-purple shadow-sm transition-transform group-hover:scale-105">
-                        {user.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-card-bg border border-pace-border flex items-center justify-center text-admin-dim hover:text-pace-purple transition-all shadow-sm">
-                        <Camera size={14} />
-                    </button>
-                </div>
-                <div>
-                    <h1 className="text-xl font-semibold text-admin-value tracking-tight">{user.name}</h1>
-                    <div className="flex items-center justify-center gap-2 mt-1.5">
-                        <span className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 text-[10px] font-bold tracking-wider uppercase">Verified Admin</span>
-                        <span className="text-[11px] font-medium text-admin-dim">Root Identity</span>
+        <div className="animate-in fade-in duration-1000 font-figtree pb-20">
+            {/* Elegant Header */}
+            <div className="relative rounded-[2.5rem] overflow-hidden bg-[#501DAA] h-64 sm:h-80 shadow-2xl shadow-pace-purple/10">
+                <Image 
+                    src="/sidesvg.svg" 
+                    alt="Network Pattern" 
+                    fill
+                    className="object-cover opacity-20"
+                    priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#501DAA]/80 via-transparent to-black/5" />
+                
+                <div className="absolute inset-0 p-8 sm:p-12 flex flex-col justify-end">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                        <div className="flex items-center gap-6">
+                            <div className="relative group">
+                                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-3xl sm:text-4xl font-black text-white shadow-2xl overflow-hidden">
+                                    {initials}
+                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                        <Camera size={24} className="text-white" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-3">
+                                    <h1 className="text-3xl sm:text-5xl font-bold text-white tracking-tight">{user.name}</h1>
+                                    <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-[10px] font-bold text-white uppercase tracking-widest">
+                                        {user.type}
+                                    </div>
+                                </div>
+                                <p className="text-white/70 text-sm font-medium flex items-center gap-2">
+                                    <Globe size={14} className="opacity-50" />
+                                    Systems Administrator • Pace Networks
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Left Column: Summary */}
-                <div className="md:col-span-1 space-y-6">
-                    <div className="bg-card-bg border border-pace-border rounded-xl p-6 space-y-4 shadow-sm">
-                        <h4 className="text-[11px] font-bold text-admin-value tracking-wider uppercase border-b border-pace-border pb-3">Session Stats</h4>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-admin-dim font-medium">Access Level</span>
-                                <span className="font-semibold text-pace-purple">Root</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-admin-dim font-medium">Last Login</span>
-                                <span className="font-semibold text-admin-value tabular-nums">2h 15m ago</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-admin-dim font-medium">MFA Status</span>
-                                <span className="font-semibold text-green-600">Enabled</span>
-                            </div>
+            <div className="max-w-4xl mx-auto mt-12 space-y-12">
+                {/* Identity Settings Section */}
+                <section className="space-y-6">
+                    <div className="flex items-center gap-4 px-2">
+                        <div className="w-10 h-10 rounded-xl bg-pace-purple/10 flex items-center justify-center text-pace-purple">
+                            <User size={20} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-admin-value">Identity Settings</h2>
+                            <p className="text-xs text-admin-dim font-medium">Update your legal identity and communication channels</p>
                         </div>
                     </div>
 
-                    <div className="bg-pace-purple/5 border border-pace-purple/10 rounded-xl p-6 text-center space-y-3">
-                        <Shield size={22} className="text-pace-purple mx-auto" />
-                        <p className="text-[11px] font-bold text-pace-purple uppercase tracking-wider">Security Protocol</p>
-                        <p className="text-[11px] text-admin-dim font-medium leading-relaxed italic">Your session is protected by 256-bit encryption.</p>
+                    <div className="bg-white border border-pace-border rounded-[2.5rem] shadow-sm overflow-hidden">
+                        <form onSubmit={handleSave} className="p-8 sm:p-10 space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-admin-value ml-1">Full Name</label>
+                                    <div className="relative">
+                                        <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
+                                        <input 
+                                            type="text" 
+                                            defaultValue={user.name}
+                                            className="w-full pl-12 pr-4 py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-2xl text-sm font-semibold text-admin-value focus:bg-white focus:border-pace-purple outline-none transition-all"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-admin-value ml-1">Phone Contact</label>
+                                    <div className="relative">
+                                        <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
+                                        <input 
+                                            type="tel" 
+                                            defaultValue={user.phone}
+                                            className="w-full pl-12 pr-4 py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-2xl text-sm font-semibold text-admin-value focus:bg-white focus:border-pace-purple outline-none transition-all"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-admin-value ml-1">Email Address</label>
+                                <div className="relative">
+                                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
+                                    <input 
+                                        type="email" 
+                                        defaultValue={user.username}
+                                        className="w-full pl-12 pr-4 py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-2xl text-sm font-semibold text-admin-value focus:bg-white focus:border-pace-purple outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-8 flex justify-end">
+                                <button 
+                                    type="submit" 
+                                    disabled={isSaving}
+                                    className="w-full sm:w-auto px-12 py-4 bg-pace-purple text-white rounded-2xl text-sm font-bold shadow-lg shadow-pace-purple/20 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Synchronizing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={18} />
+                                            Save Changes
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </div>
+                </section>
 
-                {/* Right Column: Form */}
-                <div className="md:col-span-2">
-                    <form onSubmit={handleSave} className="bg-card-bg border border-pace-border rounded-xl p-8 space-y-8 shadow-sm">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim tracking-wider uppercase pl-1">Full Identity</label>
-                                <div className="relative">
-                                    <input 
-                                        type="text" defaultValue={user.name}
-                                        className="w-full pl-11 pr-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value focus:border-pace-purple outline-none transition-all"
-                                    />
-                                    <Users size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
+                {/* Security & Access Section */}
+                <section className="space-y-6">
+                    <div className="flex items-center gap-4 px-2">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                            <Shield size={20} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-admin-value">Security & Access</h2>
+                            <p className="text-xs text-admin-dim font-medium">Manage your password and authentication protocols</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white border border-pace-border rounded-[2rem] p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
+                            <div className="space-y-3">
+                                <div className="w-10 h-10 rounded-xl bg-pace-purple/5 flex items-center justify-center text-pace-purple">
+                                    <Key size={18} />
+                                </div>
+                                <h3 className="font-bold text-admin-value">Authentication Pin</h3>
+                                <p className="text-xs text-admin-dim leading-relaxed font-medium">Update your administrative access pin used for critical operations.</p>
+                            </div>
+                            <button className="mt-6 text-xs font-bold text-pace-purple flex items-center gap-2 group-hover:gap-3 transition-all">
+                                Change Password <ChevronRight size={14} />
+                            </button>
+                        </div>
+
+                        <div className="bg-white border border-pace-border rounded-[2rem] p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
+                            <div className="space-y-3">
+                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
+                                    <Smartphone size={18} />
+                                </div>
+                                <h3 className="font-bold text-admin-value">2FA Verification</h3>
+                                <p className="text-xs text-admin-dim leading-relaxed font-medium">Add an extra layer of security to your account with mobile verification.</p>
+                            </div>
+                            <button className="mt-6 text-xs font-bold text-orange-600 flex items-center gap-2 group-hover:gap-3 transition-all">
+                                Setup Authenticator <ChevronRight size={14} />
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Notifications & ISP Accounts Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <section className="space-y-6">
+                        <div className="flex items-center gap-4 px-2">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
+                                <Bell size={20} />
+                            </div>
+                            <h2 className="text-lg font-bold text-admin-value">Notifications</h2>
+                        </div>
+                        <div className="bg-white border border-pace-border rounded-[2rem] p-8 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-admin-value">Email Alerts</span>
+                                <div className="w-10 h-5 bg-pace-purple rounded-full relative cursor-pointer">
+                                    <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full" />
                                 </div>
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim tracking-wider uppercase pl-1">Email Coordinates</label>
-                                <div className="relative">
-                                    <input 
-                                        type="email" defaultValue={user.email}
-                                        className="w-full pl-11 pr-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value focus:border-pace-purple outline-none transition-all"
-                                    />
-                                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
-                                </div>
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim tracking-wider uppercase pl-1">Phone Nexus</label>
-                                <div className="relative">
-                                    <input 
-                                        type="text" defaultValue={user.phone}
-                                        className="w-full pl-11 pr-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value focus:border-pace-purple outline-none transition-all tabular-nums"
-                                    />
-                                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
-                                </div>
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim tracking-wider uppercase pl-1">Access Tier</label>
-                                <div className="relative">
-                                    <input 
-                                        type="text" defaultValue={user.type} disabled
-                                        className="w-full pl-11 pr-4 py-2.5 bg-pace-bg-subtle/50 border border-pace-border rounded-xl text-sm font-medium text-admin-dim outline-none cursor-not-allowed uppercase"
-                                    />
-                                    <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim opacity-50" />
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-admin-value">SMS Dispatch</span>
+                                <div className="w-10 h-5 bg-pace-bg-subtle border border-pace-border rounded-full relative cursor-pointer">
+                                    <div className="absolute left-1 top-1 w-3 h-3 bg-admin-dim rounded-full" />
                                 </div>
                             </div>
                         </div>
+                    </section>
 
-                        <div className="pt-6 border-t border-pace-border flex items-center justify-between gap-4">
-                            <button type="button" className="text-[11px] font-semibold text-admin-dim hover:text-red-500 transition-colors uppercase tracking-wider">
-                                Deactivate Account
-                            </button>
-                            <button 
-                                type="submit" disabled={isSaving}
-                                className="flex items-center gap-2 px-8 py-2.5 bg-pace-purple text-white rounded-xl text-sm font-medium hover:opacity-90 transition-all shadow-sm active:scale-95 disabled:opacity-50"
-                            >
-                                {isSaving ? 'Synchronizing...' : <><Save size={16} /> Commit Changes</>}
-                            </button>
+                    <section className="space-y-6">
+                        <div className="flex items-center gap-4 px-2">
+                            <div className="w-10 h-10 rounded-xl bg-pace-green/10 flex items-center justify-center text-pace-green">
+                                <CreditCard size={20} />
+                            </div>
+                            <h2 className="text-lg font-bold text-admin-value">ISP Accounts</h2>
                         </div>
-                    </form>
+                        <div className="bg-white border border-pace-border rounded-[2rem] p-8">
+                            <div className="flex items-center gap-3 mb-2">
+                                <span className="text-xs font-bold text-admin-value">Pace Networks Ltd</span>
+                                <div className="px-2 py-0.5 bg-green-500/10 text-green-600 text-[8px] font-black uppercase rounded-md">Primary</div>
+                            </div>
+                            <p className="text-[11px] text-admin-dim font-medium">Enterprise Gateway License #842C-B1F0</p>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -145,7 +251,11 @@ function ProfileContent() {
 
 export default function ProfilePage() {
     return (
-        <Suspense fallback={<div className="p-8 text-center text-admin-dim animate-pulse text-sm font-medium">Authenticating identity...</div>}>
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="w-12 h-12 border-4 border-pace-purple border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
             <ProfileContent />
         </Suspense>
     )
