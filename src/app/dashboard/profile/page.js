@@ -82,9 +82,9 @@ function ProfileContent() {
     const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
     return (
-        <div className="animate-in fade-in duration-1000 font-figtree pb-20">
+        <div className="animate-in fade-in duration-500 font-figtree pb-12 sm:pb-20">
             {/* Elegant Header */}
-            <div className="relative rounded-[2.5rem] overflow-hidden bg-[#501DAA] h-64 sm:h-80 shadow-2xl shadow-pace-purple/10">
+            <div className="relative rounded-2xl sm:rounded-[2.5rem] overflow-hidden bg-[#501DAA] h-48 sm:h-80 shadow-2xl shadow-pace-purple/10">
                 <Image 
                     src="/sidesvg.svg" 
                     alt="Network Pattern" 
@@ -94,26 +94,26 @@ function ProfileContent() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#501DAA]/80 via-transparent to-black/5" />
                 
-                <div className="absolute inset-0 p-8 sm:p-12 flex flex-col justify-end">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                        <div className="flex items-center gap-6">
-                            <div className="relative group">
-                                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-3xl sm:text-4xl font-black text-white shadow-2xl overflow-hidden">
+                <div className="absolute inset-0 p-5 sm:p-12 flex flex-col justify-end">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+                        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-center sm:text-left">
+                            <div className="relative group shrink-0">
+                                <div className="w-20 h-20 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-2xl sm:text-4xl font-black text-white shadow-2xl overflow-hidden">
                                     {initials}
                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                                        <Camera size={24} className="text-white" />
+                                        <Camera size={20} className="text-white" />
                                     </div>
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-3">
-                                    <h1 className="text-3xl sm:text-5xl font-bold text-white tracking-tight">{user.name}</h1>
-                                    <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-[10px] font-bold text-white uppercase tracking-widest">
+                            <div className="space-y-1 sm:space-y-2">
+                                <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+                                    <h1 className="text-xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight">{user.name}</h1>
+                                    <div className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-[9px] sm:text-[10px] font-bold text-white uppercase tracking-widest">
                                         {user.type}
                                     </div>
                                 </div>
-                                <p className="text-white/70 text-sm font-medium flex items-center gap-2">
-                                    <Globe size={14} className="opacity-50" />
+                                <p className="text-white/70 text-xs sm:text-sm font-medium flex items-center justify-center sm:justify-start gap-2">
+                                    <Globe size={13} className="opacity-50" />
                                     Systems Administrator • Pace Networks
                                 </p>
                             </div>
@@ -122,63 +122,63 @@ function ProfileContent() {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto mt-12 space-y-12">
+            <div className="max-w-4xl mx-auto mt-6 sm:mt-12 space-y-6 sm:space-y-12">
                 {/* Identity Settings Section */}
-                <section className="space-y-6">
-                    <div className="flex items-center gap-4 px-2">
-                        <div className="w-10 h-10 rounded-xl bg-pace-purple/10 flex items-center justify-center text-pace-purple">
-                            <User size={20} />
+                <section className="space-y-4 sm:space-y-6">
+                    <div className="flex items-center gap-3 sm:gap-4 px-1 sm:px-2">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-pace-purple/10 flex items-center justify-center text-pace-purple shrink-0">
+                            <User size={18} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-admin-value">Identity Settings</h2>
-                            <p className="text-xs text-admin-dim font-medium">Update your legal identity and communication channels</p>
+                            <h2 className="text-base sm:text-lg font-bold text-admin-value">Identity Settings</h2>
+                            <p className="text-[10px] sm:text-xs text-admin-dim font-medium">Update your legal identity and communication channels</p>
                         </div>
                     </div>
 
-                    <div className="bg-white border border-pace-border rounded-[2.5rem] shadow-sm overflow-hidden">
-                        <form onSubmit={handleSave} className="p-8 sm:p-10 space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-admin-value ml-1">Full Name</label>
+                    <div className="bg-card-bg border border-pace-border rounded-2xl sm:rounded-[2.5rem] shadow-sm overflow-hidden">
+                        <form onSubmit={handleSave} className="p-5 sm:p-10 space-y-6 sm:space-y-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] sm:text-xs font-bold text-admin-value ml-1">Full Name</label>
                                     <div className="relative">
-                                        <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
+                                        <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
                                         <input 
                                             type="text" 
                                             defaultValue={user.name}
-                                            className="w-full pl-12 pr-4 py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-2xl text-sm font-semibold text-admin-value focus:bg-white focus:border-pace-purple outline-none transition-all"
+                                            className="w-full pl-11 pr-4 py-3 sm:py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-admin-value focus:bg-card-bg focus:border-pace-purple outline-none transition-all"
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-admin-value ml-1">Phone Contact</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] sm:text-xs font-bold text-admin-value ml-1">Phone Contact</label>
                                     <div className="relative">
-                                        <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
+                                        <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
                                         <input 
                                             type="tel" 
                                             defaultValue={user.phone}
-                                            className="w-full pl-12 pr-4 py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-2xl text-sm font-semibold text-admin-value focus:bg-white focus:border-pace-purple outline-none transition-all"
+                                            className="w-full pl-11 pr-4 py-3 sm:py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-admin-value focus:bg-card-bg focus:border-pace-purple outline-none transition-all"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-admin-value ml-1">Email Address</label>
+                            <div className="space-y-1.5">
+                                <label className="text-[11px] sm:text-xs font-bold text-admin-value ml-1">Email Address</label>
                                 <div className="relative">
-                                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
+                                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" />
                                     <input 
                                         type="email" 
                                         defaultValue={user.username}
-                                        className="w-full pl-12 pr-4 py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-2xl text-sm font-semibold text-admin-value focus:bg-white focus:border-pace-purple outline-none transition-all"
+                                        className="w-full pl-11 pr-4 py-3 sm:py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-admin-value focus:bg-card-bg focus:border-pace-purple outline-none transition-all"
                                     />
                                 </div>
                             </div>
 
-                            <div className="pt-8 flex justify-end">
+                            <div className="pt-4 sm:pt-6 flex justify-end">
                                 <button 
                                     type="submit" 
                                     disabled={isSaving}
-                                    className="w-full sm:w-auto px-12 py-4 bg-pace-purple text-white rounded-2xl text-sm font-bold shadow-lg shadow-pace-purple/20 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                                    className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-4 bg-pace-purple text-white rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-pace-purple/20 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 sm:gap-3"
                                 >
                                     {isSaving ? (
                                         <>
@@ -187,7 +187,7 @@ function ProfileContent() {
                                         </>
                                     ) : (
                                         <>
-                                            <Save size={18} />
+                                            <Save size={16} />
                                             Save Changes
                                         </>
                                     )}
@@ -198,40 +198,40 @@ function ProfileContent() {
                 </section>
 
                 {/* Security & Access Section */}
-                <section className="space-y-6">
-                    <div className="flex items-center gap-4 px-2">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600">
-                            <Shield size={20} />
+                <section className="space-y-4 sm:space-y-6">
+                    <div className="flex items-center gap-3 sm:gap-4 px-1 sm:px-2">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
+                            <Shield size={18} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-admin-value">Security & Access</h2>
-                            <p className="text-xs text-admin-dim font-medium">Manage your password and authentication protocols</p>
+                            <h2 className="text-base sm:text-lg font-bold text-admin-value">Security & Access</h2>
+                            <p className="text-[10px] sm:text-xs text-admin-dim font-medium">Manage your password and authentication protocols</p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white border border-pace-border rounded-[2rem] p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
-                            <div className="space-y-3">
-                                <div className="w-10 h-10 rounded-xl bg-pace-purple/5 flex items-center justify-center text-pace-purple">
-                                    <Key size={18} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <div className="bg-card-bg border border-pace-border rounded-xl sm:rounded-[2rem] p-5 sm:p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
+                            <div className="space-y-2 sm:space-y-3">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-pace-purple/5 flex items-center justify-center text-pace-purple">
+                                    <Key size={16} />
                                 </div>
-                                <h3 className="font-bold text-admin-value">Authentication Pin</h3>
-                                <p className="text-xs text-admin-dim leading-relaxed font-medium">Update your administrative access pin used for critical operations.</p>
+                                <h3 className="text-sm sm:text-base font-bold text-admin-value">Authentication Pin</h3>
+                                <p className="text-[11px] sm:text-xs text-admin-dim leading-relaxed font-medium">Update your administrative access pin used for critical operations.</p>
                             </div>
-                            <button className="mt-6 text-xs font-bold text-pace-purple flex items-center gap-2 group-hover:gap-3 transition-all">
+                            <button className="mt-4 sm:mt-6 text-xs font-bold text-pace-purple flex items-center gap-2 group-hover:gap-3 transition-all text-left">
                                 Change Password <ChevronRight size={14} />
                             </button>
                         </div>
 
-                        <div className="bg-white border border-pace-border rounded-[2rem] p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
-                            <div className="space-y-3">
-                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
-                                    <Smartphone size={18} />
+                        <div className="bg-card-bg border border-pace-border rounded-xl sm:rounded-[2rem] p-5 sm:p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
+                            <div className="space-y-2 sm:space-y-3">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
+                                    <Smartphone size={16} />
                                 </div>
-                                <h3 className="font-bold text-admin-value">2FA Verification</h3>
-                                <p className="text-xs text-admin-dim leading-relaxed font-medium">Add an extra layer of security to your account with mobile verification.</p>
+                                <h3 className="text-sm sm:text-base font-bold text-admin-value">2FA Verification</h3>
+                                <p className="text-[11px] sm:text-xs text-admin-dim leading-relaxed font-medium">Add an extra layer of security to your account with mobile verification.</p>
                             </div>
-                            <button className="mt-6 text-xs font-bold text-orange-600 flex items-center gap-2 group-hover:gap-3 transition-all">
+                            <button className="mt-4 sm:mt-6 text-xs font-bold text-orange-600 flex items-center gap-2 group-hover:gap-3 transition-all text-left">
                                 Setup Authenticator <ChevronRight size={14} />
                             </button>
                         </div>
@@ -239,38 +239,38 @@ function ProfileContent() {
                 </section>
 
                 {/* Notifications & ISP Accounts Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <section className="space-y-6">
-                        <div className="flex items-center gap-4 px-2">
-                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-                                <Bell size={20} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+                    <section className="space-y-4 sm:space-y-6">
+                        <div className="flex items-center gap-3 sm:gap-4 px-1 sm:px-2">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0">
+                                <Bell size={18} />
                             </div>
-                            <h2 className="text-lg font-bold text-admin-value">Notifications</h2>
+                            <h2 className="text-base sm:text-lg font-bold text-admin-value">Notifications</h2>
                         </div>
-                        <div className="bg-white border border-pace-border rounded-[2rem] p-8 space-y-4">
+                        <div className="bg-card-bg border border-pace-border rounded-xl sm:rounded-[2rem] p-5 sm:p-8 space-y-4">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-admin-value">Email Alerts</span>
-                                <div className="w-10 h-5 bg-pace-purple rounded-full relative cursor-pointer">
-                                    <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full" />
+                                <div className="w-10 h-5 bg-pace-purple rounded-full relative cursor-pointer shrink-0">
+                                    <div className="absolute right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
                                 </div>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-admin-value">SMS Dispatch</span>
-                                <div className="w-10 h-5 bg-pace-bg-subtle border border-pace-border rounded-full relative cursor-pointer">
-                                    <div className="absolute left-1 top-1 w-3 h-3 bg-admin-dim rounded-full" />
+                                <div className="w-10 h-5 bg-pace-bg-subtle border border-pace-border rounded-full relative cursor-pointer shrink-0">
+                                    <div className="absolute left-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-admin-dim rounded-full shadow-sm" />
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    <section className="space-y-6">
-                        <div className="flex items-center gap-4 px-2">
-                            <div className="w-10 h-10 rounded-xl bg-pace-green/10 flex items-center justify-center text-pace-green">
-                                <CreditCard size={20} />
+                    <section className="space-y-4 sm:space-y-6">
+                        <div className="flex items-center gap-3 sm:gap-4 px-1 sm:px-2">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-pace-green/10 flex items-center justify-center text-pace-green shrink-0">
+                                <CreditCard size={18} />
                             </div>
-                            <h2 className="text-lg font-bold text-admin-value">ISP Accounts</h2>
+                            <h2 className="text-base sm:text-lg font-bold text-admin-value">ISP Accounts</h2>
                         </div>
-                        <div className="bg-white border border-pace-border rounded-[2rem] p-8">
+                        <div className="bg-card-bg border border-pace-border rounded-xl sm:rounded-[2rem] p-5 sm:p-8 flex flex-col justify-center min-h-[5.5rem] sm:min-h-0">
                             <div className="flex items-center gap-3 mb-2">
                                 <span className="text-xs font-bold text-admin-value">Pace Networks Ltd</span>
                                 <div className="px-2 py-0.5 bg-green-500/10 text-green-600 text-[8px] font-black uppercase rounded-md">Primary</div>
