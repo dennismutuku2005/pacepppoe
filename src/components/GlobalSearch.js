@@ -14,7 +14,7 @@ const SEARCH_ITEMS = [
     { id: 'p5', type: 'page', name: 'Prepaid Users', href: '/dashboard/prepaid/users', icon: Ticket, keywords: ['active accounts', 'hotspot users', 'subscribers'] },
     { id: 'p6', type: 'page', name: 'Income', href: '/dashboard/income', icon: CreditCard, keywords: ['revenue', 'sales', 'earnings', 'payments', 'money'] },
     { id: 'p7', type: 'page', name: 'Customer List', href: '/dashboard/customers', icon: Users, keywords: ['clients', 'members', 'directory', 'phone numbers'] },
-    { id: 'p8', type: 'page', name: 'Block STK', href: '/dashboard/customers/block-stk', icon: Users, keywords: ['blacklist', 'fraud', 'security', 'mpesa block'] },
+
     { id: 'p9', type: 'page', name: 'Hotspot Theme', href: '/dashboard/themes', icon: Globe, keywords: ['design', 'appearance', 'portal', 'branding', 'ui'] },
     { id: 'p10', type: 'page', name: 'Routers', href: '/dashboard/routers', icon: Network, keywords: ['mikrotik', 'gateways', 'hardware', 'devices', 'nodes'] },
     { id: 'p11', type: 'page', name: 'System Config', href: '/dashboard/config', icon: Settings, keywords: ['core', 'api', 'links', 'setup', 'backend'] },
@@ -27,7 +27,7 @@ const SEARCH_ITEMS = [
 const QUICK_ACTIONS = [
     { id: 'a1', type: 'action', name: 'New Prepaid Plan', href: '/dashboard/prepaid/plans?action=create', icon: PlusCircle, keywords: ['add', 'create', 'new plan'] },
     { id: 'a2', type: 'action', name: 'Generate Vouchers', href: '/dashboard/prepaid/vouchers?action=generate', icon: Ticket, keywords: ['bulk', 'creation', 'pins'] },
-    { id: 'a3', type: 'action', name: 'Security Control', href: '/dashboard/customers/block-stk', icon: Fingerprint, keywords: ['stk', 'fraud', 'blocking'] },
+
 ]
 
 
