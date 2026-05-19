@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { Plus, Layers, Search, Edit3, Trash2, Network, Activity, Database, ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { Skeleton, TableRowSkeleton } from '@/components/Skeleton'
+import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
 
@@ -30,6 +30,10 @@ function PoolsContent() {
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.range.includes(search)
     )
+
+    if (isLoading) {
+        return <TablePageSkeleton />
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree">
@@ -75,9 +79,7 @@ function PoolsContent() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
-                            {isLoading ? (
-                                <TableRowSkeleton cols={4} rows={5} />
-                            ) : filteredPools.length === 0 ? (
+                            {filteredPools.length === 0 ? (
                                 <tr>
                                     <td colSpan={4} className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center gap-2 text-admin-dim">
