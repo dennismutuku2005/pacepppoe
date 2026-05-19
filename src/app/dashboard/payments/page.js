@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react'
 import { Search, Filter, Download, CreditCard, Wallet, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/Badge'
-import { TableRowSkeleton } from '@/components/Skeleton'
+import { TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockDashboardData } from '@/services/mockData'
 
 function PaymentsContent() {
@@ -31,6 +31,10 @@ function PaymentsContent() {
         t.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.receipt.toLowerCase().includes(searchTerm.toLowerCase())
     )
+
+    if (isLoading) {
+        return <TablePageSkeleton />
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree">
@@ -104,9 +108,7 @@ function PaymentsContent() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
-                            {isLoading ? (
-                                <TableRowSkeleton cols={5} rows={8} />
-                            ) : filtered.map((t) => (
+                            {filtered.map((t) => (
                                 <tr key={t.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
                                     <td className="px-6 py-2">
                                         <span className="font-semibold text-admin-value text-xs tabular-nums">{t.date}</span>
