@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { Wallet, Search, Filter, Download, CreditCard, Clock, User, CheckCircle2, Activity } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { TableRowSkeleton } from '@/components/Skeleton'
+import { TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockDashboardData } from '@/services/mockData'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -25,6 +25,10 @@ function MpesaContent() {
         p.customer?.toLowerCase().includes(search.toLowerCase()) ||
         p.receipt?.toLowerCase().includes(search.toLowerCase())
     )
+
+    if (isLoading) {
+        return <TablePageSkeleton />
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree">
@@ -100,9 +104,7 @@ function MpesaContent() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
-                            {isLoading ? (
-                                <TableRowSkeleton cols={5} rows={10} />
-                            ) : filteredPayments.length === 0 ? (
+                            {filteredPayments.length === 0 ? (
                                 <tr>
                                     <td colSpan="5" className="py-24 text-center text-admin-dim text-sm font-medium">No records found in financial pool</td>
                                 </tr>
