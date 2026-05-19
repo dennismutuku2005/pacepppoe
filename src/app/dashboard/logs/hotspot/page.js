@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { Smartphone, Search, RefreshCw, AlertCircle, Wifi, Database, CheckCircle2, XCircle } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { TableRowSkeleton } from '@/components/Skeleton'
+import { TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockDashboardData } from '@/services/mockData'
 import { cn } from '@/lib/utils'
 
@@ -36,6 +36,10 @@ function HotspotLogsContent() {
             </div>
         )
     )
+
+    if (isLoading) {
+        return <TablePageSkeleton />
+    }
 
     return (
         <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 text-sm">
@@ -83,9 +87,7 @@ function HotspotLogsContent() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
-                            {isLoading ? (
-                                <TableRowSkeleton cols={7} rows={10} />
-                            ) : filteredLogs.length === 0 ? (
+                            {filteredLogs.length === 0 ? (
                                 <tr>
                                     <td colSpan="7" className="py-24 text-center text-admin-dim text-xs font-medium">No hotspot activity logged</td>
                                 </tr>
