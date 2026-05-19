@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { Smartphone, Search, Filter, Send, Settings, CheckCircle2, XCircle, Clock, Database, ShieldCheck, Activity } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { Skeleton, TableRowSkeleton } from '@/components/Skeleton'
+import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockDashboardData } from '@/services/mockData'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
@@ -63,6 +63,10 @@ function SMSContent() {
         log.message?.toLowerCase().includes(search.toLowerCase())
     )
 
+    if (isLoading) {
+        return <TablePageSkeleton />
+    }
+
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree text-sm">
             {/* Header */}
@@ -79,34 +83,50 @@ function SMSContent() {
                 </button>
             </div>
 
-            {/* Provider Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {isLoading ? (
-                    [...Array(3)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)
-                ) : providers.map((provider) => (
-                    <div key={provider.id} className="p-5 border border-pace-border rounded-xl bg-card-bg hover:border-pace-purple/20 transition-all group shadow-sm">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="w-9 h-9 rounded-xl bg-pace-bg-subtle border border-pace-border flex items-center justify-center text-admin-dim group-hover:text-pace-purple transition-all">
-                                <Activity size={18} />
-                            </div>
-                            <Badge variant={provider.status === 'Connected' ? 'success' : 'secondary'} className="text-[10px] font-medium border-none">
-                                {provider.status}
-                            </Badge>
-                        </div>
-                        <div>
-                            <h5 className="text-sm font-semibold text-admin-value">{provider.name}</h5>
-                            <p className="text-[11px] font-medium text-admin-dim mt-0.5">Credits: <span className="text-pace-purple font-semibold">{provider.balance}</span></p>
-                        </div>
-                        <div className="mt-5 pt-4 border-t border-pace-border">
-                            <button 
-                                onClick={() => handleConfigProvider(provider)}
-                                className="w-full py-2 bg-pace-bg-subtle border border-pace-border rounded-lg text-[11px] font-semibold text-admin-dim hover:bg-pace-purple/5 hover:text-pace-purple hover:border-pace-purple/20 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Settings size={14} /> Configure Gateway
-                            </button>
-                        </div>
-                    </div>
-                ))}
+            {/* Provider Table */}
+            <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left whitespace-nowrap">
+                        <thead>
+                            <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
+                                <th className="px-6 py-3">Gateway Name</th>
+                                <th className="px-6 py-3">API Status</th>
+                                <th className="px-6 py-3">SMS Credits</th>
+                                <th className="px-6 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-pace-border">
+                            {providers.map((provider) => (
+                                <tr key={provider.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
+                                    <td className="px-6 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-pace-bg-subtle border border-pace-border flex items-center justify-center text-admin-dim group-hover:text-pace-purple transition-all">
+                                                <Activity size={14} />
+                                            </div>
+                                            <span className="text-xs font-semibold text-admin-value">{provider.name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-3">
+                                        <Badge variant={provider.status === 'Connected' ? 'success' : 'secondary'} className="text-[10px] font-medium border-none">
+                                            {provider.status}
+                                        </Badge>
+                                    </td>
+                                    <td className="px-6 py-3">
+                                        <span className="text-xs font-bold text-pace-purple tabular-nums">{provider.balance}</span>
+                                    </td>
+                                    <td className="px-6 py-3 text-right">
+                                        <button 
+                                            onClick={() => handleConfigProvider(provider)}
+                                            className="px-3 py-1.5 bg-pace-bg-subtle border border-pace-border rounded-lg text-[11px] font-semibold text-admin-dim hover:bg-pace-purple/5 hover:text-pace-purple hover:border-pace-purple/20 transition-all flex items-center justify-center gap-2 ml-auto"
+                                        >
+                                            <Settings size={12} /> Configure Gateway
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Logs Section */}
@@ -138,9 +158,7 @@ function SMSContent() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-pace-border">
-                                {isLoading ? (
-                                    <TableRowSkeleton cols={5} rows={10} />
-                                ) : filteredLogs.length === 0 ? (
+                                {filteredLogs.length === 0 ? (
                                     <tr>
                                         <td colSpan="5" className="py-24 text-center text-admin-dim text-xs font-medium">No dispatch records found</td>
                                     </tr>
@@ -243,9 +261,9 @@ function SMSContent() {
                         />
                     </div>
                     <div className="pt-4 flex gap-3">
-                        <button type="button" onClick={() => setIsSendModalOpen(false)} className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-bold text-admin-dim tracking-widest hover:bg-pace-bg-subtle transition-all uppercase">Abort</button>
+                        <button type="button" onClick={() => setIsSendModalOpen(false)} className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-bold text-admin-dim tracking-widest hover:bg-pace-bg-subtle transition-all uppercase">Cancel</button>
                         <button type="submit" disabled={isSending} className="flex-[2] px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-bold tracking-widest hover:opacity-90 shadow-xl shadow-pace-purple/20 transition-all active:scale-95 uppercase flex items-center justify-center gap-2">
-                            {isSending ? 'Transmitting...' : <><Send size={14} /> Commit Dispatch</>}
+                            {isSending ? 'Sending...' : <><Send size={14} /> Send Message</>}
                         </button>
                     </div>
                 </form>
