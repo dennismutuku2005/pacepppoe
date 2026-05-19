@@ -5,6 +5,7 @@ import { CreditCard, Shield, Key, Smartphone, Globe, Save, RefreshCw, Lock, Acti
 import { Badge } from '@/components/Badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { FormPageSkeleton } from '@/components/Skeleton'
 
 function PaymentConfigContent() {
     const [isLoading, setIsLoading] = useState(true)
@@ -40,7 +41,9 @@ function PaymentConfigContent() {
         }, 1500)
     }
 
-    if (isLoading) return <div className="p-8 text-center text-admin-dim animate-pulse uppercase text-[10px] font-bold tracking-widest">Decrypting Financial Core...</div>
+    if (isLoading) {
+        return <FormPageSkeleton />
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1200px] mx-auto pb-10 px-4 sm:px-0 font-figtree">
@@ -56,7 +59,7 @@ function PaymentConfigContent() {
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-xl shadow-pace-purple/20 active:scale-95 disabled:opacity-50"
                 >
                     {isSaving ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
-                    {isSaving ? 'Syncing...' : 'Commit Changes'}
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
             </div>
 
