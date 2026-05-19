@@ -10,6 +10,7 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import authService from '@/lib/auth'
 import { toast } from 'sonner'
+import { Skeleton } from '@/components/Skeleton'
 
 function ProfileContent() {
     const [isLoading, setIsLoading] = useState(true)
@@ -35,10 +36,44 @@ function ProfileContent() {
 
     if (isLoading || !user) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-pace-purple border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm font-semibold text-admin-dim animate-pulse">Authenticating Profile...</p>
+            <div className="space-y-12 font-figtree animate-in fade-in duration-700 pb-20">
+                {/* Elegant Banner Skeleton */}
+                <div className="relative rounded-[2.5rem] overflow-hidden bg-gray-200 dark:bg-gray-800 h-64 sm:h-80 animate-pulse flex items-end p-8 sm:p-12">
+                    <div className="flex items-center gap-6 w-full">
+                        <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-gray-300 dark:bg-gray-700" />
+                        <div className="space-y-3 flex-1">
+                            <Skeleton className="h-8 w-48 bg-gray-300 dark:bg-gray-700" />
+                            <Skeleton className="h-4 w-64 bg-gray-300 dark:bg-gray-700" />
+                        </div>
+                    </div>
+                </div>
+                {/* Forms Skeleton */}
+                <div className="max-w-4xl mx-auto space-y-12">
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-4 px-2">
+                            <Skeleton className="w-10 h-10 rounded-xl" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-5 w-40" />
+                                <Skeleton className="h-3 w-60" />
+                            </div>
+                        </div>
+                        <div className="bg-card-bg border border-pace-border rounded-[2.5rem] p-8 sm:p-10 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-24" />
+                                    <Skeleton className="h-12 w-full rounded-2xl" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-24" />
+                                    <Skeleton className="h-12 w-full rounded-2xl" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-12 w-full rounded-2xl" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         )
