@@ -20,7 +20,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={figtree.variable} suppressHydrationWarning>
-      <body className="antialiased font-figtree transition-colors duration-300">
+      <body className="antialiased font-figtree transition-colors duration-300" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Toaster 
             position="top-right" 
