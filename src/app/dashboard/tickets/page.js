@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { LifeBuoy, Search, Filter, MessageSquare, Trash2, Edit2, Clock, User, AlertTriangle, CheckCircle2, Activity } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { TableRowSkeleton } from '@/components/Skeleton'
+import { TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockDashboardData } from '@/services/mockData'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
@@ -78,6 +78,10 @@ function TicketsContent() {
         t.subject?.toLowerCase().includes(search.toLowerCase())
     )
 
+    if (isLoading) {
+        return <TablePageSkeleton />
+    }
+
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0 font-figtree">
             {/* Header */}
@@ -90,7 +94,7 @@ function TicketsContent() {
                     onClick={() => handleOpenModal()}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-xl shadow-pace-purple/20 active:scale-95"
                 >
-                    <MessageSquare size={14} /> Initialize Ticket
+                    <MessageSquare size={14} /> Create Ticket
                 </button>
             </div>
 
@@ -123,9 +127,7 @@ function TicketsContent() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
-                            {isLoading ? (
-                                <TableRowSkeleton cols={6} rows={8} />
-                            ) : filteredTickets.length === 0 ? (
+                            {filteredTickets.length === 0 ? (
                                 <tr>
                                     <td colSpan="6" className="py-24 text-center text-admin-dim text-[10px] font-bold tracking-widest italic uppercase">Zero active incidents</td>
                                 </tr>
@@ -178,7 +180,7 @@ function TicketsContent() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={currentTicket ? 'Synchronize Ticket' : 'Initialize Support Incident'}
+                title={currentTicket ? 'Edit Ticket' : 'Create Ticket'}
                 description={currentTicket ? `Updating record for incident #${currentTicket.id}` : 'Create a new support request for subscriber tracking.'}
                 maxWidth="max-w-md"
             >
@@ -230,8 +232,8 @@ function TicketsContent() {
                         </div>
                     </div>
                     <div className="pt-4 flex gap-3">
-                        <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-bold text-admin-dim tracking-widest hover:bg-pace-bg-subtle transition-all">Abort</button>
-                        <button type="submit" className="flex-3 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-bold tracking-widest hover:opacity-90 shadow-xl shadow-pace-purple/20 transition-all active:scale-95">Commit Ticket</button>
+                        <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-bold text-admin-dim tracking-widest hover:bg-pace-bg-subtle transition-all">Cancel</button>
+                        <button type="submit" className="flex-3 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-bold tracking-widest hover:opacity-90 shadow-xl shadow-pace-purple/20 transition-all active:scale-95">{currentTicket ? 'Save Changes' : 'Create Ticket'}</button>
                     </div>
                 </form>
             </Modal>
