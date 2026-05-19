@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { Plus, Search, Filter, Trash2, Edit2, DollarSign, Calendar, Tag, Activity } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { TableRowSkeleton } from '@/components/Skeleton'
+import { TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockDashboardData } from '@/services/mockData'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
@@ -88,6 +88,10 @@ function ExpensesContent() {
         ex.title?.toLowerCase().includes(search.toLowerCase()) ||
         ex.category?.toLowerCase().includes(search.toLowerCase())
     )
+
+    if (isLoading) {
+        return <TablePageSkeleton />
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 px-4 sm:px-0 font-figtree">
@@ -196,9 +200,7 @@ function ExpensesContent() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
-                            {isLoading ? (
-                                <TableRowSkeleton cols={6} rows={8} />
-                            ) : filteredExpenses.length === 0 ? (
+                            {filteredExpenses.length === 0 ? (
                                 <tr>
                                     <td colSpan="6" className="py-24 text-center text-admin-dim text-[10px] font-bold tracking-widest italic uppercase">Zero records in ledger</td>
                                 </tr>
@@ -308,8 +310,8 @@ function ExpensesContent() {
                         </div>
                     </div>
                     <div className="pt-4 flex gap-3">
-                        <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-bold text-admin-dim tracking-widest hover:bg-pace-bg-subtle transition-all">Abort</button>
-                        <button type="submit" className="flex-3 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-bold tracking-widest hover:opacity-90 shadow-xl shadow-pace-purple/20 transition-all active:scale-95">Commit Entry</button>
+                        <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-bold text-admin-dim tracking-widest hover:bg-pace-bg-subtle transition-all">Cancel</button>
+                        <button type="submit" className="flex-3 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-bold tracking-widest hover:opacity-90 shadow-xl shadow-pace-purple/20 transition-all active:scale-95">{currentExpense ? 'Save Changes' : 'Log Expense'}</button>
                     </div>
                 </form>
             </Modal>
