@@ -15,6 +15,7 @@ import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
 
 import authService from '@/lib/auth'
+import { getFilteredNavigation } from '@/lib/navigation'
 
 export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
     const pathname = usePathname()
@@ -44,67 +45,11 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
     // Move navigation logic to useMemo and ensure it's stable during hydration
     const searchParams = useSearchParams()
     const navigation = useMemo(() => {
-        const user = typeof window !== 'undefined' ? authService.getUser() : { type: 'admin' }
-        const isAdmin = !user || user.type === 'admin' || user.type === 'superadmin'
         const hasPolicy = (policy) => {
             if (typeof window === 'undefined') return true;
             return authService.hasPolicy(policy);
         };
-
-        return [
-            ...(hasPolicy('view_dashboard') ? [{ id: 'dashboard', name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }] : []),
-
-            ...((hasPolicy('manage_customers') || hasPolicy('view_active_users')) ? [{
-                id: 'subscribers',
-                name: 'Subscribers',
-                icon: Users,
-                children: [
-                    ...(hasPolicy('manage_customers') ? [{ name: 'Subscriber List', href: '/dashboard/customers' }] : []),
-                    ...(hasPolicy('view_active_users') ? [{ name: 'Active Connections', href: '/dashboard/customers/active' }] : []),
-                ]
-            }] : []),
-
-            ...(hasPolicy('view_routers') ? [
-                { id: 'routers', name: 'Routers', href: '/dashboard/routers', icon: Network },
-            ] : []),
-
-            ...(hasPolicy('manage_packages') ? [
-                { id: 'packages', name: 'Service Plans', href: '/dashboard/packages', icon: Ticket },
-                { id: 'pools', name: 'PPPoE Pools', href: '/dashboard/pools', icon: Layers },
-            ] : []),
-
-            ...((hasPolicy('view_payments') || hasPolicy('view_mpesa') || hasPolicy('manage_expenses') || hasPolicy('view_reports')) ? [{
-                id: 'finance',
-                name: 'Financials',
-                icon: CreditCard,
-                children: [
-                    ...(hasPolicy('view_payments') ? [{ name: 'Transactions', href: '/dashboard/payments' }] : []),
-                    ...(hasPolicy('view_mpesa') ? [{ name: 'M-Pesa Ledger', href: '/dashboard/mpesa' }] : []),
-                    ...(hasPolicy('view_reports') ? [{ name: 'Financial Reports', href: '/dashboard/reports' }] : []),
-                    ...(hasPolicy('manage_expenses') ? [{ name: 'Expenses', href: '/dashboard/expenses' }] : []),
-                ]
-            }] : []),
-
-            ...(hasPolicy('view_tickets') ? [
-                { id: 'tickets', name: 'Support Tickets', href: '/dashboard/tickets', icon: LifeBuoy },
-            ] : []),
-
-            ...(hasPolicy('view_sms') ? [
-                { id: 'sms', name: 'SMS Center', href: '/dashboard/sms', icon: MessageSquare },
-            ] : []),
-
-            ...((isAdmin || hasPolicy('system_config')) ? [{
-                id: 'system',
-                name: 'System',
-                icon: Settings,
-                children: [
-                    ...(hasPolicy('system_config') ? [{ name: 'Gateway Config', href: '/dashboard/payment-config' }] : []),
-                    ...(hasPolicy('view_logs') ? [{ name: 'Activity Logs', href: '/dashboard/logs' }] : []),
-                ]
-            }] : []),
-
-            { id: 'profile', name: 'My Profile', href: '/dashboard/profile', icon: UserRoundCheck },
-        ]
+        return getFilteredNavigation(hasPolicy);
     }, [])
 
     // Add body scroll lock when mobile sidebar is open
