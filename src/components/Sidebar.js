@@ -20,12 +20,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
     const pathname = usePathname()
     const [openMenus, setOpenMenus] = useState([])
     const [showLogoutModal, setShowLogoutModal] = useState(false)
-    const [mounted, setMounted] = useState(false)
-    const searchParams = useSearchParams()
 
-    useEffect(() => {
-        setMounted(true)
-    }, [])
 
     // Helper to persist query params
     const createHref = (href) => {
@@ -47,15 +42,14 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
     }
 
     // Move navigation logic to useMemo and ensure it's stable during hydration
+    const searchParams = useSearchParams()
     const navigation = useMemo(() => {
-        // Return only shared/public items if not mounted to avoid hydration mismatch
-        if (!mounted) return [
-            { id: 'profile', name: 'My Profile', href: '/dashboard/profile', icon: UserRoundCheck },
-        ]
-
-        const user = authService.getUser()
-        const isAdmin = user?.type === 'admin' || user?.type === 'superadmin'
-        const hasPolicy = (policy) => authService.hasPolicy(policy);
+        const user = typeof window !== 'undefined' ? authService.getUser() : { type: 'admin' }
+        const isAdmin = !user || user.type === 'admin' || user.type === 'superadmin'
+        const hasPolicy = (policy) => {
+            if (typeof window === 'undefined') return true;
+            return authService.hasPolicy(policy);
+        };
 
         return [
             ...(hasPolicy('view_dashboard') ? [{ id: 'dashboard', name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }] : []),
@@ -111,7 +105,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
 
             { id: 'profile', name: 'My Profile', href: '/dashboard/profile', icon: UserRoundCheck },
         ]
-    }, [mounted])
+    }, [])
 
     // Add body scroll lock when mobile sidebar is open
     useEffect(() => {
@@ -166,10 +160,13 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
                 </div>
 
                 {/* Navigation - Flex-1 with scroll */}
-                <nav className={cn(
-                    "flex-1 overflow-y-auto custom-scrollbar space-y-1",
-                    showText ? "p-3" : "px-2 py-3"
-                )}>
+                <nav 
+                    suppressHydrationWarning
+                    className={cn(
+                        "flex-1 overflow-y-auto custom-scrollbar space-y-1",
+                        showText ? "p-3" : "px-2 py-3"
+                    )}
+                >
                     {navigation.map((item) => {
                         const isActive = pathname === item.href || item.children?.some(child => child.href === pathname);
                         const isExpanded = openMenus.includes(item.id);
