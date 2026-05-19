@@ -26,16 +26,37 @@ function ReportsContent() {
 
     if (isLoading) return (
         <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10">
+            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
-                <Skeleton className="h-10 w-64" />
-                <Skeleton className="h-10 w-48" />
+                <div className="space-y-2">
+                    <Skeleton className="h-7 w-64 bg-gray-200 dark:bg-gray-800" />
+                    <Skeleton className="h-3.5 w-80 bg-gray-200 dark:bg-gray-800" />
+                </div>
+                <div className="flex gap-3">
+                    <Skeleton className="h-10 w-28 rounded-xl bg-gray-200 dark:bg-gray-800" />
+                    <Skeleton className="h-10 w-32 rounded-xl bg-gray-200 dark:bg-gray-800" />
+                </div>
             </div>
+            {/* Financial Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => <CardSkeleton key={i} />)}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Skeleton className="h-[400px] w-full rounded-2xl" />
-                <Skeleton className="h-[400px] w-full rounded-2xl" />
+            {/* Chart Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-8 bg-card-bg border border-pace-border rounded-xl p-6 shadow-sm h-[380px] flex flex-col justify-between">
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-40 bg-gray-200 dark:bg-gray-800" />
+                        <Skeleton className="h-3 w-28 bg-gray-200 dark:bg-gray-800" />
+                    </div>
+                    <Skeleton className="h-[220px] w-full rounded-xl bg-gray-200 dark:bg-gray-800" />
+                </div>
+                <div className="lg:col-span-4 bg-card-bg border border-pace-border rounded-xl p-6 shadow-sm h-[380px] flex flex-col justify-between">
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-32 bg-gray-200 dark:bg-gray-800" />
+                        <Skeleton className="h-3 w-24 bg-gray-200 dark:bg-gray-800" />
+                    </div>
+                    <Skeleton className="h-[220px] w-full rounded-xl bg-gray-200 dark:bg-gray-800" />
+                </div>
             </div>
         </div>
     )
