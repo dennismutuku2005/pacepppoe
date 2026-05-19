@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { FileText, Search, Clock, Shield, AlertCircle, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { TableRowSkeleton } from '@/components/Skeleton'
+import { TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 
 function LogsContent() {
     const [isLoading, setIsLoading] = useState(true)
@@ -26,6 +26,10 @@ function LogsContent() {
         log.event.toLowerCase().includes(search.toLowerCase()) ||
         log.user.toLowerCase().includes(search.toLowerCase())
     )
+
+    if (isLoading) {
+        return <TablePageSkeleton />
+    }
 
     return (
         <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 text-sm">
@@ -65,9 +69,7 @@ function LogsContent() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
-                            {isLoading ? (
-                                <TableRowSkeleton cols={5} rows={10} />
-                            ) : filteredLogs.length === 0 ? (
+                            {filteredLogs.length === 0 ? (
                                 <tr>
                                     <td colSpan="5" className="py-24 text-center text-admin-dim text-xs font-medium">No system events logged</td>
                                 </tr>
