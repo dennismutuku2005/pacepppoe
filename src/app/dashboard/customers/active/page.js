@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Search, Clock, Ticket, Smartphone, Activity, RefreshCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/Badge'
-import { Skeleton, TableRowSkeleton } from '@/components/Skeleton'
+import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { activeConnectionsService } from '@/services/activeConnections'
 
 function ActiveConnectionsContent() {
@@ -94,6 +94,10 @@ function ActiveConnectionsContent() {
         if (node) observer.current.observe(node)
     }, [isLoading, isLoadingMore, hasMore, page])
 
+    if (isLoading && entries.length === 0) {
+        return <TablePageSkeleton />
+    }
+
     return (
         <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10">
             {/* Page Header */}
@@ -150,9 +154,7 @@ function ActiveConnectionsContent() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
-                            {isLoading && entries.length === 0 ? (
-                                <TableRowSkeleton cols={6} rows={10} />
-                            ) : entries.length === 0 ? (
+                            {entries.length === 0 ? (
                                 <tr>
                                     <td colSpan="6" className="py-24 text-center text-admin-dim text-sm font-medium">No active sessions found</td>
                                 </tr>
