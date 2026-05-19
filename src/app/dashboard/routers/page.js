@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Search, Router as RouterIcon, Activity, RefreshCw, Power, Settings, ShieldCheck, Network, MoreVertical, List } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { Skeleton, CardSkeleton, TableRowSkeleton } from '@/components/Skeleton'
+import { Skeleton, CardSkeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockRouters } from '@/services/mockData'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
@@ -47,23 +47,9 @@ function RoutersContent() {
         r.ip?.includes(search)
     )
 
-    if (isLoading) return (
-        <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
-                <Skeleton className="h-10 w-64" />
-                <Skeleton className="h-10 w-48" />
-            </div>
-            <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left whitespace-nowrap">
-                        <tbody className="divide-y divide-pace-border">
-                            <TableRowSkeleton cols={8} rows={8} />
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    )
+    if (isLoading) {
+        return <TablePageSkeleton />
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree text-sm">
