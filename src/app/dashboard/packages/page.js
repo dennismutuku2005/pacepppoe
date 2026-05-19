@@ -3,8 +3,8 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { Plus, Package, Edit3, Trash2, Zap, Search, Activity, Sliders, DollarSign, Shield, Network, Layers } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { Skeleton, TableRowSkeleton } from '@/components/Skeleton'
-import { mockPackages } from '@/services/mockData'
+import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
+import { mockPackages, mockCustomers } from '@/services/mockData'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
@@ -66,9 +66,17 @@ function PackagesContent() {
         setIsModalOpen(false)
     }
 
-    const handleDelete = (id, name) => {
+    const handleDelete = (id, name, limit) => {
+        const activeUsers = mockCustomers.filter(c => c.plan === limit || c.plan === name)
+        if (activeUsers.length > 0) {
+            toast.error('Decommission Denied', {
+                description: `Cannot delete plan "${name}". There are ${activeUsers.length} active subscribers currently on this tier.`
+            })
+            return
+        }
+
         setPackages(prev => prev.filter(p => p.id !== id))
-        toast.error('Profile Decommissioned', {
+        toast.success('Plan Decommissioned', {
             description: `${name} has been removed from the service matrix.`
         })
     }
@@ -76,6 +84,10 @@ function PackagesContent() {
     const filteredPackages = packages.filter(p => 
         p.name?.toLowerCase().includes(search.toLowerCase())
     )
+
+    if (isLoading) {
+        return <TablePageSkeleton />
+    }
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree">
@@ -123,9 +135,7 @@ function PackagesContent() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
-                            {isLoading ? (
-                                <TableRowSkeleton cols={6} rows={8} />
-                            ) : filteredPackages.length === 0 ? (
+                            {filteredPackages.length === 0 ? (
                                 <tr>
                                     <td colSpan="6" className="py-24 text-center text-admin-dim text-sm font-medium">No service tiers defined</td>
                                 </tr>
@@ -161,7 +171,7 @@ function PackagesContent() {
                                                     <Edit3 size={14} />
                                                 </button>
                                                 <button 
-                                                    onClick={() => handleDelete(p.id, p.name)}
+                                                    onClick={() => handleDelete(p.id, p.name, p.limit)}
                                                     className="p-1 text-admin-dim hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
                                                 >
                                                     <Trash2 size={14} />
@@ -180,7 +190,7 @@ function PackagesContent() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={currentPackage ? 'Update Plan Profile' : 'Initialize Plan Profile'}
+                title={currentPackage ? 'Edit Plan Profile' : 'Create Plan Profile'}
                 description={currentPackage ? `Synchronizing QoS for ${currentPackage.name}` : 'Construct a new bandwidth queuing profile.'}
                 maxWidth="max-w-xl"
             >
@@ -276,13 +286,13 @@ function PackagesContent() {
                             onClick={() => setIsModalOpen(false)}
                             className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all"
                         >
-                            Abort
+                            Cancel
                         </button>
                         <button 
                             type="submit"
                             className="flex-[2] px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:opacity-90 shadow-sm transition-all active:scale-95"
                         >
-                            {currentPackage ? 'Commit Changes' : 'Initialize Tier'}
+                            {currentPackage ? 'Save Changes' : 'Create Plan'}
                         </button>
                     </div>
                 </form>
