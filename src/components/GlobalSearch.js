@@ -2,27 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Search, ChevronRight, LayoutDashboard, Clock, Ticket, CreditCard, Users, Globe, Network, Settings, Smartphone, Bell, Activity, PlusCircle, Unlock, Fingerprint, Command } from 'lucide-react'
+import { Search, ChevronRight, LayoutDashboard, Clock, Ticket, CreditCard, Users, Globe, Network, Settings, Smartphone, Bell, Activity, PlusCircle, Unlock, Fingerprint, Command, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import authService from '@/lib/auth'
+import { getFilteredNavigation } from '@/lib/navigation'
 
-const SEARCH_ITEMS = [
-    { id: 'p1', type: 'page', name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, keywords: ['home', 'summary', 'overview', 'main'] },
-    { id: 'p2', type: 'page', name: 'Entries', href: '/dashboard/entries', icon: Clock, keywords: ['logs', 'history', 'connections', 'activity'] },
-    { id: 'p3', type: 'page', name: 'Prepaid Plans', href: '/dashboard/prepaid/plans', icon: Ticket, keywords: ['packages', 'pricing', 'tiers', 'bandwidth'] },
-    { id: 'p4', type: 'page', name: 'Prepaid Vouchers', href: '/dashboard/prepaid/vouchers', icon: Ticket, keywords: ['tokens', 'scratch cards', 'pins', 'codes'] },
-    { id: 'p5', type: 'page', name: 'Prepaid Users', href: '/dashboard/prepaid/users', icon: Ticket, keywords: ['active accounts', 'hotspot users', 'subscribers'] },
-    { id: 'p6', type: 'page', name: 'Income', href: '/dashboard/income', icon: CreditCard, keywords: ['revenue', 'sales', 'earnings', 'payments', 'money'] },
-    { id: 'p7', type: 'page', name: 'Customer List', href: '/dashboard/customers', icon: Users, keywords: ['clients', 'members', 'directory', 'phone numbers'] },
-
-    { id: 'p9', type: 'page', name: 'Hotspot Theme', href: '/dashboard/themes', icon: Globe, keywords: ['design', 'appearance', 'portal', 'branding', 'ui'] },
-    { id: 'p10', type: 'page', name: 'Routers', href: '/dashboard/routers', icon: Network, keywords: ['mikrotik', 'gateways', 'hardware', 'devices', 'nodes'] },
-    { id: 'p11', type: 'page', name: 'System Config', href: '/dashboard/config', icon: Settings, keywords: ['core', 'api', 'links', 'setup', 'backend'] },
-    { id: 'p12', type: 'page', name: 'M-Pesa Transactions', href: '/dashboard/mpesa', icon: Smartphone, keywords: ['stk push', 'payments', 'mobile money', 'safaricom'] },
-    { id: 'p13', type: 'page', name: 'Notifications', href: '/dashboard/notifications', icon: Bell, keywords: ['alerts', 'messages', 'updates', 'unread'] },
-    { id: 'p14', type: 'page', name: 'System Logs', href: '/dashboard/logs', icon: Activity, keywords: ['debug', 'events', 'audit', 'errors', 'status'] },
-    { id: 'p15', type: 'page', name: 'Settings', href: '/dashboard/settings', icon: Settings, keywords: ['profile', 'password', 'account', 'security'] },
-]
+// SEARCH_ITEMS is now dynamically derived from the sidebar navigation pipeline.
 
 const QUICK_ACTIONS = [
     { id: 'a1', type: 'action', name: 'New Prepaid Plan', href: '/dashboard/prepaid/plans?action=create', icon: PlusCircle, keywords: ['add', 'create', 'new plan'] },
@@ -92,22 +77,36 @@ export function GlobalSearch() {
             return
         }
 
-        // 2. Search Pages & Actions
-        const filteredPages = SEARCH_ITEMS.filter(item => {
-            const matchesQuery = item.name.toLowerCase().includes(searchTerm) ||
-                item.keywords.some(k => k.toLowerCase().includes(searchTerm));
-            
-            if (!matchesQuery) return false;
+        // 2. Search Pages dynamically fetched from the sidebar navigation pipeline
+        const activeNav = getFilteredNavigation(hasPolicy)
+        const derivedSearchItems = []
+        activeNav.forEach(item => {
+            if (item.children) {
+                item.children.forEach(child => {
+                    derivedSearchItems.push({
+                        id: child.href,
+                        type: 'page',
+                        name: child.name,
+                        href: child.href,
+                        icon: item.icon || FileText,
+                        keywords: child.keywords || []
+                    })
+                })
+            } else {
+                derivedSearchItems.push({
+                    id: item.href,
+                    type: 'page',
+                    name: item.name,
+                    href: item.href,
+                    icon: item.icon || FileText,
+                    keywords: item.keywords || []
+                })
+            }
+        })
 
-            // Policy Checks
-            if (item.href === '/dashboard/income') return hasPolicy('view_income')
-            if (item.href === '/dashboard/mpesa') return hasPolicy('view_income')
-            if (item.href === '/dashboard/staff') return hasPolicy('manage_users')
-            if (item.href === '/dashboard/routers') return hasPolicy('view_routers')
-            if (item.href.includes('/dashboard/prepaid')) return hasPolicy('create_voucher')
-            if (item.href.includes('/dashboard/customers')) return hasPolicy('manage_customers')
-            
-            return true;
+        const filteredPages = derivedSearchItems.filter(item => {
+            return item.name.toLowerCase().includes(searchTerm) ||
+                item.keywords.some(k => k.toLowerCase().includes(searchTerm))
         })
 
         const filteredActions = QUICK_ACTIONS.filter(item => {
