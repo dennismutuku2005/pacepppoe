@@ -184,7 +184,7 @@ function TicketsContent() {
                 description={currentTicket ? `Updating record for incident #${currentTicket.id}` : 'Create a new support request for subscriber tracking.'}
                 maxWidth="max-w-md"
             >
-                <form onSubmit={handleSave} className="p-6 space-y-4">
+                <form onSubmit={handleSave} className="space-y-4">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-admin-dim tracking-widest pl-1">Subscriber Identity</label>
                         <input 

@@ -249,7 +249,7 @@ function ExpensesContent() {
                 description={currentExpense ? `Synchronizing record for ${currentExpense.title}` : 'Record a new infrastructure or operational cost.'}
                 maxWidth="max-w-md"
             >
-                <form onSubmit={handleSave} className="p-6 space-y-4">
+                <form onSubmit={handleSave} className="space-y-4">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-admin-dim tracking-widest pl-1">Expense Title</label>
                         <input 

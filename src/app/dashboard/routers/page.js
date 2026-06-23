@@ -175,7 +175,7 @@ function RoutersContent() {
                 maxWidth="max-w-md"
             >
                 {selectedRouter && (
-                    <div className="p-6 space-y-6 font-figtree">
+                    <div className="space-y-6 font-figtree">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-2">
                                 <div className="flex items-center gap-2 text-admin-dim">
@@ -236,7 +236,7 @@ function RoutersContent() {
                 description="Establish a secure connection with a new MikroTik or Ubiquiti router."
                 maxWidth="max-w-md"
             >
-                <div className="p-6 space-y-4 font-figtree">
+                <div className="space-y-4 font-figtree">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Node Label</label>
                         <input type="text" className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value" placeholder="e.g. West-Station-01" />

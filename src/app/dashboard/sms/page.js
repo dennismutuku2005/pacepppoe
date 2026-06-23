@@ -199,7 +199,7 @@ function SMSContent() {
                 description={`Synchronizing API topology for ${currentProvider?.name}`}
                 maxWidth="max-w-md"
             >
-                <form onSubmit={handleSaveConfig} className="p-6 space-y-5">
+                <form onSubmit={handleSaveConfig} className="space-y-5">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">API Key / Token</label>
                         <input 
@@ -236,7 +236,7 @@ function SMSContent() {
                 description="Broadcast a direct message to a subscriber. Usage will be billed to the default gateway."
                 maxWidth="max-w-md"
             >
-                <form onSubmit={handleSendMessage} className="p-6 space-y-5">
+                <form onSubmit={handleSendMessage} className="space-y-5">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Recipient Identity</label>
                         <input 

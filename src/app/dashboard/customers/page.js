@@ -30,7 +30,7 @@ function CustomersContent() {
         firstName: '', lastName: '', phone: '', plan: '', price: 0, 
         username: '', password: '', status: 'disabled',
         router: '', accountNumber: '', activationFee: 1000, amountPaid: 0,
-        nextPayment: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        nextPayment: '',
         lat: '-1.286389', lng: '36.817223', walletHistory: []
     })
 
@@ -42,6 +42,10 @@ function CustomersContent() {
     const [walletStatusChange, setWalletStatusChange] = useState('enabled')
 
     useEffect(() => {
+        setFormData(prev => ({
+            ...prev,
+            nextPayment: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        }))
         const timer = setTimeout(() => {
             const enriched = mockCustomers.map(c => {
                 const names = c.name ? c.name.split(' ') : ['Subscriber', 'Node']
@@ -512,7 +516,7 @@ function CustomersContent() {
                 description={currentCustomer ? `Updating subscriber info for ${currentCustomer.username}` : 'Configure credentials and billing rules for a new subscriber.'}
                 maxWidth="max-w-md"
             >
-                <form onSubmit={handleSave} className="p-6 space-y-5 font-figtree">
+                <form onSubmit={handleSave} className="space-y-5 font-figtree">
                     {/* First Name & Second Name */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
@@ -767,7 +771,7 @@ function CustomersContent() {
                 maxWidth="max-w-md"
             >
                 {walletCustomer && (
-                    <form onSubmit={handleSaveWallet} className="p-6 space-y-5 font-figtree">
+                    <form onSubmit={handleSaveWallet} className="space-y-5 font-figtree">
                         {/* Summary Box */}
                         <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-2xl space-y-2">
                             <div className="flex justify-between items-center text-xs">

@@ -80,7 +80,7 @@ export function Modal({
     const Icon = CustomIcon || config.icon
 
     return (
-        <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4 sm:p-8">
+        <div suppressHydrationWarning className="fixed inset-0 z-[9000] flex items-center justify-center p-4 sm:p-8">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-300"
@@ -88,8 +88,8 @@ export function Modal({
             />
 
             {/* Modal Content */}
-            <div className={cn("relative bg-card-bg w-full rounded-2xl border border-pace-border animate-in zoom-in-95 fade-in duration-300 max-h-[calc(100vh-4rem)] flex flex-col transition-colors duration-300", maxWidth)}>
-                <div className="p-8 overflow-y-auto custom-scrollbar">
+            <div suppressHydrationWarning className={cn("relative bg-card-bg w-full rounded-2xl border border-pace-border animate-in zoom-in-95 fade-in duration-300 max-h-[calc(100vh-4rem)] flex flex-col transition-colors duration-300", maxWidth)}>
+                <div className="p-6 overflow-y-auto custom-scrollbar">
                     <div className="flex items-start justify-between mb-4">
                         <div className="flex flex-col gap-1">
                             {CustomIcon && (

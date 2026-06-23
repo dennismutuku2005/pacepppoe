@@ -194,7 +194,7 @@ function PackagesContent() {
                 description={currentPackage ? `Synchronizing QoS for ${currentPackage.name}` : 'Construct a new bandwidth queuing profile.'}
                 maxWidth="max-w-xl"
             >
-                <form onSubmit={handleSave} className="p-6 space-y-6">
+                <form onSubmit={handleSave} className="space-y-6">
                     <div className="space-y-4">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Plan Identity (PPPoE Profile)</label>
