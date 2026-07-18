@@ -8,6 +8,3 @@ The system provides a high-fidelity interface for real-time bandwidth tiering, a
 Engineered for modern WISPs, it features a robust SMS notification engine for automated client communication and expiration alerts. 
 With integrated health monitoring for network nodes and a centralized support ticketing system, it ensures maximum uptime and subscriber satisfaction. 
 This portal is built for visual excellence and administrative efficiency, centralizing all critical ISP operations within a single, secure sovereignty hub.
-
----
-                                      *Developed & Maintained by [pacewisp.co.ke](https://pacewisp.co.ke)*
