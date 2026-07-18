@@ -10,4 +10,4 @@ With integrated health monitoring for network nodes and a centralized support ti
 This portal is built for visual excellence and administrative efficiency, centralizing all critical ISP operations within a single, secure sovereignty hub.
 
 ---
-*Developed & Maintained by [pacewisp.co.ke](https://pacewisp.co.ke)*
+                                      *Developed & Maintained by [pacewisp.co.ke](https://pacewisp.co.ke)*
