@@ -53,7 +53,7 @@ function MpesaContent() {
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-5 border border-pace-border rounded-xl bg-card-bg group hover:border-pace-purple/20 transition-all shadow-sm">
                     <p className="text-[10px] font-bold text-admin-dim tracking-wider mb-1 uppercase">Today's Revenue</p>
                     <h3 className="text-2xl font-bold text-admin-value tabular-nums">KES {mockDashboardData.stats.totalRevenueToday.toLocaleString()}</h3>
@@ -71,11 +71,7 @@ function MpesaContent() {
                     <h3 className="text-2xl font-bold text-pace-purple tabular-nums">{mockDashboardData.stats.paybill}</h3>
                     <p className="text-[11px] font-medium text-admin-dim mt-2">Disbursement node</p>
                 </div>
-                <div className="p-5 border border-pace-border rounded-xl bg-card-bg group hover:border-pace-purple/20 transition-all shadow-sm">
-                    <p className="text-[10px] font-bold text-admin-dim tracking-wider mb-1 uppercase">Business Identity</p>
-                    <h3 className="text-xl font-bold text-admin-value truncate">{mockDashboardData.stats.accountName}</h3>
-                    <p className="text-[11px] font-medium text-admin-dim mt-2">Verification portal</p>
-                </div>
+
             </div>
 
             {/* Controls */}
