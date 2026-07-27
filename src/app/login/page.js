@@ -162,7 +162,7 @@ export default function LoginPage() {
                     src="/sidesvg.svg" 
                     alt="Side" 
                     fill
-                    className="object-contain opacity-90 p-12"
+                    className="object-contain opacity-90"
                     priority
                 />
                 <div className="absolute inset-0 bg-black/5 pointer-events-none" />
