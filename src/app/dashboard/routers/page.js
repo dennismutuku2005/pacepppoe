@@ -111,12 +111,12 @@ function RoutersContent() {
                                                 className="cursor-pointer group/node"
                                                 onClick={() => router.push(`/dashboard/routers/details?id=${r.id}`)}
                                             >
-                                                <p className="text-xs font-semibold text-admin-value group-hover/node:text-pace-purple transition-colors">{r.name}</p>
+                                                <p className="text-xs font-medium text-admin-value group-hover/node:text-pace-purple transition-colors">{r.name}</p>
                                                 <p className="text-[10px] text-admin-dim font-mono">{r.ip}</p>
                                             </div>
                                         </td>
                                         <td className="px-6 py-2">
-                                            <span className="text-[11px] font-bold text-admin-dim uppercase tracking-tight">{r.model}</span>
+                                            <span className="text-[11px] font-medium text-admin-dim uppercase tracking-tight">{r.model}</span>
                                         </td>
                                         <td className="px-6 py-2 text-center">
                                             <Badge variant={r.status === 'online' ? 'success' : 'error'} className="text-[8px] font-black border-none px-2 py-0.5 uppercase tracking-widest">
@@ -131,7 +131,7 @@ function RoutersContent() {
                                                         r.cpu > 70 ? "bg-red-500" : r.cpu > 40 ? "bg-amber-500" : "bg-pace-purple"
                                                     )} style={{ width: `${r.cpu}%` }} />
                                                 </div>
-                                                <span className="text-[10px] font-bold text-admin-value tabular-nums">{r.cpu}%</span>
+                                                <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.cpu}%</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-2">
@@ -139,11 +139,11 @@ function RoutersContent() {
                                                 <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
                                                     <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${r.ram}%` }} />
                                                 </div>
-                                                <span className="text-[10px] font-bold text-admin-value tabular-nums">{r.ram}%</span>
+                                                <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.ram}%</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-2 text-center text-xs font-semibold text-admin-value tabular-nums">{r.users}</td>
-                                        <td className="px-6 py-2 text-xs font-semibold text-pace-purple tabular-nums">{r.uptime}</td>
+                                        <td className="px-6 py-2 text-center text-xs font-medium text-admin-value tabular-nums">{r.users}</td>
+                                        <td className="px-6 py-2 text-xs font-medium text-pace-purple tabular-nums">{r.uptime}</td>
                                         <td className="px-6 py-2 text-right">
                                             <div className="flex justify-end gap-2">
                                                 <button 
