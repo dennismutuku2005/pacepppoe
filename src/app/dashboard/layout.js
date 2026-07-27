@@ -225,7 +225,7 @@ export default function DashboardLayout({ children }) {
                                     </div>
                                     <button
                                         onClick={() => setShowLogoutModal(true)}
-                                        className="w-9 h-9 rounded-xl bg-pace-bg-subtle border border-pace-border flex items-center justify-center text-[10px] font-bold text-admin-dim hover:bg-card-bg hover:text-pace-purple transition-all"
+                                        className="w-9 h-9 rounded-full bg-pace-bg-subtle border border-pace-border flex items-center justify-center text-[10px] font-bold text-admin-dim hover:bg-card-bg hover:text-pace-purple transition-all"
                                         title="Account"
                                     >
                                         {getUserInitials()}
