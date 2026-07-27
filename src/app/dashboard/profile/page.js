@@ -84,7 +84,7 @@ function ProfileContent() {
     return (
         <div className="animate-in fade-in duration-500 font-figtree pb-12 sm:pb-20">
             {/* Elegant Header */}
-            <div className="relative rounded-2xl sm:rounded-[2.5rem] overflow-hidden bg-[#501DAA] h-48 sm:h-80 shadow-2xl shadow-pace-purple/10">
+            <div className="relative rounded-[1.75rem] sm:rounded-[3rem] overflow-hidden bg-[#501DAA] h-52 sm:h-88 shadow-2xl shadow-pace-purple/10">
                 <Image 
                     src="/sidesvg.svg" 
                     alt="Network Pattern" 
@@ -98,7 +98,7 @@ function ProfileContent() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
                         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-center sm:text-left">
                             <div className="relative group shrink-0">
-                                <div className="w-20 h-20 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-2xl sm:text-4xl font-black text-white shadow-2xl overflow-hidden">
+                                <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-[1.4rem] sm:rounded-[2rem] bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-2xl sm:text-4xl font-black text-white shadow-2xl overflow-hidden">
                                     {initials}
                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                                         <Camera size={20} className="text-white" />
@@ -107,15 +107,12 @@ function ProfileContent() {
                             </div>
                             <div className="space-y-1 sm:space-y-2">
                                 <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-                                    <h1 className="text-xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight">{user.name}</h1>
+                                    <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">{user.name}</h1>
                                     <div className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-[9px] sm:text-[10px] font-bold text-white uppercase tracking-widest">
                                         {user.type}
                                     </div>
                                 </div>
-                                <p className="text-white/70 text-xs sm:text-sm font-medium flex items-center justify-center sm:justify-start gap-2">
-                                    <Globe size={13} className="opacity-50" />
-                                    Systems Administrator • Pace Networks
-                                </p>
+
                             </div>
                         </div>
                     </div>
@@ -130,12 +127,12 @@ function ProfileContent() {
                             <User size={18} />
                         </div>
                         <div>
-                            <h2 className="text-base sm:text-lg font-bold text-admin-value">Identity Settings</h2>
-                            <p className="text-[10px] sm:text-xs text-admin-dim font-medium">Update your legal identity and communication channels</p>
+                            <h2 className="text-lg sm:text-2xl font-black text-admin-value">Identity Settings</h2>
+                            <p className="text-[11px] sm:text-sm text-admin-dim font-semibold">Update your legal identity and communication channels</p>
                         </div>
                     </div>
 
-                    <div className="bg-card-bg border border-pace-border rounded-2xl sm:rounded-[2.5rem] shadow-sm overflow-hidden">
+                    <div className="bg-card-bg border border-pace-border rounded-[1.5rem] sm:rounded-[2.75rem] shadow-sm overflow-hidden">
                         <form onSubmit={handleSave} className="p-5 sm:p-10 space-y-6 sm:space-y-8">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
                                 <div className="space-y-1.5">
@@ -174,7 +171,7 @@ function ProfileContent() {
                                 </div>
                             </div>
 
-                            <div className="pt-4 sm:pt-6 flex justify-end">
+                            <div className="pt-4 sm:pt-6 flex justify-center">
                                 <button 
                                     type="submit" 
                                     disabled={isSaving}
@@ -210,13 +207,13 @@ function ProfileContent() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <div className="bg-card-bg border border-pace-border rounded-xl sm:rounded-[2rem] p-5 sm:p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
+                                <div className="bg-card-bg border border-pace-border rounded-[1.25rem] sm:rounded-[2.25rem] p-5 sm:p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
                             <div className="space-y-2 sm:space-y-3">
                                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-pace-purple/5 flex items-center justify-center text-pace-purple">
                                     <Key size={16} />
                                 </div>
-                                <h3 className="text-sm sm:text-base font-bold text-admin-value">Authentication Pin</h3>
-                                <p className="text-[11px] sm:text-xs text-admin-dim leading-relaxed font-medium">Update your administrative access pin used for critical operations.</p>
+                                <h3 className="text-base sm:text-lg font-black text-admin-value">Authentication Pin</h3>
+                                <p className="text-[12px] sm:text-sm text-admin-dim leading-relaxed font-medium">Update your administrative access pin used for critical operations.</p>
                             </div>
                             <button className="mt-4 sm:mt-6 text-xs font-bold text-pace-purple flex items-center gap-2 group-hover:gap-3 transition-all text-left">
                                 Change Password <ChevronRight size={14} />
@@ -228,8 +225,8 @@ function ProfileContent() {
                                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
                                     <Smartphone size={16} />
                                 </div>
-                                <h3 className="text-sm sm:text-base font-bold text-admin-value">2FA Verification</h3>
-                                <p className="text-[11px] sm:text-xs text-admin-dim leading-relaxed font-medium">Add an extra layer of security to your account with mobile verification.</p>
+                                <h3 className="text-base sm:text-lg font-black text-admin-value">2FA Verification</h3>
+                                <p className="text-[12px] sm:text-sm text-admin-dim leading-relaxed font-medium">Add an extra layer of security to your account with mobile verification.</p>
                             </div>
                             <button className="mt-4 sm:mt-6 text-xs font-bold text-orange-600 flex items-center gap-2 group-hover:gap-3 transition-all text-left">
                                 Setup Authenticator <ChevronRight size={14} />
@@ -238,47 +235,6 @@ function ProfileContent() {
                     </div>
                 </section>
 
-                {/* Notifications & ISP Accounts Summary */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
-                    <section className="space-y-4 sm:space-y-6">
-                        <div className="flex items-center gap-3 sm:gap-4 px-1 sm:px-2">
-                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0">
-                                <Bell size={18} />
-                            </div>
-                            <h2 className="text-base sm:text-lg font-bold text-admin-value">Notifications</h2>
-                        </div>
-                        <div className="bg-card-bg border border-pace-border rounded-xl sm:rounded-[2rem] p-5 sm:p-8 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-admin-value">Email Alerts</span>
-                                <div className="w-10 h-5 bg-pace-purple rounded-full relative cursor-pointer shrink-0">
-                                    <div className="absolute right-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
-                                </div>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-admin-value">SMS Dispatch</span>
-                                <div className="w-10 h-5 bg-pace-bg-subtle border border-pace-border rounded-full relative cursor-pointer shrink-0">
-                                    <div className="absolute left-1 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-admin-dim rounded-full shadow-sm" />
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section className="space-y-4 sm:space-y-6">
-                        <div className="flex items-center gap-3 sm:gap-4 px-1 sm:px-2">
-                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-pace-green/10 flex items-center justify-center text-pace-green shrink-0">
-                                <CreditCard size={18} />
-                            </div>
-                            <h2 className="text-base sm:text-lg font-bold text-admin-value">ISP Accounts</h2>
-                        </div>
-                        <div className="bg-card-bg border border-pace-border rounded-xl sm:rounded-[2rem] p-5 sm:p-8 flex flex-col justify-center min-h-[5.5rem] sm:min-h-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className="text-xs font-bold text-admin-value">Pace Networks Ltd</span>
-                                <div className="px-2 py-0.5 bg-green-500/10 text-green-600 text-[8px] font-black uppercase rounded-md">Primary</div>
-                            </div>
-                            <p className="text-[11px] text-admin-dim font-medium">Enterprise Gateway License #842C-B1F0</p>
-                        </div>
-                    </section>
-                </div>
             </div>
         </div>
     )
