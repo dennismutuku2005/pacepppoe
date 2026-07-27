@@ -1,6 +1,6 @@
 import {
     Users, CreditCard, Ticket, Settings,
-    Activity, Network, Layers, LifeBuoy,
+    Activity, Network, LifeBuoy,
     MessageSquare, UserRoundCheck, LayoutDashboard, FileText
 } from 'lucide-react'
 
@@ -47,14 +47,6 @@ export const NAVIGATION_SCHEMA = [
         icon: Ticket,
         policy: 'manage_packages',
         keywords: ['plans', 'pricing', 'tiers', 'bandwidth', 'packages']
-    },
-    {
-        id: 'pools',
-        name: 'PPPoE Pools',
-        href: '/dashboard/pools',
-        icon: Layers,
-        policy: 'manage_packages',
-        keywords: ['ip pools', 'subnet', 'ranges', 'dhcp']
     },
     {
         id: 'finance',
