@@ -16,6 +16,11 @@ const MapView = dynamic(() => import('@/components/MapView'), {
     loading: () => <div className="h-[200px] w-full bg-pace-bg-subtle animate-pulse rounded-xl border border-pace-border flex items-center justify-center text-[10px] font-bold uppercase text-admin-dim tracking-widest">Loading Mapping...</div>
 })
 
+const MapPicker = dynamic(() => import('@/components/MapPicker'), { 
+    ssr: false,
+    loading: () => <div className="h-[220px] w-full bg-pace-bg-subtle animate-pulse rounded-xl border border-pace-border flex items-center justify-center text-[10px] font-bold uppercase text-admin-dim tracking-widest">Loading Location Picker...</div>
+})
+
 function CustomersContent() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
@@ -31,7 +36,7 @@ function CustomersContent() {
         username: '', password: '', status: 'disabled',
         router: '', accountNumber: '', activationFee: 1000, amountPaid: 0,
         nextPayment: '',
-        lat: '-1.286389', lng: '36.817223', walletHistory: []
+        lat: '', lng: '', walletHistory: []
     })
 
     // Wallet & Reconnect Modal State
@@ -104,8 +109,8 @@ function CustomersContent() {
                 nextPayment: c.nextPayment || new Date().toISOString().split('T')[0],
                 activationFee: c.activationFee !== undefined ? c.activationFee : 0,
                 amountPaid: c.amountPaid || 0,
-                lat: c.lat ? c.lat.toString() : '-1.286389',
-                lng: c.lng ? c.lng.toString() : '36.817223'
+                lat: c.lat ? c.lat.toString() : '',
+                lng: c.lng ? c.lng.toString() : ''
             })
             setAccountType(c.accountNumber === c.phone ? 'phone' : 'generate')
         } else {
@@ -115,7 +120,7 @@ function CustomersContent() {
                 username: '', password: '', status: 'disabled',
                 router: '', accountNumber: '', activationFee: 1000, amountPaid: 0,
                 nextPayment: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                lat: '-1.286389', lng: '36.817223', walletHistory: []
+                lat: '', lng: '', walletHistory: []
             })
             setAccountType('phone')
         }
@@ -568,28 +573,21 @@ function CustomersContent() {
                         </div>
                     </div>
 
-                    {/* Geolocation Coordinates (Manual Pin Configuration) */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Latitude (Pin)</label>
-                            <input 
-                                type="text" required
-                                value={formData.lat}
-                                onChange={(e) => setFormData({...formData, lat: e.target.value})}
-                                placeholder="-1.286389"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
-                            />
+                    {/* Optional Site Pin */}
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Location Pin (Optional)</label>
+                            {formData.lat && formData.lng ? (
+                                <span className="text-[9px] font-black uppercase tracking-widest text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">Pinned</span>
+                            ) : (
+                                <span className="text-[9px] font-black uppercase tracking-widest text-admin-dim">Optional</span>
+                            )}
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Longitude (Pin)</label>
-                            <input 
-                                type="text" required
-                                value={formData.lng}
-                                onChange={(e) => setFormData({...formData, lng: e.target.value})}
-                                placeholder="36.817223"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
-                            />
-                        </div>
+                        <MapPicker
+                            value={formData.lat && formData.lng ? { lat: Number(formData.lat), lng: Number(formData.lng) } : null}
+                            onChange={(pos) => setFormData({ ...formData, lat: pos.lat.toString(), lng: pos.lng.toString() })}
+                        />
+                        <p className="text-[10px] text-admin-dim font-medium pl-1">Pick a site on the map if you want to pin the subscriber location. Leaving it blank is fine.</p>
                     </div>
 
                     <div className="space-y-1.5 pt-2">
