@@ -12,7 +12,6 @@ import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import authService from '@/lib/auth'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { GlobalSearch } from '@/components/GlobalSearch'
 
 export default function DashboardLayout({ children }) {
@@ -213,7 +212,6 @@ export default function DashboardLayout({ children }) {
                                 <GlobalSearch />
                             </div>
                             <div className="flex items-center gap-4 border-l border-pace-border pl-6 h-6">
-                                <ThemeToggle />
                                 <Link href="/dashboard/notifications" className="relative p-1.5 text-admin-dim hover:text-foreground transition-colors rounded-lg hover:bg-pace-bg-subtle">
                                     <Bell size={16} />
                                     <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-400 rounded-full border border-background"></span>
