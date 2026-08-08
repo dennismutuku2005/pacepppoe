@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X, LogOut, LayoutDashboard, Network, Users, Wallet, FileText, Activity, AlertCircle } from 'lucide-react'
 import { Modal } from '@/components/Modal'
