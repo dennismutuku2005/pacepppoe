@@ -227,3 +227,5 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
         </>
     )
 }
+
+export default Sidebar
