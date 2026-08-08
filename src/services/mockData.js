@@ -76,11 +76,11 @@ export const mockDashboardData = {
 };
 
 export const mockCustomers = [
-    { id: 1, name: "John Doe", username: "john_pppoe", phone: "0711223344", accountNumber: "0711223344", plan: "5M/5M", price: 1500, nextPayment: "2026-06-06", status: "enabled", secret: "p@ss123", router: "Main Tower A" },
-    { id: 2, name: "Jane Smith", username: "jane_wifi", phone: "0722334455", accountNumber: "4455", plan: "10M/10M", price: 2500, nextPayment: "2026-06-02", status: "enabled", secret: "secret99", router: "Main Tower A" },
-    { id: 3, name: "Robert Ngugi", username: "rob_ngugi", phone: "0733445566", accountNumber: "0733445566", plan: "20M/20M", price: 3500, nextPayment: "2026-04-10", status: "disabled", secret: "rob66", router: "Backup Site B" },
-    { id: 4, name: "Alice Wanjiku", username: "ali_wanj", phone: "0744556677", accountNumber: "6677", plan: "5M/5M", price: 1500, nextPayment: "2026-06-15", status: "enabled", secret: "ali77", router: "Corporate Link" },
-    { id: 5, name: "Mercy Mwangi", username: "mercy_m", phone: "0755667788", accountNumber: "0755667788", plan: "10M/10M", price: 2500, nextPayment: "2026-06-12", status: "enabled", secret: "mmm88", router: "Main Tower A" },
+    { id: 1, name: "John Doe", username: "john_pppoe", phone: "0711223344", accountNumber: "0711223344", plan: "5M/5M", price: 1500, amountPaid: 1500, nextPayment: "2026-06-06", status: "enabled", secret: "p@ss123", router: "Main Tower A" },
+    { id: 2, name: "Jane Smith", username: "jane_wifi", phone: "0722334455", accountNumber: "4455", plan: "10M/10M", price: 2500, amountPaid: 1250, nextPayment: "2026-06-02", status: "enabled", secret: "secret99", router: "Main Tower A" },
+    { id: 3, name: "Robert Ngugi", username: "rob_ngugi", phone: "0733445566", accountNumber: "0733445566", plan: "20M/20M", price: 3500, amountPaid: 0, nextPayment: "2026-04-10", status: "disabled", secret: "rob66", router: "Backup Site B" },
+    { id: 4, name: "Alice Wanjiku", username: "ali_wanj", phone: "0744556677", accountNumber: "6677", plan: "5M/5M", price: 1500, amountPaid: 1500, nextPayment: "2026-06-15", status: "enabled", secret: "ali77", router: "Corporate Link" },
+    { id: 5, name: "Mercy Mwangi", username: "mercy_m", phone: "0755667788", accountNumber: "0755667788", plan: "10M/10M", price: 2500, amountPaid: 0, nextPayment: "2026-06-12", status: "enabled", secret: "mmm88", router: "Main Tower A" },
 ];
 
 export const mockPackages = [

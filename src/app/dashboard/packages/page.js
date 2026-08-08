@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Plus, Package, Edit3, Trash2, Zap, Search, Activity, Sliders, DollarSign, Shield, Network, Layers } from 'lucide-react'
+import { Plus, Package, Edit3, Trash2, Zap, Search, Activity, Sliders, DollarSign, Shield, Network } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockPackages, mockCustomers } from '@/services/mockData'
@@ -16,8 +16,7 @@ function PackagesContent() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [currentPackage, setCurrentPackage] = useState(null)
     const [formData, setFormData] = useState({ 
-        name: '', price: '', limit: '', status: 'active', 
-        burstLimit: '', priority: '8', poolName: '' 
+        name: '', price: '', limit: '', router: '', active: true 
     })
 
     useEffect(() => {
@@ -35,8 +34,7 @@ function PackagesContent() {
         } else {
             setCurrentPackage(null)
             setFormData({ 
-                name: '', price: '', limit: '', status: 'active', 
-                burstLimit: '0/0', priority: '8', poolName: 'shared-pool' 
+                name: '', price: '', limit: '', router: '', active: true 
             })
         }
         setIsModalOpen(true)
@@ -64,6 +62,13 @@ function PackagesContent() {
             })
         }
         setIsModalOpen(false)
+    }
+
+    const handleToggleActive = (id) => {
+        setPackages(prev => prev.map(p => p.id === id ? { ...p, active: !p.active } : p))
+        toast.success('Plan Status Updated', {
+            description: 'The package availability has been changed.'
+        })
     }
 
     const handleDelete = (id, name, limit) => {
@@ -127,9 +132,8 @@ function PackagesContent() {
                         <thead>
                             <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
                                 <th className="px-6 py-3">Plan Identity</th>
+                                <th className="px-6 py-3">Router</th>
                                 <th className="px-6 py-3 text-center">Speed Limit</th>
-                                <th className="px-6 py-3">Burst / Priority</th>
-                                <th className="px-6 py-3">Network Pool</th>
                                 <th className="px-6 py-3 text-right">Monthly Cost</th>
                                 <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
@@ -150,20 +154,28 @@ function PackagesContent() {
                                                 {p.limit}
                                             </Badge>
                                         </td>
-                                        <td className="px-6 py-2">
-                                            <div className="flex flex-col">
-                                                <span className="text-[11px] font-semibold text-admin-value font-mono">{p.burstLimit || 'No Burst'}</span>
-                                                <span className="text-[9px] text-admin-dim font-medium uppercase tracking-wider">Priority: {p.priority}</span>
-                                            </div>
-                                        </td>
                                         <td className="px-6 py-2 text-xs font-medium text-admin-dim">
-                                            {p.poolName || 'Default Pool'}
+                                            {p.router || 'Default Router'}
                                         </td>
                                         <td className="px-6 py-2 text-right">
                                             <span className="text-xs font-bold text-admin-value tabular-nums">KES {Number(p.price).toLocaleString()}</span>
                                         </td>
                                         <td className="px-6 py-2 text-right">
-                                            <div className="flex justify-end gap-1">
+                                            <div className="flex justify-end items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleToggleActive(p.id)}
+                                                    className={cn(
+                                                        "relative inline-flex h-6 w-11 items-center rounded-full transition-all",
+                                                        p.active ? "bg-pace-purple" : "bg-pace-border"
+                                                    )}
+                                                    aria-label={p.active ? 'Disable package' : 'Enable package'}
+                                                >
+                                                    <span className={cn(
+                                                        "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-all",
+                                                        p.active ? "translate-x-5" : "translate-x-1"
+                                                    )} />
+                                                </button>
                                                 <button 
                                                     onClick={() => handleOpenModal(p)}
                                                     className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
@@ -209,7 +221,7 @@ function PackagesContent() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Sustained limit</label>
+                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Speed</label>
                                 <input 
                                     type="text" required
                                     value={formData.limit}
@@ -219,64 +231,46 @@ function PackagesContent() {
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Burst limit</label>
+                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Router</label>
                                 <input 
                                     type="text"
-                                    value={formData.burstLimit}
-                                    onChange={(e) => setFormData({...formData, burstLimit: e.target.value})}
-                                    placeholder="10M/10M"
-                                    className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-dim outline-none focus:border-pace-purple transition-all font-mono"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">QoS Priority</label>
-                                <select 
-                                    value={formData.priority}
-                                    onChange={(e) => setFormData({...formData, priority: e.target.value})}
-                                    className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
-                                >
-                                    {[1,2,3,4,5,6,7,8].map(p => (
-                                        <option key={p} value={p}>Priority {p} {p === 1 ? '(Critical)' : p === 8 ? '(Best Effort)' : ''}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Address Pool</label>
-                                <input 
-                                    type="text"
-                                    value={formData.poolName}
-                                    onChange={(e) => setFormData({...formData, poolName: e.target.value})}
-                                    placeholder="pppoe-pool"
+                                    value={formData.router}
+                                    onChange={(e) => setFormData({...formData, router: e.target.value})}
+                                    placeholder="MikroTik"
                                     className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-dim outline-none focus:border-pace-purple transition-all"
                                 />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Monthly cost (KES)</label>
-                                <input 
-                                    type="number" required
-                                    value={formData.price}
-                                    onChange={(e) => setFormData({...formData, price: e.target.value})}
-                                    placeholder="1500"
-                                    className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
-                                />
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Price</label>
+                            <input 
+                                type="number" required
+                                value={formData.price}
+                                onChange={(e) => setFormData({...formData, price: e.target.value})}
+                                placeholder="1500"
+                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between rounded-xl border border-pace-border bg-pace-bg-subtle px-4 py-3">
+                            <div>
+                                <p className="text-sm font-semibold text-admin-value">Enable package</p>
+                                <p className="text-[11px] text-admin-dim">Turn this plan on or off without deleting it.</p>
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Visibility</label>
-                                <select 
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                                    className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
-                                >
-                                    <option value="active">Active - NAS Synchronized</option>
-                                    <option value="inactive">Inactive - System Lockdown</option>
-                                </select>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFormData({...formData, active: !formData.active})}
+                                className={cn(
+                                    "relative inline-flex h-7 w-12 items-center rounded-full transition-all",
+                                    formData.active ? "bg-pace-purple" : "bg-pace-border"
+                                )}
+                            >
+                                <span className={cn(
+                                    "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-all",
+                                    formData.active ? "translate-x-6" : "translate-x-1"
+                                )} />
+                            </button>
                         </div>
                     </div>
 

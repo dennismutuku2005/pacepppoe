@@ -157,15 +157,19 @@ export default function LoginPage() {
             </div>
 
             {/* Visual Side */}
-            <div className="hidden lg:block flex-1 relative bg-[#501DAA]">
+            <div className="hidden lg:block flex-1 relative bg-white overflow-hidden">
                 <Image 
                     src="/sidesvg.svg" 
                     alt="Side" 
                     fill
+<<<<<<< HEAD
                     className="object-contain opacity-90"
+=======
+                    className="object-cover w-full h-full"
+>>>>>>> 5cda829b39ff3bd75d8b1a7258870b672362226e
                     priority
                 />
-                <div className="absolute inset-0 bg-black/5 pointer-events-none" />
+                <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white/70 via-white/20 to-transparent" />
             </div>
         </div>
     )
