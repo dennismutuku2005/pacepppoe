@@ -194,43 +194,87 @@ function ProfileContent() {
                     </div>
                 </section>
 
-                {/* Security & Access Section */}
-                <section className="space-y-4 sm:space-y-6">
+                {/* Security & Access Section - Consolidated Clean Card */}
+                <section className="space-y-4 sm:space-y-6 font-figtree">
                     <div className="flex items-center gap-3 sm:gap-4 px-1 sm:px-2">
                         <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
                             <Shield size={18} />
                         </div>
                         <div>
                             <h2 className="text-base sm:text-lg font-bold text-admin-value">Security & Access</h2>
-                            <p className="text-[10px] sm:text-xs text-admin-dim font-medium">Manage your password and authentication protocols</p>
+                            <p className="text-[10px] sm:text-xs text-admin-dim font-medium">Manage your password, PIN and two-factor authentication</p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                <div className="bg-card-bg border border-pace-border rounded-[1.25rem] sm:rounded-[2.25rem] p-5 sm:p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
-                            <div className="space-y-2 sm:space-y-3">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-pace-purple/5 flex items-center justify-center text-pace-purple">
-                                    <Key size={16} />
+                    <div className="bg-card-bg border border-pace-border rounded-[1.5rem] sm:rounded-[2.75rem] p-5 sm:p-8 space-y-6">
+                        {/* Change Password */}
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-pace-purple/5 flex items-center justify-center text-pace-purple">
+                                    <Lock size={16} />
                                 </div>
-                                <h3 className="text-base sm:text-lg font-black text-admin-value">Authentication Pin</h3>
-                                <p className="text-[12px] sm:text-sm text-admin-dim leading-relaxed font-medium">Update your administrative access pin used for critical operations.</p>
+                                <h3 className="text-sm sm:text-base font-bold text-admin-value">Change Password</h3>
                             </div>
-                            <button className="mt-4 sm:mt-6 text-xs font-bold text-pace-purple flex items-center gap-2 group-hover:gap-3 transition-all text-left">
-                                Change Password <ChevronRight size={14} />
-                            </button>
+                            <form onSubmit={(e) => {
+                                e.preventDefault();
+                                toast.success('Password updated locally');
+                            }} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <input type="password" placeholder="Current password" className="col-span-1 sm:col-span-1 py-2 px-3 rounded-xl border border-pace-border bg-pace-bg-subtle text-sm" />
+                                <input type="password" placeholder="New password" className="col-span-1 py-2 px-3 rounded-xl border border-pace-border bg-pace-bg-subtle text-sm" />
+                                <input type="password" placeholder="Confirm new" className="col-span-1 py-2 px-3 rounded-xl border border-pace-border bg-pace-bg-subtle text-sm" />
+                                <div className="col-span-1 sm:col-span-3 flex justify-center mt-2">
+                                    <button type="submit" className="w-full sm:w-72 py-3 bg-pace-purple text-white rounded-2xl font-bold text-sm shadow-md">Update Password</button>
+                                </div>
+                            </form>
                         </div>
 
-                        <div className="bg-card-bg border border-pace-border rounded-xl sm:rounded-[2rem] p-5 sm:p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
-                            <div className="space-y-2 sm:space-y-3">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
+                        {/* Admin PIN */}
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-pace-purple/5 flex items-center justify-center text-pace-purple">
+                                    <Key size={16} />
+                                </div>
+                                <h3 className="text-sm sm:text-base font-bold text-admin-value">Administrative PIN</h3>
+                            </div>
+                            <form onSubmit={(e) => { e.preventDefault(); toast.success('Admin PIN updated'); }} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <input type="password" inputMode="numeric" placeholder="New 4-digit PIN" maxLength={6} className="col-span-1 py-2 px-3 rounded-xl border border-pace-border bg-pace-bg-subtle text-sm" />
+                                <input type="password" inputMode="numeric" placeholder="Confirm PIN" maxLength={6} className="col-span-1 py-2 px-3 rounded-xl border border-pace-border bg-pace-bg-subtle text-sm" />
+                                <div className="col-span-1 sm:col-span-3 flex justify-center mt-2">
+                                    <button type="submit" className="w-full sm:w-72 py-3 bg-white text-pace-purple rounded-2xl font-bold text-sm border border-pace-purple/10 shadow-sm">Set Admin PIN</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* 2FA Setup */}
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-600">
                                     <Smartphone size={16} />
                                 </div>
-                                <h3 className="text-base sm:text-lg font-black text-admin-value">2FA Verification</h3>
-                                <p className="text-[12px] sm:text-sm text-admin-dim leading-relaxed font-medium">Add an extra layer of security to your account with mobile verification.</p>
+                                <h3 className="text-sm sm:text-base font-bold text-admin-value">Two-Factor Authentication</h3>
                             </div>
-                            <button className="mt-4 sm:mt-6 text-xs font-bold text-orange-600 flex items-center gap-2 group-hover:gap-3 transition-all text-left">
-                                Setup Authenticator <ChevronRight size={14} />
-                            </button>
+                            <p className="text-[12px] text-admin-dim">Secure your account with an authenticator app. We recommend using Google Authenticator or Authy.</p>
+                            <div className="flex flex-col sm:flex-row items-center gap-3">
+                                <div className="w-full sm:w-48 h-48 bg-pace-bg-subtle border border-pace-border rounded-xl flex items-center justify-center text-admin-dim">
+                                    <div className="text-center">
+                                        <div className="mb-2 font-semibold">QR Placeholder</div>
+                                        <div className="text-xs">Scan with your authenticator</div>
+                                    </div>
+                                </div>
+                                <div className="flex-1 space-y-3">
+                                    <div className="flex gap-2">
+                                        <input type="text" placeholder="Enter verification code" className="flex-1 py-2 px-3 rounded-xl border border-pace-border bg-pace-bg-subtle text-sm" />
+                                        <button onClick={() => toast.success('2FA enabled (mock)')} className="py-2 px-4 bg-pace-purple text-white rounded-xl font-bold">Enable</button>
+                                    </div>
+                                    <div className="text-[12px] text-admin-dim">If you already have 2FA enabled, you can regenerate recovery codes from here.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Primary CTA */}
+                        <div className="pt-2 border-t border-pace-border"></div>
+                        <div className="flex justify-center">
+                            <button onClick={() => toast.success('Security settings saved (mock)')} className="w-full sm:w-96 py-3 bg-pace-purple text-white rounded-3xl font-black text-sm shadow-lg">Save Security Settings</button>
                         </div>
                     </div>
                 </section>
