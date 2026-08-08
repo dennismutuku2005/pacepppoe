@@ -8,7 +8,7 @@ import { mockCustomers, mockPackages } from '@/services/mockData'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
-function MpesaContent() {
+function AccountsContent() {
     const [isLoading, setIsLoading] = useState(true)
     const [accounts, setAccounts] = useState([])
     const [search, setSearch] = useState('')
@@ -61,7 +61,7 @@ function MpesaContent() {
                         <div className="w-9 h-9 rounded-xl bg-pace-purple/10 flex items-center justify-center">
                             <Wallet size={18} className="text-pace-purple" />
                         </div>
-                        Subscriber Accounts
+                        Accounts
                     </h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Wallet balance and package payment status for every subscriber</p>
                 </div>
@@ -183,10 +183,10 @@ function MpesaContent() {
     )
 }
 
-export default function MpesaPage() {
+export default function AccountsPage() {
     return (
         <Suspense fallback={<div className="p-8 text-center text-admin-dim animate-pulse text-sm font-medium">Syncing subscriber wallet accounts...</div>}>
-            <MpesaContent />
+            <AccountsContent />
         </Suspense>
     )
 }

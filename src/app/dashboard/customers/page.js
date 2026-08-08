@@ -6,7 +6,6 @@ import { Badge } from '@/components/Badge'
 import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockCustomers, mockRouters, mockPackages } from '@/services/mockData'
 import { toast } from 'sonner'
-import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
@@ -354,13 +353,6 @@ function CustomersContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Subscriber List</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">PPPoE node authentication and session control</p>
                 </div>
-                <button 
-                    onClick={() => handleOpenModal()}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95"
-                >
-                    <UserPlus size={16} />
-                    <span>Add Subscriber</span>
-                </button>
             </div>
 
             {/* Controls */}
@@ -389,7 +381,6 @@ function CustomersContent() {
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Service Tier</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Wallet Status</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Status</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
@@ -459,51 +450,6 @@ function CustomersContent() {
                                                     </Badge>
                                                 </button>
                                             </td>
-                                            <td className="px-6 py-2 text-right">
-                                                <div className="flex justify-end items-center gap-1">
-                                                    <button 
-                                                        onClick={() => handleOpenWalletModal(c)}
-                                                        className="p-1 text-admin-dim hover:text-green-600 hover:bg-green-500/5 rounded-lg transition-all"
-                                                        title="Wallet & Manual Reconnect"
-                                                    >
-                                                        <Wallet size={13} />
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleOpenModal(c)}
-                                                        className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
-                                                        title="View Location & Edit"
-                                                    >
-                                                        <MapPin size={13} />
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleOpenModal(c)}
-                                                        className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
-                                                        title="Edit Details"
-                                                    >
-                                                        <Edit2 size={13} />
-                                                    </button>
-                                                    <button 
-                                                        className="p-1 text-admin-dim hover:text-green-500 hover:bg-green-500/5 rounded-lg transition-all"
-                                                        title="Quick SMS"
-                                                    >
-                                                        <Smartphone size={13} />
-                                                    </button>
-                                                    <button 
-                                                        className="p-1 text-admin-dim hover:text-orange-500 hover:bg-orange-500/5 rounded-lg transition-all"
-                                                        title="Log Incident"
-                                                        onClick={() => router.push(`/dashboard/tickets?customer=${fullName}`)}
-                                                    >
-                                                        <LifeBuoy size={13} />
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleDelete(c.id, fullName)}
-                                                        className="p-1 text-admin-dim hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
-                                                        title="Delete Subscriber"
-                                                    >
-                                                        <Trash2 size={13} />
-                                                    </button>
-                                                </div>
-                                            </td>
                                         </tr>
                                     )
                                 })
@@ -513,16 +459,6 @@ function CustomersContent() {
                 </div>
             </div>
 
-            {/* Subscriber Add/Edit Modal */}
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={currentCustomer ? 'Edit Subscriber' : 'Add Subscriber'}
-                description={currentCustomer ? `Updating subscriber info for ${currentCustomer.username}` : 'Configure credentials and billing rules for a new subscriber.'}
-                maxWidth="max-w-md"
-            >
-                <form onSubmit={handleSave} className="space-y-5 font-figtree">
-                    {/* First Name & Second Name */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">First Name</label>

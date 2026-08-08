@@ -90,14 +90,14 @@ th {
   color: var(--admin-label);
   background-color: var(--pace-bg-subtle);
   letter-spacing: 0.02em;
-  padding: 10px 16px !important;
+  padding: 8px 12px !important;
   font-size: 11px !important;
   border-bottom: 1px solid var(--pace-border);
 }
 
 td {
-  padding: 12px 16px !important;
-  font-size: 13px !important;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
 }
 
 tr:hover td {

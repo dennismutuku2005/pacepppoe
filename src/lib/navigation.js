@@ -60,10 +60,10 @@ export const NAVIGATION_SCHEMA = [
                 keywords: ['revenue', 'sales', 'earnings', 'payments', 'money']
             },
             {
-                name: 'M-Pesa Ledger',
+                name: 'Accounts',
                 href: '/dashboard/mpesa',
                 policy: 'view_mpesa',
-                keywords: ['stk push', 'payments', 'mobile money', 'safaricom']
+                keywords: ['accounts', 'wallet', 'subscriber balance', 'payments']
             },
             {
                 name: 'Financial Reports',
