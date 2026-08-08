@@ -46,7 +46,7 @@ export default function LoginPage() {
                 setIsRedirecting(true)
 
                 setTimeout(() => {
-                    router.push(`/dashboard`)
+                    router.push('/admin')
                 }, 400)
             } else {
                 setError(result.message || 'Verification failed.')
@@ -71,7 +71,7 @@ export default function LoginPage() {
     return (
         <div className="h-screen w-screen flex bg-white font-figtree text-sm overflow-hidden">
             {/* Login Form Side */}
-            <div className="w-full lg:w-[480px] h-full flex flex-col justify-center px-12 lg:px-20 relative z-10 bg-white shadow-xl">
+            <div className="w-full lg:w-120 h-full flex flex-col justify-center px-12 lg:px-20 relative z-10 bg-white shadow-xl">
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -165,7 +165,7 @@ export default function LoginPage() {
                     className="object-cover w-full h-full"
                     priority
                 />
-                <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white/70 via-white/20 to-transparent" />
+                <div className="absolute inset-y-0 right-0 w-24 bg-linear-to-l from-white/70 via-white/20 to-transparent" />
             </div>
         </div>
     )

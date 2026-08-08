@@ -24,7 +24,7 @@ export const TableRowSkeleton = ({ cols = 6, rows = 8, colHeight = "h-4" }) => (
     <>
         {[...Array(rows)].map((_, i) => (
             <tr key={`skel-${i}`} className="border-b border-pace-border last:border-0">
-                <td colSpan={cols} className="px-6 py-[14px]">
+                <td colSpan={cols} className="px-6 py-3.5">
                     <div className="flex items-center gap-3">
                         <Skeleton className="w-8 h-8 rounded-lg shrink-0 opacity-60" />
                         <Skeleton

@@ -1,17 +1,15 @@
 "use client"
 
 import React from 'react'
-import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-
+import authService from '@/lib/auth'
 
 export default function RootPage() {
   const router = useRouter()
 
   React.useEffect(() => {
-    const token = localStorage.getItem('pace_token')
-    if (token) {
-      router.push('/dashboard')
+    if (authService.isAuthenticated()) {
+      router.push('/admin')
     } else {
       router.push('/login')
     }

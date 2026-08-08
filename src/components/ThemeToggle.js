@@ -52,7 +52,7 @@ export function ThemeToggle() {
             </AnimatePresence>
 
             {/* Subtle hover gleam effect */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent 
+            <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/10 to-transparent 
                       opacity-0 group-hover:opacity-100 transition-opacity duration-500 -translate-x-full 
                       group-hover:translate-x-full transform"
             />
