@@ -119,16 +119,16 @@ function ProfileContent() {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto mt-6 sm:mt-12 space-y-6 sm:space-y-12">
+            <div className="max-w-4xl mx-auto mt-6 sm:mt-12 space-y-6 sm:space-y-12 font-figtree">
                 {/* Identity Settings Section */}
-                <section className="space-y-4 sm:space-y-6">
+                <section className="space-y-4 sm:space-y-6 font-sans font-normal">
                     <div className="flex items-center gap-3 sm:gap-4 px-1 sm:px-2">
                         <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-pace-purple/10 flex items-center justify-center text-pace-purple shrink-0">
                             <User size={18} />
                         </div>
                         <div>
-                            <h2 className="text-lg sm:text-2xl font-black text-admin-value">Identity Settings</h2>
-                            <p className="text-[11px] sm:text-sm text-admin-dim font-semibold">Update your legal identity and communication channels</p>
+                            <h2 className="text-lg sm:text-2xl font-medium text-admin-value">Identity Settings</h2>
+                            <p className="text-[11px] sm:text-sm text-admin-dim font-normal">Update your legal identity and communication channels</p>
                         </div>
                     </div>
 
@@ -142,7 +142,7 @@ function ProfileContent() {
                                         <input 
                                             type="text" 
                                             defaultValue={user.name}
-                                            className="w-full pl-11 pr-4 py-3 sm:py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-admin-value focus:bg-card-bg focus:border-pace-purple outline-none transition-all"
+                                            className="w-full pl-11 pr-4 py-3 sm:py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-xl sm:rounded-2xl text-xs sm:text-sm font-normal text-admin-value focus:bg-card-bg focus:border-pace-purple outline-none transition-all"
                                         />
                                     </div>
                                 </div>
@@ -153,7 +153,7 @@ function ProfileContent() {
                                         <input 
                                             type="tel" 
                                             defaultValue={user.phone}
-                                            className="w-full pl-11 pr-4 py-3 sm:py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-admin-value focus:bg-card-bg focus:border-pace-purple outline-none transition-all"
+                                            className="w-full pl-11 pr-4 py-3 sm:py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-xl sm:rounded-2xl text-xs sm:text-sm font-normal text-admin-value focus:bg-card-bg focus:border-pace-purple outline-none transition-all"
                                         />
                                     </div>
                                 </div>
@@ -166,16 +166,16 @@ function ProfileContent() {
                                     <input 
                                         type="email" 
                                         defaultValue={user.username}
-                                        className="w-full pl-11 pr-4 py-3 sm:py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold text-admin-value focus:bg-card-bg focus:border-pace-purple outline-none transition-all"
+                                        className="w-full pl-11 pr-4 py-3 sm:py-4 bg-pace-bg-subtle/50 border border-pace-border rounded-xl sm:rounded-2xl text-xs sm:text-sm font-normal text-admin-value focus:bg-card-bg focus:border-pace-purple outline-none transition-all"
                                     />
                                 </div>
                             </div>
 
-                            <div className="pt-4 sm:pt-6 flex justify-center">
+                            <div className="pt-4 sm:pt-6">
                                 <button 
                                     type="submit" 
                                     disabled={isSaving}
-                                    className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-4 bg-pace-purple text-white rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-pace-purple/20 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 sm:gap-3"
+                                    className="w-full px-6 py-3 bg-pace-purple text-white rounded-xl sm:rounded-2xl text-sm font-semibold shadow-lg shadow-pace-purple/20 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isSaving ? (
                                         <>
@@ -206,8 +206,8 @@ function ProfileContent() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                <div className="bg-card-bg border border-pace-border rounded-[1.25rem] sm:rounded-[2.25rem] p-5 sm:p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                                <div className="bg-card-bg border border-pace-border rounded-[1.25rem] sm:rounded-[2.25rem] p-5 sm:p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all font-figtree">
                             <div className="space-y-2 sm:space-y-3">
                                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-pace-purple/5 flex items-center justify-center text-pace-purple">
                                     <Key size={16} />
@@ -217,19 +217,6 @@ function ProfileContent() {
                             </div>
                             <button className="mt-4 sm:mt-6 text-xs font-bold text-pace-purple flex items-center gap-2 group-hover:gap-3 transition-all text-left">
                                 Change Password <ChevronRight size={14} />
-                            </button>
-                        </div>
-
-                        <div className="bg-card-bg border border-pace-border rounded-xl sm:rounded-[2rem] p-5 sm:p-8 flex flex-col justify-between group hover:border-pace-purple/30 transition-all">
-                            <div className="space-y-2 sm:space-y-3">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
-                                    <Smartphone size={16} />
-                                </div>
-                                <h3 className="text-base sm:text-lg font-black text-admin-value">2FA Verification</h3>
-                                <p className="text-[12px] sm:text-sm text-admin-dim leading-relaxed font-medium">Add an extra layer of security to your account with mobile verification.</p>
-                            </div>
-                            <button className="mt-4 sm:mt-6 text-xs font-bold text-orange-600 flex items-center gap-2 group-hover:gap-3 transition-all text-left">
-                                Setup Authenticator <ChevronRight size={14} />
                             </button>
                         </div>
                     </div>
