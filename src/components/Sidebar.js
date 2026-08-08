@@ -17,10 +17,11 @@ import { cn } from '@/lib/utils'
 import authService from '@/lib/auth'
 import { getFilteredNavigation } from '@/lib/navigation'
 
-export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
+export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationOverride = null }) {
     const pathname = usePathname()
     const [openMenus, setOpenMenus] = useState([])
     const [showLogoutModal, setShowLogoutModal] = useState(false)
+    const [mounted, setMounted] = useState(false)
 
 
     // Helper to persist query params
@@ -42,15 +43,18 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
         )
     }
 
-    // Move navigation logic to useMemo and ensure it's stable during hydration
+    // Compute navigation only on the client to avoid SSR/CSR mismatches
     const searchParams = useSearchParams()
-    const navigation = useMemo(() => {
-        const hasPolicy = (policy) => {
-            if (typeof window === 'undefined') return true;
-            return authService.hasPolicy(policy);
-        };
-        return getFilteredNavigation(hasPolicy);
-    }, [])
+    const [navigation, setNavigation] = useState([])
+
+    useEffect(() => {
+        if (navigationOverride && Array.isArray(navigationOverride)) {
+            setNavigation(navigationOverride)
+            return
+        }
+        const hasPolicy = (policy) => authService.hasPolicy(policy)
+        setNavigation(getFilteredNavigation(hasPolicy))
+    }, [navigationOverride])
 
     // Add body scroll lock when mobile sidebar is open
     useEffect(() => {
@@ -63,6 +67,11 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
             document.body.style.overflow = '';
         };
     }, [isMobile, isSidebarOpen]);
+
+    // Avoid hydration mismatches: only use `pathname`-dependent UI after mount
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const sidebarClass = isMobile
         ? cn(
@@ -113,7 +122,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
                     )}
                 >
                     {navigation.map((item) => {
-                        const isActive = pathname === item.href || item.children?.some(child => child.href === pathname);
+                        const isActive = mounted && (pathname === item.href || item.children?.some(child => child.href === pathname));
                         const isExpanded = openMenus.includes(item.id);
 
                         return (
@@ -140,7 +149,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile }) {
                                         {showText && isExpanded && (
                                             <div className="ml-4 space-y-0.5 border-l border-pace-border pl-2 my-1">
                                                 {item.children.map((child) => {
-                                                    const isChildActive = pathname === child.href;
+                                                    const isChildActive = mounted && pathname === child.href;
                                                     return (
                                                         <Link
                                                             key={child.name}

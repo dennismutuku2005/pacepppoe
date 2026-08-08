@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X, LogOut, LayoutDashboard, Network, Users, Wallet, FileText, Activity, AlertCircle } from 'lucide-react'
+import Sidebar from '@/components/Sidebar'
 import { Modal } from '@/components/Modal'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import authService from '@/lib/auth'
@@ -136,74 +137,12 @@ export default function AdminLayout({ children }) {
           />
         )}
 
-        <aside className={sidebarClass}>
-          <div className="h-16 flex items-center justify-center border-b border-pace-border">
-            <Link href="/admin" className="flex items-center justify-center gap-2 w-full">
-              {showText ? (
-                <Image
-                  src="/logoc.png"
-                  alt="Pace"
-                  width={140}
-                  height={46}
-                  className="h-8 w-auto object-contain"
-                  priority
-                />
-              ) : (
-                <Image
-                  src="/logoc.png"
-                  alt="Pace"
-                  width={40}
-                  height={40}
-                  className="h-7 w-auto object-contain"
-                  priority
-                />
-              )}
-            </Link>
-          </div>
-
-          <nav className={cn('flex-1 overflow-y-auto custom-scrollbar', showText ? 'p-3' : 'px-2 py-3')}>
-            {ADMIN_NAVIGATION.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center transition-all rounded-xl text-[13px] py-2',
-                    showText ? 'px-3 gap-3' : 'px-0 justify-center',
-                    isActive
-                      ? 'bg-pace-purple text-white shadow-sm font-medium'
-                      : 'text-admin-label hover:bg-pace-bg-subtle hover:text-foreground'
-                  )}
-                >
-                  <item.icon size={18} className={cn(isActive ? 'text-white' : 'text-admin-dim')} />
-                  {showText && <span className="truncate">{item.name}</span>}
-                </Link>
-              )
-            })}
-          </nav>
-
-          <div className={cn('mt-auto border-t border-pace-border py-4', showText ? 'px-3' : 'px-2')}>
-            <button
-              onClick={() => setShowLogoutModal(true)}
-              className={cn(
-                'w-full flex items-center rounded-xl transition-all text-[13px] py-2.5',
-                showText ? 'px-3 gap-3 justify-start' : 'px-0 justify-center',
-                'text-admin-dim hover:text-red-500 hover:bg-red-500/10'
-              )}
-            >
-              <LogOut size={18} />
-              {showText && <span>Sign Out</span>}
-            </button>
-
-            {showText && (
-              <div className="mt-4 px-2 py-3 rounded-2xl bg-pace-bg-subtle border border-pace-border text-[12px] text-admin-dim">
-                <p className="font-semibold text-admin-value">{user?.name || 'Administrator'}</p>
-                <p className="mt-1 text-xs uppercase tracking-widest">{user?.type || 'admin'}</p>
-              </div>
-            )}
-          </div>
-        </aside>
+        <Sidebar
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+          isMobile={isMobile}
+          navigationOverride={ADMIN_NAVIGATION}
+        />
 
         <main
           className={cn(

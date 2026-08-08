@@ -27,7 +27,25 @@ class AuthService {
       name: isAdmin ? 'System Administrator' : username,
       type: isAdmin ? 'admin' : 'user',
       phone: isAdmin ? '0712345678' : '0700000000',
-      email: isAdmin ? 'admin@pacewisp.co.ke' : `${username}@pacewisp.co.ke`
+      email: isAdmin ? 'admin@pacewisp.co.ke' : `${username}@pacewisp.co.ke`,
+      // Default policies for non-admin mock users so sidebar navigation appears
+      policies: isAdmin
+        ? ['*']
+        : [
+            'view_dashboard',
+            'manage_customers',
+            'view_active_users',
+            'view_routers',
+            'manage_packages',
+            'view_payments',
+            'view_mpesa',
+            'view_reports',
+            'manage_expenses',
+            'view_tickets',
+            'view_sms',
+            'system_config',
+            'view_logs'
+          ]
     }
     const dummyToken = 'mock-jwt-token-' + Date.now();
 
@@ -172,7 +190,7 @@ class AuthService {
     if (!user) return false;
 
     // Admin/Superadmin bypass
-    if (user.type === 'admin' || user.type === 'superadmin') return true;
+    if (user.type === 'admin' || user.type === 'superadmin' || user.type === 'isp') return true;
 
     // Check specific policy
     const policies = user.policies || [];
