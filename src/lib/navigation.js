@@ -101,12 +101,6 @@ export const NAVIGATION_SCHEMA = [
         icon: Settings,
         children: [
             {
-                name: 'Gateway Config',
-                href: '/dashboard/payment-config',
-                policy: 'system_config',
-                keywords: ['payment configuration', 'keys', 'stk token', 'setup', 'gateways']
-            },
-            {
                 name: 'Activity Logs',
                 href: '/dashboard/logs',
                 policy: 'view_logs',
