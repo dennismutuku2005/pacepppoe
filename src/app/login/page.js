@@ -46,7 +46,8 @@ export default function LoginPage() {
                 setIsRedirecting(true)
 
                 setTimeout(() => {
-                    router.push('/admin')
+                    const isAdmin = result.data?.user?.type === 'admin'
+                    router.push(isAdmin ? '/admin' : '/dashboard')
                 }, 400)
             } else {
                 setError(result.message || 'Verification failed.')

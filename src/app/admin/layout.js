@@ -137,12 +137,26 @@ export default function AdminLayout({ children }) {
         )}
 
         <aside className={sidebarClass}>
-          <div className="h-16 flex items-center justify-center border-b border-pace-border px-3">
-            <Link href="/admin" className="flex items-center gap-2 w-full">
+          <div className="h-16 flex items-center justify-center border-b border-pace-border">
+            <Link href="/admin" className="flex items-center justify-center gap-2 w-full">
               {showText ? (
-                <span className="text-lg font-black tracking-tight text-admin-value">Admin Portal</span>
+                <Image
+                  src="/logoc.png"
+                  alt="Pace"
+                  width={140}
+                  height={46}
+                  className="h-8 w-auto object-contain"
+                  priority
+                />
               ) : (
-                <span className="text-lg font-black text-admin-value">AP</span>
+                <Image
+                  src="/logoc.png"
+                  alt="Pace"
+                  width={40}
+                  height={40}
+                  className="h-7 w-auto object-contain"
+                  priority
+                />
               )}
             </Link>
           </div>

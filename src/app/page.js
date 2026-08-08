@@ -9,7 +9,12 @@ export default function RootPage() {
 
   React.useEffect(() => {
     if (authService.isAuthenticated()) {
-      router.push('/admin')
+      const user = authService.getUser()
+      if (user?.type === 'admin' || user?.type === 'superadmin') {
+        router.push('/admin')
+      } else {
+        router.push('/dashboard')
+      }
     } else {
       router.push('/login')
     }

@@ -13,23 +13,21 @@ class AuthService {
    * Login user (Mock)
    */
   async login(username, password) {
-    const ADMIN_USERNAME = 'admin'
-    const ADMIN_PASSWORD = 'admin'
-
-    if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+    if (!username || !password) {
       return {
         success: false,
-        message: 'Invalid admin credentials. Only admin access is allowed.'
+        message: 'Username and password are required.'
       }
     }
 
+    const isAdmin = username === 'admin' && password === 'admin'
     const dummyUser = {
-      id: 1,
-      username: ADMIN_USERNAME,
-      name: 'System Administrator',
-      type: 'admin',
-      phone: '0712345678',
-      email: 'admin@pacewisp.co.ke'
+      id: Date.now(),
+      username,
+      name: isAdmin ? 'System Administrator' : username,
+      type: isAdmin ? 'admin' : 'user',
+      phone: isAdmin ? '0712345678' : '0700000000',
+      email: isAdmin ? 'admin@pacewisp.co.ke' : `${username}@pacewisp.co.ke`
     }
     const dummyToken = 'mock-jwt-token-' + Date.now();
 
