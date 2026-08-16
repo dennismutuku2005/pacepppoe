@@ -112,7 +112,7 @@ function RouterDetailsContent() {
             </div>
 
             {/* Quick Metrics Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                     { label: 'CPU Load', value: `${node.cpu}%`, icon: Cpu, color: 'text-pace-purple', bg: 'bg-pace-purple/5' },
                     { label: 'RAM Memory', value: `${node.ram}%`, icon: HardDrive, color: 'text-blue-500', bg: 'bg-blue-500/5' },

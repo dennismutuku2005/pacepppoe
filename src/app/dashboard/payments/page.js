@@ -58,7 +58,7 @@ function PaymentsContent() {
             </div>
 
             {/* Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div className="bg-card-bg border border-pace-border rounded-xl p-5 group hover:border-pace-purple/20 transition-all shadow-sm">
                     <p className="text-[10px] font-bold text-admin-dim uppercase tracking-wider mb-1">Total Revenue</p>
                     <h3 className="text-2xl font-bold text-admin-value tabular-nums">KES 152,400</h3>

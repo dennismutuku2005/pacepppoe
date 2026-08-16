@@ -77,9 +77,9 @@ export const mockDashboardData = {
 
 export const mockCustomers = [
     { id: 1, name: "John Doe", username: "john_pppoe", phone: "0711223344", accountNumber: "0711223344", plan: "5M/5M", price: 1500, amountPaid: 1500, nextPayment: "2026-06-06", status: "enabled", secret: "p@ss123", router: "Main Tower A" },
-    { id: 2, name: "Jane Smith", username: "jane_wifi", phone: "0722334455", accountNumber: "4455", plan: "10M/10M", price: 2500, amountPaid: 1250, nextPayment: "2026-06-02", status: "enabled", secret: "secret99", router: "Main Tower A" },
+    { id: 2, name: "Jane Smith", username: "jane_wifi", phone: "0722334455", accountNumber: "234455", plan: "10M/10M", price: 2500, amountPaid: 1250, nextPayment: "2026-06-02", status: "enabled", secret: "secret99", router: "Main Tower A" },
     { id: 3, name: "Robert Ngugi", username: "rob_ngugi", phone: "0733445566", accountNumber: "0733445566", plan: "20M/20M", price: 3500, amountPaid: 0, nextPayment: "2026-04-10", status: "disabled", secret: "rob66", router: "Backup Site B" },
-    { id: 4, name: "Alice Wanjiku", username: "ali_wanj", phone: "0744556677", accountNumber: "6677", plan: "5M/5M", price: 1500, amountPaid: 1500, nextPayment: "2026-06-15", status: "enabled", secret: "ali77", router: "Corporate Link" },
+    { id: 4, name: "Alice Wanjiku", username: "ali_wanj", phone: "0744556677", accountNumber: "246677", plan: "5M/5M", price: 1500, amountPaid: 1500, nextPayment: "2026-06-15", status: "enabled", secret: "ali77", router: "Corporate Link" },
     { id: 5, name: "Mercy Mwangi", username: "mercy_m", phone: "0755667788", accountNumber: "0755667788", plan: "10M/10M", price: 2500, amountPaid: 0, nextPayment: "2026-06-12", status: "enabled", secret: "mmm88", router: "Main Tower A" },
 ];
 
@@ -88,6 +88,26 @@ export const mockPackages = [
     { id: 2, name: "Silver Plan", limit: "10M/10M", burstLimit: "15M/15M", price: 2500, priority: 7, poolName: "shared-pool" },
     { id: 3, name: "Gold Plan", limit: "20M/20M", burstLimit: "30M/30M", price: 3500, priority: 6, poolName: "business-pool" },
     { id: 4, name: "Business Pro", limit: "50M/50M", burstLimit: "0/0", price: 7500, priority: 1, poolName: "dedicated-pool" }
+];
+
+// Monthly revenue per service plan (last 6 months)
+export const mockPlanMonthlyRevenue = [
+    { month: "Mar", "Bronze Plan": 52500, "Silver Plan": 42500, "Gold Plan": 31500, "Business Pro": 45000 },
+    { month: "Apr", "Bronze Plan": 58500, "Silver Plan": 47500, "Gold Plan": 35000, "Business Pro": 52500 },
+    { month: "May", "Bronze Plan": 63000, "Silver Plan": 52500, "Gold Plan": 38500, "Business Pro": 60000 },
+    { month: "Jun", "Bronze Plan": 61500, "Silver Plan": 55000, "Gold Plan": 42000, "Business Pro": 67500 },
+    { month: "Jul", "Bronze Plan": 67500, "Silver Plan": 60000, "Gold Plan": 45500, "Business Pro": 75000 },
+    { month: "Aug", "Bronze Plan": 72000, "Silver Plan": 65000, "Gold Plan": 49000, "Business Pro": 82500 },
+];
+
+// Subscriber distribution per plan (total across all time)
+export const mockPlanSubscriberHistory = [
+    { month: "Mar", "Bronze Plan": 34, "Silver Plan": 18, "Gold Plan": 9, "Business Pro": 5 },
+    { month: "Apr", "Bronze Plan": 37, "Silver Plan": 21, "Gold Plan": 10, "Business Pro": 6 },
+    { month: "May", "Bronze Plan": 40, "Silver Plan": 23, "Gold Plan": 11, "Business Pro": 7 },
+    { month: "Jun", "Bronze Plan": 42, "Silver Plan": 24, "Gold Plan": 12, "Business Pro": 8 },
+    { month: "Jul", "Bronze Plan": 45, "Silver Plan": 26, "Gold Plan": 13, "Business Pro": 9 },
+    { month: "Aug", "Bronze Plan": 48, "Silver Plan": 28, "Gold Plan": 14, "Business Pro": 10 },
 ];
 
 export const mockRouters = [

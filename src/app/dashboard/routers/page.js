@@ -59,13 +59,6 @@ function RoutersContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Routers</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Manage and monitor your network infrastructure</p>
                 </div>
-                <button 
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-pace-purple text-white rounded-xl hover:opacity-95 transition-all text-sm font-medium shadow-sm active:scale-[0.98]"
-                >
-                    <Plus size={18} />
-                    <span>Authorize Node</span>
-                </button>
             </div>
 
             {/* Controls */}

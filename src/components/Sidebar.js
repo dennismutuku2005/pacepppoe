@@ -50,10 +50,15 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
     useEffect(() => {
         if (navigationOverride && Array.isArray(navigationOverride)) {
             setNavigation(navigationOverride)
+            // Open all groups that have children by default
+            setOpenMenus(navigationOverride.filter(i => i.children).map(i => i.id))
             return
         }
         const hasPolicy = (policy) => authService.hasPolicy(policy)
-        setNavigation(getFilteredNavigation(hasPolicy))
+        const nav = getFilteredNavigation(hasPolicy)
+        setNavigation(nav)
+        // Open all groups that have children by default
+        setOpenMenus(nav.filter(i => i.children).map(i => i.id))
     }, [navigationOverride])
 
     // Add body scroll lock when mobile sidebar is open

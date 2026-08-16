@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, X, LogOut, LayoutDashboard, Network, Users, Wallet, FileText, Activity, AlertCircle } from 'lucide-react'
+import { Menu, X, LogOut, LayoutDashboard, Network, Users, Wallet, FileText, Activity, AlertCircle, CreditCard, LifeBuoy, MessageSquare } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
 import { Modal } from '@/components/Modal'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -14,12 +14,14 @@ import { cn } from '@/lib/utils'
 const ADMIN_NAVIGATION = [
   { id: 'overview', name: 'Overview', href: '/admin', icon: LayoutDashboard },
   { id: 'dashboard', name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { id: 'users', name: 'User Management', href: '/admin/users', icon: Users },
   { id: 'routers', name: 'Routers', href: '/admin/routers', icon: Network },
-  { id: 'mpesa', name: 'Accounts', href: '/admin/mpesa', icon: Wallet },
-  { id: 'reports', name: 'Reports', href: '/admin/reports', icon: FileText },
+  { id: 'wallets', name: 'ISP Wallets', href: '/admin/wallets', icon: Wallet },
+  { id: 'expenses', name: 'Expenses', href: '/admin/expenses', icon: CreditCard },
+  { id: 'tickets', name: 'Support Tickets', href: '/admin/tickets', icon: LifeBuoy },
+  { id: 'sms', name: 'SMS Center', href: '/admin/sms', icon: MessageSquare },
   { id: 'logs', name: 'Audit Logs', href: '/admin/logs', icon: FileText },
-  { id: 'hotspot', name: 'Hotspot Logs', href: '/admin/logs/hotspot', icon: AlertCircle },
-  { id: 'isps', name: 'ISP Management', href: '/admin/isps', icon: Users }
+  { id: 'hotspot', name: 'Hotspot Logs', href: '/admin/logs/hotspot', icon: AlertCircle }
 ]
 
 export default function AdminLayout({ children }) {

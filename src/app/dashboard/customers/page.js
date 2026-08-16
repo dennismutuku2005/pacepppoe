@@ -6,6 +6,7 @@ import { Badge } from '@/components/Badge'
 import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockCustomers, mockRouters, mockPackages } from '@/services/mockData'
 import { toast } from 'sonner'
+import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
@@ -25,6 +26,8 @@ function CustomersContent() {
     const [isLoading, setIsLoading] = useState(true)
     const [customers, setCustomers] = useState([])
     const [search, setSearch] = useState('')
+    const [filterRouter, setFilterRouter] = useState('')
+    const [filterPlan, setFilterPlan] = useState('')
     
     // Subscriber Add/Edit Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -334,11 +337,19 @@ function CustomersContent() {
         setIsWalletModalOpen(false)
     }
 
+    // Unique routers and plans from loaded data for dropdown options
+    const routerOptions = [...new Set(customers.map(c => c.router).filter(Boolean))]
+    const planOptions = [...new Set(customers.map(c => c.plan).filter(Boolean))]
+
     const filteredCustomers = customers.filter(c => {
         const fullName = c.name || `${c.firstName} ${c.lastName}`
-        return fullName.toLowerCase().includes(search.toLowerCase()) ||
+        const matchesSearch =
+            fullName.toLowerCase().includes(search.toLowerCase()) ||
             c.username?.toLowerCase().includes(search.toLowerCase()) ||
             c.phone?.includes(search)
+        const matchesRouter = filterRouter === '' || c.router === filterRouter
+        const matchesPlan = filterPlan === '' || c.plan === filterPlan
+        return matchesSearch && matchesRouter && matchesPlan
     })
 
     if (isLoading) {
@@ -353,20 +364,62 @@ function CustomersContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Subscriber List</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">PPPoE node authentication and session control</p>
                 </div>
+                <button 
+                    onClick={() => handleOpenModal()}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95"
+                >
+                    <UserPlus size={16} />
+                    <span>Add Subscriber</span>
+                </button>
             </div>
 
             {/* Controls */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="relative w-full sm:w-80 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={16} />
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+                {/* Search */}
+                <div className="relative w-full sm:w-72 group">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
                     <input
                         type="text"
-                        placeholder="Search identity pool..."
+                        placeholder="Search by name, username, phone…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-11 pr-4 py-2.5 bg-card-bg border border-pace-border rounded-xl text-sm font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
                     />
                 </div>
+
+                {/* Router Filter */}
+                <select
+                    value={filterRouter}
+                    onChange={e => setFilterRouter(e.target.value)}
+                    className="w-full sm:w-48 px-3 py-2.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all appearance-none"
+                >
+                    <option value="">All Routers</option>
+                    {routerOptions.map(r => (
+                        <option key={r} value={r}>{r}</option>
+                    ))}
+                </select>
+
+                {/* Plan Filter */}
+                <select
+                    value={filterPlan}
+                    onChange={e => setFilterPlan(e.target.value)}
+                    className="w-full sm:w-48 px-3 py-2.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all appearance-none"
+                >
+                    <option value="">All Plans</option>
+                    {planOptions.map(p => (
+                        <option key={p} value={p}>{p}</option>
+                    ))}
+                </select>
+
+                {/* Clear filters */}
+                {(filterRouter || filterPlan || search) && (
+                    <button
+                        onClick={() => { setSearch(''); setFilterRouter(''); setFilterPlan('') }}
+                        className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-admin-dim border border-pace-border rounded-xl hover:text-red-500 hover:border-red-400/40 transition-all"
+                    >
+                        <X size={13} /> Clear
+                    </button>
+                )}
             </div>
 
             {/* Matrix Table */}
@@ -381,6 +434,7 @@ function CustomersContent() {
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Service Tier</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Wallet Status</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Status</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
@@ -450,6 +504,51 @@ function CustomersContent() {
                                                     </Badge>
                                                 </button>
                                             </td>
+                                            <td className="px-6 py-2 text-right">
+                                                <div className="flex justify-end items-center gap-1">
+                                                    <button 
+                                                        onClick={() => handleOpenWalletModal(c)}
+                                                        className="p-1 text-admin-dim hover:text-green-600 hover:bg-green-500/5 rounded-lg transition-all"
+                                                        title="Wallet & Manual Reconnect"
+                                                    >
+                                                        <Wallet size={13} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleOpenModal(c)}
+                                                        className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
+                                                        title="View Location & Edit"
+                                                    >
+                                                        <MapPin size={13} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleOpenModal(c)}
+                                                        className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
+                                                        title="Edit Details"
+                                                    >
+                                                        <Edit2 size={13} />
+                                                    </button>
+                                                    <button 
+                                                        className="p-1 text-admin-dim hover:text-green-500 hover:bg-green-500/5 rounded-lg transition-all"
+                                                        title="Quick SMS"
+                                                    >
+                                                        <Smartphone size={13} />
+                                                    </button>
+                                                    <button 
+                                                        className="p-1 text-admin-dim hover:text-orange-500 hover:bg-orange-500/5 rounded-lg transition-all"
+                                                        title="Log Incident"
+                                                        onClick={() => router.push(`/dashboard/tickets?customer=${fullName}`)}
+                                                    >
+                                                        <LifeBuoy size={13} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDelete(c.id, fullName)}
+                                                        className="p-1 text-admin-dim hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
+                                                        title="Delete Subscriber"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     )
                                 })
@@ -459,6 +558,16 @@ function CustomersContent() {
                 </div>
             </div>
 
+            {/* Subscriber Add/Edit Modal */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={currentCustomer ? 'Edit Subscriber' : 'Add Subscriber'}
+                description={currentCustomer ? `Updating subscriber info for ${currentCustomer.username}` : 'Configure credentials and billing rules for a new subscriber.'}
+                maxWidth="max-w-md"
+            >
+                <form onSubmit={handleSave} className="space-y-5 font-figtree">
+                    {/* First Name & Second Name */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">First Name</label>
@@ -546,7 +655,7 @@ function CustomersContent() {
                                 type="button"
                                 onClick={() => {
                                     setAccountType('generate')
-                                    const rand = Math.floor(1000 + Math.random() * 9000).toString()
+                                    const rand = Math.floor(100000 + Math.random() * 900000).toString()
                                     setFormData({...formData, accountNumber: rand})
                                 }}
                                 className={cn(
@@ -554,7 +663,7 @@ function CustomersContent() {
                                     accountType === 'generate' ? "bg-pace-purple text-white border-pace-purple" : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:bg-pace-purple/5"
                                 )}
                             >
-                                Generate 4-Digit
+                                Generate 6-Digit
                             </button>
                         </div>
                         {formData.accountNumber && (

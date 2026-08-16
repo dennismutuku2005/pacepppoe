@@ -1,7 +1,7 @@
 import {
     Users, CreditCard, Ticket, Settings,
     Activity, Network, LifeBuoy,
-    MessageSquare, UserRoundCheck, LayoutDashboard, FileText
+    MessageSquare, UserRoundCheck, LayoutDashboard, FileText, Wallet
 } from 'lucide-react'
 
 export const NAVIGATION_SCHEMA = [
@@ -43,10 +43,21 @@ export const NAVIGATION_SCHEMA = [
     {
         id: 'packages',
         name: 'Service Plans',
-        href: '/dashboard/packages',
         icon: Ticket,
-        policy: 'manage_packages',
-        keywords: ['plans', 'pricing', 'tiers', 'bandwidth', 'packages']
+        children: [
+            {
+                name: 'Pppoe Packages',
+                href: '/dashboard/packages',
+                policy: 'manage_packages',
+                keywords: ['plans', 'pricing', 'tiers', 'bandwidth', 'packages']
+            },
+            {
+                name: 'Plan Analytics',
+                href: '/dashboard/packages/analytics',
+                policy: 'manage_packages',
+                keywords: ['plan analytics', 'service distribution', 'revenue per plan', 'subscriber growth']
+            }
+        ]
     },
     {
         id: 'finance',
@@ -78,6 +89,14 @@ export const NAVIGATION_SCHEMA = [
                 keywords: ['payouts', 'operational cost', 'bills', 'outgoing']
             }
         ]
+    },
+    {
+        id: 'wallet',
+        name: 'My Wallet',
+        href: '/dashboard/wallet',
+        icon: Wallet,
+        policy: 'view_mpesa',
+        keywords: ['wallet', 'withdraw', 'balance', 'payout', 'settlement']
     },
     {
         id: 'tickets',

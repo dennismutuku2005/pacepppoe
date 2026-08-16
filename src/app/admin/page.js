@@ -19,13 +19,13 @@ export default function AdminHomePage() {
           <Link href="/admin/routers" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all">
             <Network size={16} /> Manage Routers
           </Link>
-          <Link href="/admin/isps" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-sm font-medium hover:border-pace-purple hover:text-pace-purple transition-all">
-            <Users size={16} /> ISP Accounts
+          <Link href="/admin/users" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-sm font-medium hover:border-pace-purple hover:text-pace-purple transition-all">
+            <Users size={16} /> Manage Users
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
           { label: 'Online Routers', value: onlineRouters, icon: Network, badge: 'status' },
           { label: 'Offline Routers', value: offlineRouters, icon: ShieldCheck, badge: 'alert' },

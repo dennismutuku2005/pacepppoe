@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Plus, Package, Edit3, Trash2, Zap, Search, Activity, Sliders, DollarSign, Shield, Network } from 'lucide-react'
+import { Plus, Package, Edit3, Trash2, Zap, Search, Activity, Sliders, DollarSign, Shield, Network, Users } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockPackages, mockCustomers } from '@/services/mockData'
@@ -21,7 +21,7 @@ function PackagesContent() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            setPackages(mockPackages)
+            setPackages(mockPackages.map(p => ({ ...p, active: p.active !== false })))
             setIsLoading(false)
         }, 800)
         return () => clearTimeout(timer)
@@ -30,7 +30,7 @@ function PackagesContent() {
     const handleOpenModal = (p = null) => {
         if (p) {
             setCurrentPackage(p)
-            setFormData({ ...p })
+            setFormData({ ...p, active: p.active !== false })
         } else {
             setCurrentPackage(null)
             setFormData({ 
@@ -87,12 +87,18 @@ function PackagesContent() {
     }
 
     const filteredPackages = packages.filter(p => 
-        p.name?.toLowerCase().includes(search.toLowerCase())
+        p.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.limit?.toLowerCase().includes(search.toLowerCase()) ||
+        p.router?.toLowerCase().includes(search.toLowerCase())
     )
 
     if (isLoading) {
         return <TablePageSkeleton />
     }
+
+    const totalPlans = packages.length
+    const activePlans = packages.filter(p => p.active).length
+    const avgPrice = totalPlans ? Math.round(packages.reduce((sum, p) => sum + Number(p.price || 0), 0) / totalPlans) : 0
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree">
@@ -109,6 +115,46 @@ function PackagesContent() {
                     <Plus size={16} />
                     <span>Create Plan</span>
                 </button>
+            </div>
+
+            {/* Metrics Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-card-bg border border-pace-border rounded-xl p-5 hover:border-pace-purple/20 transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-pace-purple/10">
+                            <Zap size={20} className="text-pace-purple" />
+                        </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-admin-value tracking-tight tabular-nums">{totalPlans}</h3>
+                    <p className="text-[11px] font-medium text-gray-400 mt-1">Total Tiers</p>
+                </div>
+                <div className="bg-card-bg border border-pace-border rounded-xl p-5 hover:border-pace-purple/20 transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-500/10">
+                            <Activity size={20} className="text-emerald-500" />
+                        </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-admin-value tracking-tight tabular-nums">{activePlans}</h3>
+                    <p className="text-[11px] font-medium text-gray-400 mt-1">Active Profiles</p>
+                </div>
+                <div className="bg-card-bg border border-pace-border rounded-xl p-5 hover:border-pace-purple/20 transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10">
+                            <DollarSign size={20} className="text-blue-500" />
+                        </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-admin-value tracking-tight tabular-nums">KES {avgPrice.toLocaleString()}</h3>
+                    <p className="text-[11px] font-medium text-gray-400 mt-1">Avg Plan Price</p>
+                </div>
+                <div className="bg-card-bg border border-pace-border rounded-xl p-5 hover:border-pace-purple/20 transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-orange-500/10">
+                            <Users size={20} className="text-orange-500" />
+                        </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-admin-value tracking-tight tabular-nums">{mockCustomers.length}</h3>
+                    <p className="text-[11px] font-medium text-gray-400 mt-1">Total Subscribers</p>
+                </div>
             </div>
 
             {/* Controls */}
@@ -131,11 +177,12 @@ function PackagesContent() {
                     <table className="w-full text-left whitespace-nowrap">
                         <thead>
                             <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
-                                <th className="px-6 py-3">Plan Identity</th>
-                                <th className="px-6 py-3">Router</th>
-                                <th className="px-6 py-3 text-center">Speed Limit</th>
-                                <th className="px-6 py-3 text-right">Monthly Cost</th>
-                                <th className="px-6 py-3 text-right">Actions</th>
+                                <th className="px-6 py-3.5">Plan Identity</th>
+                                <th className="px-6 py-3.5 text-center">Speed Limit</th>
+                                <th className="px-6 py-3.5">Router / Pool</th>
+                                <th className="px-6 py-3.5 text-center">Subscribers</th>
+                                <th className="px-6 py-3.5 text-right">Monthly Price</th>
+                                <th className="px-6 py-3.5 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
@@ -144,54 +191,78 @@ function PackagesContent() {
                                     <td colSpan="6" className="py-24 text-center text-admin-dim text-sm font-medium">No service tiers defined</td>
                                 </tr>
                             ) : (
-                                filteredPackages.map((p) => (
-                                    <tr key={p.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
-                                        <td className="px-6 py-2">
-                                            <span className="text-xs font-semibold text-admin-value">{p.name}</span>
-                                        </td>
-                                        <td className="px-6 py-2 text-center">
-                                            <Badge variant="success" className="text-[10px] font-medium border-none">
-                                                {p.limit}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-6 py-2 text-xs font-medium text-admin-dim">
-                                            {p.router || 'Default Router'}
-                                        </td>
-                                        <td className="px-6 py-2 text-right">
-                                            <span className="text-xs font-bold text-admin-value tabular-nums">KES {Number(p.price).toLocaleString()}</span>
-                                        </td>
-                                        <td className="px-6 py-2 text-right">
-                                            <div className="flex justify-end items-center gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleToggleActive(p.id)}
-                                                    className={cn(
-                                                        "relative inline-flex h-6 w-11 items-center rounded-full transition-all",
-                                                        p.active ? "bg-pace-purple" : "bg-pace-border"
-                                                    )}
-                                                    aria-label={p.active ? 'Disable package' : 'Enable package'}
-                                                >
-                                                    <span className={cn(
-                                                        "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-all",
-                                                        p.active ? "translate-x-5" : "translate-x-1"
-                                                    )} />
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleOpenModal(p)}
-                                                    className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
-                                                >
-                                                    <Edit3 size={14} />
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleDelete(p.id, p.name, p.limit)}
-                                                    className="p-1 text-admin-dim hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                filteredPackages.map((p) => {
+                                    const subCount = mockCustomers.filter(c => c.plan === p.limit || c.plan === p.name).length
+                                    return (
+                                        <tr key={p.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
+                                            <td className="px-6 py-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center text-pace-purple font-bold text-xs shrink-0">
+                                                        <Zap size={14} />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs font-semibold text-admin-value">{p.name}</div>
+                                                        {p.burstLimit && (
+                                                            <div className="text-[10px] text-admin-dim">Burst: {p.burstLimit}</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-3 text-center">
+                                                <Badge variant="info" className="text-[11px] font-mono font-semibold px-2.5 py-1">
+                                                    {p.limit}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-3">
+                                                <div className="flex items-center gap-1.5 text-xs font-medium text-admin-dim">
+                                                    <Network size={14} className="text-admin-dim/70 shrink-0" />
+                                                    <span>{p.router || p.poolName || 'Default Router'}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-3 text-center">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-pace-bg-subtle text-admin-value border border-pace-border tabular-nums">
+                                                    {subCount} users
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-3 text-right">
+                                                <span className="text-xs font-bold text-admin-value tabular-nums">KES {Number(p.price).toLocaleString()}</span>
+                                            </td>
+                                            <td className="px-6 py-3 text-right">
+                                                <div className="flex justify-end items-center gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleToggleActive(p.id)}
+                                                        className={cn(
+                                                            "relative inline-flex h-5 w-9 items-center rounded-full transition-all shrink-0",
+                                                            p.active ? "bg-pace-purple" : "bg-pace-border"
+                                                        )}
+                                                        title={p.active ? 'Disable package' : 'Enable package'}
+                                                        aria-label={p.active ? 'Disable package' : 'Enable package'}
+                                                    >
+                                                        <span className={cn(
+                                                            "inline-block h-4 w-4 transform rounded-full bg-white shadow transition-all",
+                                                            p.active ? "translate-x-4" : "translate-x-0.5"
+                                                        )} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleOpenModal(p)}
+                                                        className="p-1.5 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/10 rounded-lg transition-all"
+                                                        title="Edit Plan"
+                                                    >
+                                                        <Edit3 size={14} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDelete(p.id, p.name, p.limit)}
+                                                        className="p-1.5 text-admin-dim hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                                        title="Delete Plan"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })
                             )}
                         </tbody>
                     </table>
@@ -231,19 +302,19 @@ function PackagesContent() {
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Router</label>
+                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Router / Pool</label>
                                 <input 
                                     type="text"
-                                    value={formData.router}
+                                    value={formData.router || ''}
                                     onChange={(e) => setFormData({...formData, router: e.target.value})}
-                                    placeholder="MikroTik"
+                                    placeholder="MikroTik / shared-pool"
                                     className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-dim outline-none focus:border-pace-purple transition-all"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Price</label>
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Price (KES)</label>
                             <input 
                                 type="number" required
                                 value={formData.price}
@@ -262,13 +333,13 @@ function PackagesContent() {
                                 type="button"
                                 onClick={() => setFormData({...formData, active: !formData.active})}
                                 className={cn(
-                                    "relative inline-flex h-7 w-12 items-center rounded-full transition-all",
+                                    "relative inline-flex h-6 w-11 items-center rounded-full transition-all shrink-0",
                                     formData.active ? "bg-pace-purple" : "bg-pace-border"
                                 )}
                             >
                                 <span className={cn(
                                     "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-all",
-                                    formData.active ? "translate-x-6" : "translate-x-1"
+                                    formData.active ? "translate-x-5" : "translate-x-0.5"
                                 )} />
                             </button>
                         </div>
