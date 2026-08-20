@@ -5,7 +5,7 @@ import { Plus, Search, Filter, UserPlus, Edit2, Trash2, Smartphone, Network, Shi
 import { Badge } from '@/components/Badge'
 import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockCustomers, mockRouters, mockPackages } from '@/services/mockData'
-import { customerService } from '@/services/customers'
+import { customerService } from '@/services/isp/customers'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'

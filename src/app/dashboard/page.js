@@ -14,7 +14,7 @@ import { CardSkeleton, Skeleton } from '@/components/Skeleton'
 import { Badge } from '@/components/Badge'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { GlobalFilters } from '@/components/GlobalFilters'
-import { dashboardService } from '@/services/dashboard'
+import { dashboardService } from '@/services/isp/dashboard'
 import { mockDashboardData } from '@/services/mockData'
 import authService from '@/lib/auth'
 

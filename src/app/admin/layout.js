@@ -4,24 +4,25 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, X, LogOut, LayoutDashboard, Network, Users, Wallet, FileText, Activity, AlertCircle, CreditCard, LifeBuoy, MessageSquare } from 'lucide-react'
+import { Menu, X, LogOut, LayoutDashboard, Network, Users, Wallet, FileText, Activity, AlertCircle, CreditCard, LifeBuoy, MessageSquare, User, TrendingUp, Smartphone } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
 import { Modal } from '@/components/Modal'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import authService from '@/lib/auth'
+import { logService } from '@/services/admin/logs'
 import { cn } from '@/lib/utils'
 
 const ADMIN_NAVIGATION = [
   { id: 'overview', name: 'Overview', href: '/admin', icon: LayoutDashboard },
-  { id: 'dashboard', name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { id: 'users', name: 'User Management', href: '/admin/users', icon: Users },
+  { id: 'isps', name: 'ISPs', href: '/admin/isps', icon: Users },
   { id: 'routers', name: 'Routers', href: '/admin/routers', icon: Network },
   { id: 'wallets', name: 'ISP Wallets', href: '/admin/wallets', icon: Wallet },
-  { id: 'expenses', name: 'Expenses', href: '/admin/expenses', icon: CreditCard },
+  { id: 'mpesa', name: 'M-Pesa Txns', href: '/admin/mpesa', icon: Smartphone },
+  { id: 'analytics', name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
   { id: 'tickets', name: 'Support Tickets', href: '/admin/tickets', icon: LifeBuoy },
   { id: 'sms', name: 'SMS Center', href: '/admin/sms', icon: MessageSquare },
   { id: 'logs', name: 'Audit Logs', href: '/admin/logs', icon: FileText },
-  { id: 'hotspot', name: 'Hotspot Logs', href: '/admin/logs/hotspot', icon: AlertCircle }
+  { id: 'profile', name: 'Profile Settings', href: '/admin/profile', icon: User }
 ]
 
 export default function AdminLayout({ children }) {
@@ -51,13 +52,22 @@ export default function AdminLayout({ children }) {
     const handleResize = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
-      setIsSidebarOpen(!mobile)
     }
 
     handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  useEffect(() => {
+    // Keep sidebar open by default, do not auto-close on page navigation
+    if (user && pathname) {
+      const navItem = ADMIN_NAVIGATION.find(item => item.href === pathname)
+      const pageName = navItem ? navItem.name : pathname.split('/').pop() || 'Overview'
+      logService.logAction('PAGE_VIEW', `${user.name} (${user.username}) visited ${pageName} page`)
+        .catch(err => console.error("Error logging page view", err))
+    }
+  }, [pathname, user])
 
   useEffect(() => {
     if (isMobile) {
@@ -132,9 +142,9 @@ export default function AdminLayout({ children }) {
           onConfirm={handleLogout}
         />
 
-        {isMobile && isSidebarOpen && (
+        {isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity md:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -148,8 +158,9 @@ export default function AdminLayout({ children }) {
 
         <main
           className={cn(
-            'flex-1 min-h-screen flex flex-col transition-all duration-300',
-            !isMobile && (isSidebarOpen ? 'ml-60' : 'ml-16')
+            'flex-1 min-h-screen flex flex-col transition-all duration-300 w-full',
+            isSidebarOpen ? 'md:ml-60' : 'md:ml-16',
+            'max-md:ml-0'
           )}
         >
           <header className="h-16 bg-card-bg/80 backdrop-blur-md border-b border-pace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30">
@@ -160,14 +171,14 @@ export default function AdminLayout({ children }) {
               >
                 {isSidebarOpen && isMobile ? <X size={20} /> : <Menu size={20} />}
               </button>
-              <div className="text-[11px] font-medium uppercase tracking-[0.3em] text-admin-dim">
+              <div className="text-[11px] font-medium uppercase tracking-widest text-admin-dim">
                 {getPageName()}
               </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex flex-col text-right">
                 <span className="text-xs font-semibold text-admin-value">{user?.name || 'Admin User'}</span>
-                <span className="text-[10px] uppercase tracking-[0.35em] text-admin-dim">{user?.type || 'administrator'}</span>
+                <span className="text-[10px] uppercase tracking-wider text-admin-dim">{user?.type || 'administrator'}</span>
               </div>
               <div className="w-10 h-10 rounded-full bg-pace-bg-subtle border border-pace-border flex items-center justify-center text-[11px] font-bold text-admin-dim">
                 {getUserInitials()}

@@ -174,9 +174,9 @@ export default function DashboardLayout({ children }) {
                 />
 
                 {/* Mobile Overlay */}
-                {isMobile && isSidebarOpen && (
+                {isSidebarOpen && (
                     <div
-                        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity"
+                        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity md:hidden"
                         onClick={() => setIsSidebarOpen(false)}
                     />
                 )}
@@ -189,8 +189,8 @@ export default function DashboardLayout({ children }) {
                 {/* Main Content Area */}
                 <main className={cn(
                     "flex-1 min-h-screen flex flex-col transition-all duration-300 w-full",
-                    // On desktop, add margin based on sidebar state. On mobile, no margin (overlay)
-                    !isMobile && (isSidebarOpen ? "ml-60" : "ml-16")
+                    isSidebarOpen ? "md:ml-60" : "md:ml-16",
+                    "max-md:ml-0"
                 )}>
                     {/* Header */}
                     <header className="h-16 bg-card-bg/80 backdrop-blur-md border-b border-pace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 transition-colors duration-300">

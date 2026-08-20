@@ -6,7 +6,7 @@ import { Plus, Search, Router as RouterIcon, Activity, RefreshCw, Power, Setting
 import { Badge } from '@/components/Badge'
 import { Skeleton, CardSkeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockRouters } from '@/services/mockData'
-import { routerService } from '@/services/routers'
+import { routerService } from '@/services/isp/routers'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'

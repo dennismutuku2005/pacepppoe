@@ -9,7 +9,7 @@ import {
     Activity, FileText, Network, Receipt,
     UserRoundCheck, MessageSquare, Globe, ChevronDown,
     LogOut, LayoutDashboard, Clock, Smartphone, Bell,
-    Wallet, ShieldCheck, LifeBuoy, Layers
+    Wallet, ShieldCheck, LifeBuoy, Layers, X
 } from 'lucide-react'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
@@ -78,15 +78,15 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
         setMounted(true)
     }, [])
 
-    const sidebarClass = isMobile
-        ? cn(
-            "fixed inset-y-0 left-0 z-50 bg-card-bg border-r border-pace-border transition-transform duration-300 w-64 flex flex-col font-figtree shadow-sm",
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )
-        : cn(
-            "fixed inset-y-0 left-0 z-50 bg-card-bg border-r border-pace-border transition-all duration-300 flex flex-col font-figtree shadow-sm",
-            isSidebarOpen ? "w-60" : "w-16"
-        );
+    const sidebarClass = cn(
+        "fixed inset-y-0 left-0 z-50 bg-card-bg border-r border-pace-border flex flex-col font-figtree shadow-sm transition-all duration-300",
+        // Mobile style rules (< 768px viewport)
+        "max-md:w-64",
+        isSidebarOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
+        // Desktop style rules (>= 768px viewport)
+        "md:translate-x-0",
+        isSidebarOpen ? "md:w-60" : "md:w-16"
+    );
 
     const showText = isMobile || isSidebarOpen;
 
@@ -94,14 +94,17 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
         <>
             <aside className={sidebarClass}>
                 {/* Logo Section */}
-                <div className="h-16 flex items-center justify-center border-b border-pace-border">
-                    <Link href={createHref("/dashboard")} className="flex items-center justify-center gap-2">
+                <div className={cn(
+                    "h-16 flex items-center border-b border-pace-border",
+                    showText ? "justify-between px-4" : "justify-center"
+                )}>
+                    <Link href={createHref("/dashboard")} className="flex items-center gap-2">
                         {showText ? (
                             <Image
                                 src="/logoc.png"
                                 alt="Pace"
-                                width={140}
-                                height={46}
+                                width={120}
+                                height={40}
                                 className="h-8 w-auto object-contain"
                                 priority
                             />
@@ -116,6 +119,15 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
                             />
                         )}
                     </Link>
+                    {isMobile && isSidebarOpen && (
+                        <button
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="p-1 text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle rounded-lg transition-all"
+                            title="Close Menu"
+                        >
+                            <X size={18} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Navigation - Flex-1 with scroll */}

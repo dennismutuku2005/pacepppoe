@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Calendar as CalendarIcon, ChevronDown, Router, Check, Clock, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CalendarUI } from './Calendar'
-import { dashboardService } from '@/services/dashboard'
+import { dashboardService } from '@/services/isp/dashboard'
 
 export function GlobalFilters({ onFilterChange, defaultDateRange = 'Today', showDateFilter = true, showRouterFilter = true }) {
     const [selectedRouter, setSelectedRouter] = useState('All Routers')

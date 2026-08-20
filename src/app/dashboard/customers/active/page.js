@@ -6,7 +6,7 @@ import { Search, Clock, Ticket, Smartphone, Activity, RefreshCcw } from 'lucide-
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/Badge'
 import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
-import { activeConnectionsService } from '@/services/activeConnections'
+import { activeConnectionsService } from '@/services/isp/activeConnections'
 
 function ActiveConnectionsContent() {
     const router = useRouter()

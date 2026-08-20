@@ -9,23 +9,27 @@ export const dashboardService = {
                 const revenueByDay = res.data.revenue_by_day || [];
                 const recentTransactions = res.data.recent_transactions || [];
                 
-                // Format revenue charts
-                const chartsData = revenueByDay.map(item => ({
-                    day: item.day,
-                    amount: parseFloat(item.revenue),
-                    entries: 0 // Fallback/default entries
-                }));
+                // Format revenue charts (fill in missing days from the last 7 days)
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const chartsDataMap = {};
+                
+                // Initialize last 7 days with 0
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dayName = dayNames[d.getDay()];
+                    chartsDataMap[dayName] = { day: dayName, amount: 0, entries: 0 };
+                }
 
-                // Fallback chart data if empty
-                const charts = chartsData.length ? chartsData : [
-                    { day: 'Mon', amount: 0, entries: 0 },
-                    { day: 'Tue', amount: 0, entries: 0 },
-                    { day: 'Wed', amount: 0, entries: 0 },
-                    { day: 'Thu', amount: 0, entries: 0 },
-                    { day: 'Fri', amount: 0, entries: 0 },
-                    { day: 'Sat', amount: 0, entries: 0 },
-                    { day: 'Sun', amount: 0, entries: 0 },
-                ];
+                // Fill in real values from API
+                revenueByDay.forEach(item => {
+                    const day = item.day;
+                    if (chartsDataMap[day]) {
+                        chartsDataMap[day].amount = parseFloat(item.revenue || 0);
+                    }
+                });
+
+                const charts = Object.values(chartsDataMap);
 
                 // Format recent transactions
                 const transactions = recentTransactions.map((p, index) => {
