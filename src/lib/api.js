@@ -38,8 +38,8 @@ export async function apiFetch(endpoint, options = {}) {
   try {
     const response = await fetch(url, fetchOptions);
 
-    // Auto-logout on 401 Unauthorized
-    if (response.status === 401) {
+    // Auto-logout on 401 Unauthorized (except for login requests)
+    if (response.status === 401 && !cleanEndpoint.includes('/auth/login.php')) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('pace_auth_token');
         localStorage.removeItem('pace_user_data');
