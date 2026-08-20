@@ -75,17 +75,17 @@ export default function AdminHomePage() {
           <h2 className="text-sm font-semibold text-admin-value mb-4">ISP Overview</h2>
           <p className="text-xs text-admin-dim leading-relaxed">Manage partner ISPs, review account health, and route provisioning status from one place.</p>
           <div className="mt-6 space-y-3">
-            <div className="rounded-2xl border border-pace-border bg-white p-4">
-              <div className="text-xs uppercase tracking-[0.35em] text-admin-dim font-bold">ISP Partners</div>
-              <div className="text-3xl font-bold text-admin-value mt-3">4</div>
+            <div className="rounded-xl border border-pace-border bg-pace-bg-subtle p-4">
+              <div className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">ISP Partners</div>
+              <div className="text-xl font-bold text-admin-value tracking-tight mt-1">4</div>
             </div>
-            <div className="rounded-2xl border border-pace-border bg-white p-4">
-              <div className="text-xs uppercase tracking-[0.35em] text-admin-dim font-bold">Service Regions</div>
-              <div className="text-3xl font-bold text-admin-value mt-3">7</div>
+            <div className="rounded-xl border border-pace-border bg-pace-bg-subtle p-4">
+              <div className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Service Regions</div>
+              <div className="text-xl font-bold text-admin-value tracking-tight mt-1">7</div>
             </div>
-            <div className="rounded-2xl border border-pace-border bg-white p-4">
-              <div className="text-xs uppercase tracking-[0.35em] text-admin-dim font-bold">Pending Reviews</div>
-              <div className="text-3xl font-bold text-admin-value mt-3">1</div>
+            <div className="rounded-xl border border-pace-border bg-pace-bg-subtle p-4">
+              <div className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Pending Reviews</div>
+              <div className="text-xl font-bold text-admin-value tracking-tight mt-1">1</div>
             </div>
           </div>
         </div>
