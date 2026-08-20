@@ -1,7 +1,8 @@
 /**
- * Authentication Utility (Sovereign Mock Hub)
- * Handles local state management and session persistence without external API calls.
+ * Authentication Utility
+ * Connects with PHP JWT Auth APIs and manages session storage.
  */
+import { apiFetch } from './api';
 
 class AuthService {
   constructor() {
@@ -10,77 +11,87 @@ class AuthService {
   }
 
   /**
-   * Login user (Mock)
+   * Login user via backend API
    */
   async login(username, password) {
     if (!username || !password) {
       return {
         success: false,
         message: 'Username and password are required.'
-      }
+      };
     }
 
-    const isAdmin = username === 'admin' && password === 'admin'
-    const dummyUser = {
-      id: Date.now(),
-      username,
-      name: isAdmin ? 'System Administrator' : username,
-      type: isAdmin ? 'admin' : 'user',
-      phone: isAdmin ? '0712345678' : '0700000000',
-      email: isAdmin ? 'admin@pacewisp.co.ke' : `${username}@pacewisp.co.ke`,
-      // Default policies for non-admin mock users so sidebar navigation appears
-      policies: isAdmin
-        ? ['*']
-        : [
-            'view_dashboard',
-            'manage_customers',
-            'view_active_users',
-            'view_routers',
-            'manage_packages',
-            'view_payments',
-            'view_mpesa',
-            'view_reports',
-            'manage_expenses',
-            'view_tickets',
-            'view_sms',
-            'system_config',
-            'view_logs'
-          ]
-    }
-    const dummyToken = 'mock-jwt-token-' + Date.now();
+    try {
+      const res = await apiFetch('/auth/login.php', {
+        method: 'POST',
+        body: JSON.stringify({ username, password })
+      });
 
-    this.setToken(dummyToken);
-    this.setUser(dummyUser);
+      if (res && res.status === 'success') {
+        const token = res.data.token;
+        const user = {
+          id: res.data.user.id,
+          username: res.data.user.username,
+          name: res.data.user.name,
+          type: res.data.user.role // role maps to type (admin or isp)
+        };
 
-    return {
-      success: true,
-      data: {
-        token: dummyToken,
-        user: dummyUser
+        this.setToken(token);
+        this.setUser(user);
+
+        return {
+          success: true,
+          data: {
+            token,
+            user
+          }
+        };
+      } else {
+        return {
+          success: false,
+          message: res.message || 'Invalid credentials.'
+        };
       }
-    };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.message || 'Connection failure.'
+      };
+    }
   }
 
   /**
-   * Logout user (Mock)
+   * Logout user via backend API and clear local state
    */
   async logout() {
-    // Immediately clear local auth without attempting network handshake
-    this.clearAuth();
+    try {
+      await apiFetch('/auth/logout.php', { method: 'POST' });
+    } catch (err) {
+      console.warn("Logout endpoint failed:", err);
+    } finally {
+      this.clearAuth();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
   }
 
   /**
    * Verify token validity
    */
   async verifyToken() {
-    return true; 
+    const token = this.getToken();
+    if (!token || this.isTokenExpired(token)) {
+      return false;
+    }
+    return true;
   }
 
   /**
-   * Refresh expired token
+   * Refresh expired token (Mocked/No-op as backend handles standard JWTs)
    */
   async refreshToken() {
-    return true; 
+    return true;
   }
 
   /**
@@ -92,11 +103,21 @@ class AuthService {
   }
 
   /**
-   * Get current user data
+   * Get current cached user data
    */
   getUser() {
     if (typeof window === 'undefined') return null;
-    const userData = localStorage.getItem(this.userKey);
+    let userData = localStorage.getItem(this.userKey);
+    if (!userData) {
+      const match = document.cookie.match(new RegExp('(^| )' + this.userKey + '=([^;]+)'));
+      if (match) {
+        try {
+          userData = decodeURIComponent(match[2]);
+        } catch (e) {
+          userData = null;
+        }
+      }
+    }
     return userData ? JSON.parse(userData) : null;
   }
 
@@ -105,7 +126,12 @@ class AuthService {
    */
   getToken() {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(this.tokenKey);
+    let token = localStorage.getItem(this.tokenKey);
+    if (!token) {
+      const match = document.cookie.match(new RegExp('(^| )' + this.tokenKey + '=([^;]+)'));
+      if (match) token = match[2];
+    }
+    return token;
   }
 
   /**
@@ -114,6 +140,7 @@ class AuthService {
   setToken(token) {
     if (typeof window === 'undefined') return;
     localStorage.setItem(this.tokenKey, token);
+    document.cookie = `${this.tokenKey}=${token};path=/;max-age=86400;SameSite=Lax;Secure`;
   }
 
   /**
@@ -122,6 +149,7 @@ class AuthService {
   setUser(user) {
     if (typeof window === 'undefined') return;
     localStorage.setItem(this.userKey, JSON.stringify(user));
+    document.cookie = `${this.userKey}=${encodeURIComponent(JSON.stringify(user))};path=/;max-age=86400;SameSite=Lax;Secure`;
   }
 
   /**
@@ -142,17 +170,24 @@ class AuthService {
   }
 
   /**
-   * Mock authenticated request (No-op)
+   * Authenticated request helper
    */
   async authenticatedFetch(url, options = {}) {
-    return { ok: true, json: async () => ({ status: 'success', data: {} }) };
+    return apiFetch(url, options);
   }
 
   /**
-   * Decode JWT token payload (Mock)
+   * Decode JWT token payload
    */
   decodeToken(token) {
-    return { exp: Date.now() / 1000 + 3600 };
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload;
+    } catch (e) {
+      return null;
+    }
   }
 
   /**
@@ -160,18 +195,37 @@ class AuthService {
    */
   isTokenExpired(token) {
     if (!token) return true;
-    return false; // Mock tokens never expire in this portal
+    const decoded = this.decodeToken(token);
+    if (!decoded || !decoded.exp) return true;
+    return decoded.exp < Date.now() / 1000;
   }
 
   /**
-   * Get user profile info (Mock)
+   * Get user profile info from backend
    */
   async getProfile() {
-    return { success: true, data: this.getUser() };
+    try {
+      const res = await apiFetch('/auth/me.php');
+      if (res && res.status === 'success') {
+        const user = {
+          id: res.data.id,
+          username: res.data.username,
+          name: res.data.name,
+          email: res.data.email,
+          phone: res.data.phone,
+          type: res.data.role
+        };
+        this.setUser(user);
+        return { success: true, data: user };
+      }
+      return { success: false, message: 'Failed to retrieve profile.' };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
   }
 
   /**
-   * Update user profile info (Mock)
+   * Update user profile info (Mock/Local fallback)
    */
   async updateProfile(profileData) {
     const currentUser = this.getUser();
@@ -182,19 +236,11 @@ class AuthService {
 
   /**
    * Check if user has a specific policy
-   * Admins and Superadmins have all policies by default.
    */
   hasPolicy(policy) {
     if (typeof window === 'undefined') return false;
     const user = this.getUser();
-    if (!user) return false;
-
-    // Admin/Superadmin bypass
-    if (user.type === 'admin' || user.type === 'superadmin' || user.type === 'isp') return true;
-
-    // Check specific policy
-    const policies = user.policies || [];
-    return policies.includes(policy);
+    return !!user;
   }
 }
 

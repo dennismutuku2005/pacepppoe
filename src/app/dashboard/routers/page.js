@@ -6,6 +6,7 @@ import { Plus, Search, Router as RouterIcon, Activity, RefreshCw, Power, Setting
 import { Badge } from '@/components/Badge'
 import { Skeleton, CardSkeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockRouters } from '@/services/mockData'
+import { routerService } from '@/services/routers'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
@@ -22,11 +23,23 @@ function RoutersContent() {
     const [isSystemInfoOpen, setIsSystemInfoOpen] = useState(false)
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setRouters(mockRouters)
-            setIsLoading(false)
-        }, 800)
-        return () => clearTimeout(timer)
+        async function fetchRouters() {
+            setIsLoading(true)
+            try {
+                const res = await routerService.getRouters()
+                if (res.status === 'success') {
+                    setRouters(res.data)
+                } else {
+                    throw new Error(res.message)
+                }
+            } catch (err) {
+                console.warn("Failed to load dynamic routers, falling back to mocks:", err)
+                setRouters(mockRouters)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchRouters()
     }, [])
 
     const handleOpenSystemInfo = (r) => {

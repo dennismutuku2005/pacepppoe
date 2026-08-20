@@ -1,48 +1,87 @@
-import { mockDashboardData, mockRouters } from './mockData';
+import { apiFetch } from '@/lib/api';
 
 export const dashboardService = {
     async getDashboardData(filters = {}) {
-        // Mock implementation
-        return {
-            status: 'success',
-            data: {
-                widgets: {
-                    active_users: { value: mockDashboardData.stats.activeCustomers },
-                    todays_earnings: { value: mockDashboardData.stats.totalRevenueToday },
-                    sms_balance: { value: mockDashboardData.stats.smsBalance },
-                    system_health: { value: '98%' },
-                    customers_month: { value: 1240 },
-                    online_customers: { value: 856 }
-                },
-                charts: {
-                    revenue_over_time: [
-                        { day: 'Mon', amount: 4000, entries: 240 },
-                        { day: 'Tue', amount: 3000, entries: 198 },
-                        { day: 'Wed', amount: 2000, entries: 380 },
-                        { day: 'Thu', amount: 2780, entries: 308 },
-                        { day: 'Fri', amount: 1890, entries: 480 },
-                        { day: 'Sat', amount: 2390, entries: 380 },
-                        { day: 'Sun', amount: 3490, entries: 430 },
-                    ]
-                },
-                recent_transactions: mockDashboardData.recentPayments.map(p => ({
-                    id: p.id,
-                    user_phone: p.phone || '0712345678',
-                    plan_name: p.plan || 'Bronze',
-                    time_ago: '2 mins ago',
-                    amount: p.amount,
-                    mpesa_code: p.receipt
-                })),
-                router_status: mockRouters.map(r => ({
-                    name: r.name,
-                    ip: r.ip,
-                    status: r.status === 'online' ? 'Online' : 'Offline',
-                    load: '24%',
-                    uptime: r.uptime
-                }))
-            },
-            pagination: { page: 1, has_more: false }
-        };
+        try {
+            const res = await apiFetch('/isp/dashboard.php');
+            if (res && res.status === 'success') {
+                const widgetsData = res.data.widgets || {};
+                const revenueByDay = res.data.revenue_by_day || [];
+                const recentTransactions = res.data.recent_transactions || [];
+                
+                // Format revenue charts
+                const chartsData = revenueByDay.map(item => ({
+                    day: item.day,
+                    amount: parseFloat(item.revenue),
+                    entries: 0 // Fallback/default entries
+                }));
+
+                // Fallback chart data if empty
+                const charts = chartsData.length ? chartsData : [
+                    { day: 'Mon', amount: 0, entries: 0 },
+                    { day: 'Tue', amount: 0, entries: 0 },
+                    { day: 'Wed', amount: 0, entries: 0 },
+                    { day: 'Thu', amount: 0, entries: 0 },
+                    { day: 'Fri', amount: 0, entries: 0 },
+                    { day: 'Sat', amount: 0, entries: 0 },
+                    { day: 'Sun', amount: 0, entries: 0 },
+                ];
+
+                // Format recent transactions
+                const transactions = recentTransactions.map((p, index) => {
+                    const date = new Date(p.transaction_date);
+                    const timeAgo = isNaN(date.getTime()) ? 'Recently' : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    return {
+                        id: p.receipt_number || `TX-${index}`,
+                        user_phone: p.phone_number || '0712345678',
+                        plan_name: p.plan || 'Bronze',
+                        time_ago: timeAgo,
+                        amount: parseFloat(p.amount),
+                        mpesa_code: p.receipt_number
+                    };
+                });
+
+                // Get routers list and map it
+                let routers = [];
+                try {
+                    const routersRes = await apiFetch('/isp/routers.php');
+                    if (routersRes && routersRes.status === 'success') {
+                        routers = (routersRes.data.routers || []).map(r => ({
+                            name: r.name,
+                            ip: r.ip_address,
+                            status: r.status === 'online' ? 'Online' : 'Offline',
+                            load: `${r.cpu_usage || 0}%`,
+                            uptime: r.uptime || 'N/A'
+                        }));
+                    }
+                } catch (e) {
+                    console.error("Dashboard router fetch failed, falling back", e);
+                }
+
+                return {
+                    status: 'success',
+                    data: {
+                        widgets: {
+                            active_users: { value: widgetsData.active_subscribers || 0 },
+                            monthly_users: { value: widgetsData.total_subscribers || 0 },
+                            todays_earnings: { value: widgetsData.today_revenue || 0 },
+                            sms_balance: { value: widgetsData.net_profit || 0 },
+                            system_health: { value: '98%' }
+                        },
+                        charts: {
+                            revenue_over_time: charts
+                        },
+                        recent_transactions: transactions,
+                        router_status: routers
+                    }
+                };
+            }
+            return { status: 'error', message: 'Failed to fetch dashboard' };
+        } catch (e) {
+            console.error("getDashboardData failed", e);
+            throw e;
+        }
     },
 
     async getWidgets(filters = {}) {
@@ -66,6 +105,14 @@ export const dashboardService = {
     },
 
     async getRouters() {
-        return ['All Routers', ...mockRouters.map(r => r.name)];
+        try {
+            const res = await apiFetch('/isp/routers.php');
+            if (res && res.status === 'success') {
+                return ['All Routers', ...(res.data.routers || []).map(r => r.name)];
+            }
+        } catch (e) {
+            console.error("getRouters failed", e);
+        }
+        return ['All Routers'];
     }
 };

@@ -5,6 +5,7 @@ import { Plus, Search, Filter, UserPlus, Edit2, Trash2, Smartphone, Network, Shi
 import { Badge } from '@/components/Badge'
 import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { mockCustomers, mockRouters, mockPackages } from '@/services/mockData'
+import { customerService } from '@/services/customers'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
@@ -53,42 +54,60 @@ function CustomersContent() {
             ...prev,
             nextPayment: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         }))
-        const timer = setTimeout(() => {
-            const enriched = mockCustomers.map(c => {
-                const names = c.name ? c.name.split(' ') : ['Subscriber', 'Node']
-                const firstName = names[0] || 'Subscriber'
-                const lastName = names.slice(1).join(' ') || 'Node'
-                const activationFee = 0 // Setup fee assumed paid for existing ones
-                let amountPaid = c.price
-                let walletStatus = 'complete'
-                
-                if (c.id === 2 || c.id === 5) {
-                    walletStatus = 'pending'
-                    amountPaid = c.price / 2
-                } else if (c.id === 3) {
-                    walletStatus = 'not-paid'
-                    amountPaid = 0
-                }
 
-                return {
-                    ...c,
-                    firstName,
-                    lastName,
-                    activationFee,
-                    amountPaid,
-                    walletStatus,
-                    lat: c.lat || -1.286389,
-                    lng: c.lng || 36.817223,
-                    walletHistory: [
-                        { date: '2026-05-01', type: 'Package Cost', amount: c.price, description: `${c.plan} Subscription` },
-                        { date: '2026-05-01', type: 'Payment', amount: amountPaid, description: 'Automatic check-in payment' }
-                    ]
+        async function fetchInitialData() {
+            setIsLoading(true);
+            try {
+                const subRes = await customerService.getCustomers();
+                if (subRes.status === 'success') {
+                    const enriched = subRes.data.map(c => {
+                        const names = c.name ? c.name.split(' ') : ['Subscriber', 'Node']
+                        const firstName = names[0] || 'Subscriber'
+                        const lastName = names.slice(1).join(' ') || 'Node'
+                        return {
+                            ...c,
+                            firstName,
+                            lastName,
+                            lat: c.lat || -1.286389,
+                            lng: c.lng || 36.817223,
+                            walletHistory: [
+                                { date: c.createdAt ? c.createdAt.split(' ')[0] : '2026-08-20', type: 'Package Cost', amount: c.price || 0, description: `${c.plan || 'Bronze'} Subscription` },
+                                { date: c.createdAt ? c.createdAt.split(' ')[0] : '2026-08-20', type: 'Payment', amount: c.price || 0, description: 'Automatic check-in payment' }
+                            ]
+                        }
+                    });
+                    setCustomers(enriched);
+                } else {
+                    throw new Error(subRes.message);
                 }
-            })
-            setCustomers(enriched)
-            setIsLoading(false)
-        }, 800)
-        return () => clearTimeout(timer)
+            } catch (err) {
+                console.warn("Failed to load dynamic subscribers, using mocks as fallback:", err);
+                const enriched = mockCustomers.map(c => {
+                    const names = c.name ? c.name.split(' ') : ['Subscriber', 'Node']
+                    const firstName = names[0] || 'Subscriber'
+                    const lastName = names.slice(1).join(' ') || 'Node'
+                    return {
+                        ...c,
+                        firstName,
+                        lastName,
+                        activationFee: 0,
+                        amountPaid: c.price,
+                        walletStatus: 'complete',
+                        lat: c.lat || -1.286389,
+                        lng: c.lng || 36.817223,
+                        walletHistory: [
+                            { date: '2026-05-01', type: 'Package Cost', amount: c.price, description: `${c.plan} Subscription` },
+                            { date: '2026-05-01', type: 'Payment', amount: c.price, description: 'Automatic check-in payment' }
+                        ]
+                    }
+                });
+                setCustomers(enriched);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchInitialData();
     }, [])
 
     const handleNameChange = (field, value) => {
