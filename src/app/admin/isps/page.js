@@ -322,10 +322,10 @@ export default function AdminISPsPage() {
             
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider font-bold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={card.label}>
+                <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={card.label}>
                   {card.label}
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 tracking-tight group-hover:scale-[1.02] transition-transform origin-left duration-300">
+                <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300">
                   {card.value}
                 </p>
               </div>
@@ -342,7 +342,7 @@ export default function AdminISPsPage() {
         <div className="overflow-x-auto w-full max-w-full">
           <table className="w-full text-left whitespace-nowrap min-w-[1000px]">
             <thead>
-              <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
+              <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-semibold text-admin-dim text-xs">
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Username</th>
                 <th className="px-6 py-4">Password</th>
