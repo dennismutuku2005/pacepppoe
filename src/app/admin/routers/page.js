@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Plus, Search, Power, Settings, RefreshCw, Cpu, HardDrive, Users, Edit, Trash2, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
+import { IspAutocomplete } from '@/components/IspAutocomplete'
 import { routerService } from '@/services/admin/routers'
 import { ispService } from '@/services/admin/isps'
 import { toast } from 'sonner'
@@ -28,11 +29,11 @@ export default function AdminRoutersPage() {
   const [createForm, setCreateForm] = useState({
     name: '',
     ip_address: '',
-    api_port: 8728,
-    winbox_port: 8291,
+    api_port: '',
+    winbox_port: '',
     username: '',
     password: '',
-    model: 'MikroTik',
+    model: '',
     ownerSearch: '',
     isp_id: ''
   })
@@ -128,11 +129,11 @@ export default function AdminRoutersPage() {
     setCreateForm({
       name: '',
       ip_address: '',
-      api_port: 8728,
-      winbox_port: 8291,
+      api_port: '',
+      winbox_port: '',
       username: '',
       password: '',
-      model: 'MikroTik',
+      model: '',
       ownerSearch: '',
       isp_id: ''
     })
@@ -314,8 +315,8 @@ export default function AdminRoutersPage() {
         <div className="overflow-x-auto w-full max-w-full">
           <table className="w-full text-left whitespace-nowrap min-w-[1000px]">
             <thead>
-              <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
-                <th className="px-6 py-4">Node Info</th>
+              <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-semibold text-admin-dim text-xs">
+                <th className="px-6 py-4">MikroTik / Router Info</th>
                 <th className="px-6 py-4">IP Address</th>
                 <th className="px-6 py-4">Owner / ISP</th>
                 <th className="px-6 py-4">Ports (API/Winbox)</th>
@@ -330,108 +331,84 @@ export default function AdminRoutersPage() {
             </thead>
             <tbody className="divide-y divide-pace-border">
               {isLoading ? (
-                [...Array(3)].map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-6 py-4"><div className="h-4 w-28 bg-pace-bg-subtle rounded-md" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-24 bg-pace-bg-subtle rounded-md" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-28 bg-pace-bg-subtle rounded-md" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-20 bg-pace-bg-subtle rounded-md" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-16 bg-pace-bg-subtle rounded-md" /></td>
-                    <td className="px-6 py-4"><div className="h-5 w-12 bg-pace-bg-subtle rounded-full" /></td>
-                    <td className="px-6 py-4"><div className="h-2 w-20 bg-pace-bg-subtle rounded-md" /></td>
-                    <td className="px-6 py-4"><div className="h-2 w-20 bg-pace-bg-subtle rounded-md" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-8 bg-pace-bg-subtle rounded-md" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-16 bg-pace-bg-subtle rounded-md" /></td>
-                    <td className="px-6 py-4 text-right"><div className="h-8 w-16 bg-pace-bg-subtle rounded-md ml-auto" /></td>
+                [...Array(5)].map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-32" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-28" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
+                    <td className="px-6 py-4 text-right"><Skeleton className="h-4 w-16 ml-auto" /></td>
                   </tr>
                 ))
               ) : filteredRouters.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-6 py-16 text-center text-admin-dim text-xs font-medium">
-                    No edge routers found matching your criteria.
+                  <td colSpan="11" className="py-12 text-center text-admin-dim text-xs font-semibold">
+                    No MikroTik routers found
                   </td>
                 </tr>
               ) : (
                 filteredRouters.map((routerItem) => (
-                  <tr key={routerItem.id} className="hover:bg-pace-bg-subtle/30 transition-all duration-150">
-                    <td className="px-6 py-4 font-semibold text-admin-value text-xs">
-                      {routerItem.name}
+                  <tr key={routerItem.id} className="hover:bg-pace-purple/[0.02] transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-pace-purple/5 border border-pace-purple/10 flex items-center justify-center text-pace-purple shrink-0 group-hover:scale-105 transition-transform">
+                          <Cpu size={15} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-admin-value group-hover:text-pace-purple transition-colors">{routerItem.name}</p>
+                          <p className="text-[10px] text-admin-dim font-medium">{routerItem.model}</p>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 font-mono text-[11px] text-admin-value">
-                      {routerItem.ip}
-                    </td>
-                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">
+                    <td className="px-6 py-4 text-xs font-semibold text-admin-dim font-mono">{routerItem.ip}</td>
+                    <td className="px-6 py-4">
                       {routerItem.owner_name === 'Admin / Shared' ? (
                         <span className="text-[10px] bg-pace-bg-subtle text-admin-dim font-bold border border-pace-border/60 px-2 py-0.5 rounded-md uppercase tracking-tight">Shared</span>
                       ) : (
                         <span className="text-[10px] bg-pace-purple/5 text-pace-purple font-bold border border-pace-purple/15 px-2 py-0.5 rounded-md uppercase tracking-tight">{routerItem.owner_name}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-xs font-semibold text-admin-value">
-                      API: <span className="font-mono text-pace-purple">{routerItem.port}</span> | WB: <span className="font-mono text-admin-dim">{routerItem.winbox_port || 8291}</span>
+                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">
+                      API: <span className="font-semibold text-admin-value">{routerItem.port}</span> • Winbox: <span className="font-semibold text-admin-value">{routerItem.winbox_port || 8291}</span>
                     </td>
-                    <td className="px-6 py-4 text-xs font-semibold text-admin-dim">
-                      {routerItem.model}
-                    </td>
+                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">{routerItem.model}</td>
                     <td className="px-6 py-4">
                       <Badge variant={routerItem.status === 'Online' ? 'success' : 'error'} className="text-[9px] font-bold border-none px-2 py-0.5 uppercase tracking-wider">
                         {routerItem.status}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 w-24">
-                        <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
-                          <div className={cn(
-                            'h-full transition-all duration-700',
-                            routerItem.cpu > 70 ? 'bg-rose-500' : routerItem.cpu > 40 ? 'bg-amber-500' : 'bg-pace-purple'
-                          )} style={{ width: `${routerItem.cpu}%` }} />
-                        </div>
-                        <span className="text-[10px] font-bold text-admin-value tabular-nums">{routerItem.cpu}%</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 w-24">
-                        <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
-                          <div className="h-full bg-blue-500 transition-all duration-700" style={{ width: `${routerItem.ram}%` }} />
-                        </div>
-                        <span className="text-[10px] font-bold text-admin-value tabular-nums">{routerItem.ram}%</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-xs font-bold text-admin-value text-center">
-                      {routerItem.subscribers}
-                    </td>
-                    <td className="px-6 py-4 text-xs font-semibold text-pace-purple">
-                      {routerItem.uptime}
-                    </td>
+                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">{routerItem.cpu}%</td>
+                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">{routerItem.ram}%</td>
+                    <td className="px-6 py-4 text-xs font-semibold text-admin-value">{routerItem.subscribers}</td>
+                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">{routerItem.uptime}</td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1.5 opacity-90 group-hover:opacity-100">
                         <button
                           onClick={() => openInfoModal(routerItem)}
-                          className="p-1.5 text-admin-dim hover:bg-pace-bg-subtle rounded-lg hover:text-admin-value transition-all"
-                          title="View Info"
+                          title="View Router Telemetry"
+                          className="p-1.5 hover:bg-pace-purple/10 rounded-lg text-admin-dim hover:text-pace-purple transition-all"
                         >
-                          <Settings size={14} />
+                          <Eye size={15} />
                         </button>
                         <button
                           onClick={() => openEditModal(routerItem)}
-                          className="p-1.5 text-admin-dim hover:bg-pace-bg-subtle rounded-lg hover:text-pace-purple transition-all"
-                          title="Edit Router"
+                          title="Edit Router Configuration"
+                          className="p-1.5 hover:bg-pace-purple/10 rounded-lg text-admin-dim hover:text-pace-purple transition-all"
                         >
-                          <Edit size={14} />
+                          <Edit size={15} />
                         </button>
                         <button
                           onClick={() => openDeleteModal(routerItem)}
-                          className="p-1.5 text-admin-dim hover:bg-red-500/10 rounded-lg hover:text-red-500 transition-all"
-                          title="Delete Router"
+                          title="De-authorize Router"
+                          className="p-1.5 hover:bg-rose-500/10 rounded-lg text-admin-dim hover:text-rose-600 transition-all"
                         >
-                          <Trash2 size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleReboot(routerItem.name)}
-                          className="p-1.5 text-admin-dim hover:bg-pace-bg-subtle rounded-lg hover:text-admin-value transition-all"
-                          title="Reboot Edge Node"
-                        >
-                          <Power size={14} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -443,19 +420,6 @@ export default function AdminRoutersPage() {
         </div>
       </div>
 
-      {/* Datalists for Suggestions */}
-      <datalist id="isp-owners-create">
-        <option value="Admin / Shared" />
-        {ispsList.map((isp) => (
-          <option key={isp.id} value={isp.name} />
-        ))}
-      </datalist>
-      <datalist id="isp-owners-edit">
-        <option value="Admin / Shared" />
-        {ispsList.map((isp) => (
-          <option key={isp.id} value={isp.name} />
-        ))}
-      </datalist>
 
       {/* VIEW MODAL */}
       <Modal
@@ -466,55 +430,74 @@ export default function AdminRoutersPage() {
         maxWidth="max-w-xl"
       >
         {selectedRouter && (
-          <div className="space-y-5 font-figtree">
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: 'Router ID', value: `#${selectedRouter.id}` },
-                { label: 'Owner ISP', value: selectedRouter.owner_name },
-                { label: 'IP Address', value: selectedRouter.ip },
-                { label: 'Model Type', value: selectedRouter.model },
-                { label: 'API Port', value: selectedRouter.port },
-                { label: 'Winbox Port', value: selectedRouter.winbox_port || 8291 },
-                { label: 'Username', value: selectedRouter.username || 'Not set' },
-                { label: 'Active Uptime', value: selectedRouter.uptime }
-              ].map((item) => (
-                <div key={item.label} className="rounded-xl border border-pace-border bg-pace-bg-subtle p-3">
-                  <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold mb-1">{item.label}</p>
-                  <p className="text-xs font-bold text-admin-value truncate">{item.value}</p>
+          <div className="space-y-6 font-figtree">
+            {/* Quick Status Bar */}
+            <div className="flex items-center justify-between p-4 bg-pace-bg-subtle border border-pace-border rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-pace-purple/10 border border-pace-purple/20 flex items-center justify-center text-pace-purple">
+                  <Cpu size={20} />
                 </div>
-              ))}
+                <div>
+                  <h3 className="text-sm font-bold text-admin-value">{selectedRouter.name}</h3>
+                  <p className="text-xs font-mono text-admin-dim">{selectedRouter.ip}</p>
+                </div>
+              </div>
+              <Badge variant={selectedRouter.status === 'Online' ? 'success' : 'error'}>
+                {selectedRouter.status}
+              </Badge>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="rounded-xl border border-pace-border bg-pace-bg-subtle p-3 text-center">
-                <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold mb-1">CPU Usage</p>
-                <p className="text-lg font-extrabold text-pace-purple">{selectedRouter.cpu}%</p>
+            {/* Resources Grid */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-3 bg-card-bg border border-pace-border rounded-xl">
+                <p className="text-xs text-admin-dim font-medium mb-1">CPU Usage</p>
+                <p className="text-lg font-bold text-admin-value">{selectedRouter.cpu}%</p>
               </div>
-              <div className="rounded-xl border border-pace-border bg-pace-bg-subtle p-3 text-center">
-                <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold mb-1">RAM Used</p>
-                <p className="text-lg font-extrabold text-blue-500">{selectedRouter.ram}%</p>
+              <div className="p-3 bg-card-bg border border-pace-border rounded-xl">
+                <p className="text-xs text-admin-dim font-medium mb-1">RAM Used</p>
+                <p className="text-lg font-bold text-admin-value">{selectedRouter.ram}%</p>
               </div>
-              <div className="rounded-xl border border-pace-border bg-pace-bg-subtle p-3 text-center">
-                <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold mb-1">PPPoE Users</p>
-                <p className="text-lg font-extrabold text-emerald-500">{selectedRouter.subscribers}</p>
+              <div className="p-3 bg-card-bg border border-pace-border rounded-xl">
+                <p className="text-xs text-admin-dim font-medium mb-1">PPPoE Users</p>
+                <p className="text-lg font-bold text-admin-value">{selectedRouter.subscribers}</p>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => {
-                  setIsInfoOpen(false)
-                  openEditModal(selectedRouter)
-                }}
-                className="flex-1 bg-pace-bg-subtle text-admin-value border border-pace-border py-2.5 rounded-xl text-sm font-medium hover:bg-pace-purple/5 hover:text-pace-purple transition-all"
-              >
-                Edit Credentials
-              </button>
+            {/* Detail Key-Values */}
+            <div className="space-y-2 border border-pace-border rounded-xl p-4 bg-card-bg">
+              <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
+                <span className="text-admin-dim font-medium">MikroTik Model</span>
+                <span className="font-bold text-admin-value">{selectedRouter.model}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
+                <span className="text-admin-dim font-medium">Owner / ISP Scope</span>
+                <span className="font-bold text-admin-value">{selectedRouter.owner_name}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
+                <span className="text-admin-dim font-medium">API Connection Port</span>
+                <span className="font-mono font-bold text-admin-value">{selectedRouter.port}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
+                <span className="text-admin-dim font-medium">Winbox Remote Port</span>
+                <span className="font-mono font-bold text-admin-value">{selectedRouter.winbox_port || 8291}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
+                <span className="text-admin-dim font-medium">System Uptime</span>
+                <span className="font-mono font-bold text-admin-value">{selectedRouter.uptime}</span>
+              </div>
+              <div className="flex justify-between py-1.5 text-xs">
+                <span className="text-admin-dim font-medium">API Username</span>
+                <span className="font-mono font-bold text-admin-value">{selectedRouter.username || 'admin'}</span>
+              </div>
+            </div>
+
+            {/* Operational Actions */}
+            <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setIsInfoOpen(false)}
-                className="flex-1 bg-pace-purple text-white py-2.5 rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all"
+                className="px-4 py-2 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all"
               >
-                Dismiss Detail
+                Close
               </button>
             </div>
           </div>
@@ -532,16 +515,16 @@ export default function AdminRoutersPage() {
         <div className="space-y-4 font-figtree">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Node Identifier</label>
+              <label className="text-xs font-semibold text-admin-dim">MikroTik Name</label>
               <input
                 value={createForm.name}
                 onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g. East edge 1"
+                placeholder="e.g. East Edge MikroTik 1"
                 className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">IP Address</label>
+              <label className="text-xs font-semibold text-admin-dim">IP Address</label>
               <input
                 value={createForm.ip_address}
                 onChange={(e) => setCreateForm(prev => ({ ...prev, ip_address: e.target.value }))}
@@ -553,20 +536,22 @@ export default function AdminRoutersPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">API Port</label>
+              <label className="text-xs font-semibold text-admin-dim">API Port</label>
               <input
                 type="number"
                 value={createForm.api_port}
                 onChange={(e) => setCreateForm(prev => ({ ...prev, api_port: e.target.value }))}
+                placeholder="8728"
                 className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Winbox Port</label>
+              <label className="text-xs font-semibold text-admin-dim">Winbox Port</label>
               <input
                 type="number"
                 value={createForm.winbox_port}
                 onChange={(e) => setCreateForm(prev => ({ ...prev, winbox_port: e.target.value }))}
+                placeholder="8291"
                 className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
               />
             </div>
@@ -574,7 +559,7 @@ export default function AdminRoutersPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">API Username</label>
+              <label className="text-xs font-semibold text-admin-dim">API Username</label>
               <input
                 value={createForm.username}
                 onChange={(e) => setCreateForm(prev => ({ ...prev, username: e.target.value }))}
@@ -583,7 +568,7 @@ export default function AdminRoutersPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">API Password</label>
+              <label className="text-xs font-semibold text-admin-dim">API Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -605,7 +590,7 @@ export default function AdminRoutersPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Hardware Model</label>
+              <label className="text-xs font-semibold text-admin-dim">Hardware Model</label>
               <input
                 value={createForm.model}
                 onChange={(e) => setCreateForm(prev => ({ ...prev, model: e.target.value }))}
@@ -614,13 +599,12 @@ export default function AdminRoutersPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Owner / ISP Suggestion</label>
-              <input
-                list="isp-owners-create"
-                value={createForm.ownerSearch}
-                onChange={handleCreateOwnerChange}
-                placeholder="Admin / Shared"
-                className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
+              <label className="text-xs font-semibold text-admin-dim mb-1 block">Owner / ISP</label>
+              <IspAutocomplete
+                value={createForm.isp_id}
+                onChange={(selected) => setCreateForm(prev => ({ ...prev, isp_id: selected?.id || '' }))}
+                isps={ispsList}
+                placeholder="Search ISP by name or username..."
               />
             </div>
           </div>
@@ -646,16 +630,16 @@ export default function AdminRoutersPage() {
         <div className="space-y-4 font-figtree">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Node Identifier</label>
+              <label className="text-xs font-semibold text-admin-dim">MikroTik Name</label>
               <input
                 value={editForm.name}
                 onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Name"
+                placeholder="e.g. East Edge MikroTik 1"
                 className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">IP Address</label>
+              <label className="text-xs font-semibold text-admin-dim">IP Address</label>
               <input
                 value={editForm.ip_address}
                 onChange={(e) => setEditForm(prev => ({ ...prev, ip_address: e.target.value }))}
@@ -667,7 +651,7 @@ export default function AdminRoutersPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">API Port</label>
+              <label className="text-xs font-semibold text-admin-dim">API Port</label>
               <input
                 type="number"
                 value={editForm.api_port}
@@ -676,7 +660,7 @@ export default function AdminRoutersPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Winbox Port</label>
+              <label className="text-xs font-semibold text-admin-dim">Winbox Port</label>
               <input
                 type="number"
                 value={editForm.winbox_port}
@@ -688,7 +672,7 @@ export default function AdminRoutersPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">API Username</label>
+              <label className="text-xs font-semibold text-admin-dim">API Username</label>
               <input
                 value={editForm.username}
                 onChange={(e) => setEditForm(prev => ({ ...prev, username: e.target.value }))}
@@ -697,7 +681,7 @@ export default function AdminRoutersPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Change Password</label>
+              <label className="text-xs font-semibold text-admin-dim">Change Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -719,7 +703,7 @@ export default function AdminRoutersPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Hardware Model</label>
+              <label className="text-xs font-semibold text-admin-dim">Hardware Model</label>
               <input
                 value={editForm.model}
                 onChange={(e) => setEditForm(prev => ({ ...prev, model: e.target.value }))}
@@ -728,13 +712,12 @@ export default function AdminRoutersPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Owner / ISP Suggestion</label>
-              <input
-                list="isp-owners-edit"
-                value={editForm.ownerSearch}
-                onChange={handleEditOwnerChange}
-                placeholder="Admin / Shared"
-                className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
+              <label className="text-xs font-semibold text-admin-dim mb-1 block">Owner / ISP</label>
+              <IspAutocomplete
+                value={editForm.isp_id}
+                onChange={(selected) => setEditForm(prev => ({ ...prev, isp_id: selected?.id || '' }))}
+                isps={ispsList}
+                placeholder="Search ISP by name or username..."
               />
             </div>
           </div>
