@@ -65,9 +65,9 @@ export default function AdminHomePage() {
       iconBorder: 'border-green-500/10 group-hover:border-green-500/30'
     },
     { 
-      label: 'Total Transactions Today', 
-      value: widgets.today_transactions_count?.value ?? 0, 
-      icon: Smartphone, 
+      label: 'Total ISPs', 
+      value: widgets.isp_tenants?.value ?? 0, 
+      icon: Users, 
       color: 'text-orange-500', 
       bg: 'bg-orange-500/5',
       accent: 'bg-gradient-to-b from-amber-400 to-orange-500',
@@ -136,12 +136,12 @@ export default function AdminHomePage() {
             
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider font-bold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={card.label}>
+                <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={card.label}>
                   {card.label}
                 </p>
                 <div className="relative mt-1.5">
                   <p className={cn(
-                    "text-base sm:text-2xl font-bold text-admin-value tracking-tight group-hover:scale-[1.02] transition-all origin-left duration-300",
+                    "text-base sm:text-2xl font-bold text-admin-value group-hover:scale-[1.02] transition-all origin-left duration-300",
                     card.isWallet && isWalletBlurred && "blur-md"
                   )}>
                     {card.value}
@@ -167,11 +167,11 @@ export default function AdminHomePage() {
           <div className="flex justify-between items-center mb-8">
             <div>
               <h4 className="text-sm font-medium text-admin-value">Activity & Growth</h4>
-              <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase">Utilization Trends</p>
+              <p className="text-xs text-gray-400 font-normal mt-0.5">Utilization Trends</p>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-pace-purple" />
-              <span className="text-[9px] font-medium text-gray-400 uppercase tracking-widest">Revenue</span>
+              <span className="text-xs font-medium text-gray-500">Revenue</span>
             </div>
           </div>
           
@@ -203,7 +203,7 @@ export default function AdminHomePage() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-sm font-semibold text-admin-value">Recent Transactions</h2>
-              <p className="text-[10px] text-admin-dim uppercase tracking-wider mt-1">Live M-Pesa collection stream</p>
+              <p className="text-xs text-admin-dim font-normal mt-0.5">Live M-Pesa collection stream</p>
             </div>
             <Link href="/admin/mpesa" className="p-2 bg-pace-bg-subtle rounded-lg text-admin-dim hover:text-pace-purple transition-all">
               <ArrowUpRight size={16} />
