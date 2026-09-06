@@ -70,7 +70,7 @@ export const dashboardService = {
                         widgets: {
                             active_users: { value: widgets.active_subscribers || 0 },
                             monthly_users: { value: widgets.total_subscribers || 0 },
-                            todays_earnings: { value: widgets.total_revenue || 0 },
+                            todays_earnings: { value: widgets.todays_revenue ?? widgets.total_revenue ?? 0 },
                             sms_balance: { value: widgets.net_profit || 0 },
                             isp_tenants: { value: widgets.isp_tenants || 0 },
                             open_tickets: { value: widgets.open_tickets || 0 },
