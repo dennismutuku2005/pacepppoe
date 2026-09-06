@@ -170,13 +170,13 @@ export default function AdminWalletsPage() {
           
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-[10px] uppercase tracking-wider font-bold text-admin-dim">
+              <p className="text-xs font-semibold text-admin-dim">
                 Total in ISP Wallets
               </p>
               {isLoading ? (
                 <div className="h-8 w-32 bg-pace-bg-subtle rounded-md animate-pulse mt-2" />
               ) : (
-                <p className="text-2xl sm:text-3xl font-bold text-admin-value mt-2 tracking-tight">
+                <p className="text-2xl sm:text-3xl font-bold text-admin-value mt-2">
                   {formatCurrency(totalBalance)}
                 </p>
               )}
@@ -193,7 +193,7 @@ export default function AdminWalletsPage() {
         <div className="overflow-x-auto w-full max-w-full">
           <table className="w-full text-left whitespace-nowrap min-w-[700px]">
             <thead>
-              <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
+              <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-semibold text-admin-dim text-xs">
                 <th className="px-6 py-4">ISP Operator</th>
                 <th className="px-6 py-4">Username</th>
                 <th className="px-6 py-4">Wallet Balance</th>
