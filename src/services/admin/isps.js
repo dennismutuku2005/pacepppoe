@@ -71,9 +71,10 @@ export const ispService = {
         }
     },
 
-    async getISPSuggestions() {
+    async getISPSuggestions(query = '') {
         try {
-            const res = await apiFetch('/admin/isp_suggestions.php');
+            const queryParams = new URLSearchParams({ q: query });
+            const res = await apiFetch(`/admin/isp_suggestions.php?${queryParams.toString()}`);
             if (res && res.status === 'success') {
                 return {
                     status: 'success',
