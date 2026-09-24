@@ -68,18 +68,20 @@ function ActiveUsersContent() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex flex-col items-end shadow-sm">
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-lg font-bold text-emerald-600 tabular-nums">{totalActive}</span>
-                        </div>
-                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Active Users</span>
-                    </div>
+                    <button 
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold disabled:opacity-50"
+                        title="Refresh active users"
+                    >
+                        <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                        <span>Refresh</span>
+                    </button>
                 </div>
             </div>
 
             {/* Control Bar */}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
                 <div className="relative w-full sm:w-80 group">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
                     <input
