@@ -94,28 +94,58 @@ function PaymentsContent() {
             </div>
 
             {/* Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <div className="bg-card-bg border border-pace-border rounded-xl p-5 group hover:border-pace-purple/20 transition-all shadow-sm">
-                    <p className="text-[10px] font-bold text-admin-dim uppercase tracking-wider mb-1">Total Revenue</p>
-                    <h3 className="text-2xl font-bold text-admin-value tabular-nums">KES {totalRevenue.toLocaleString()}</h3>
-                    <div className="flex items-center gap-1.5 mt-2 text-[11px] text-green-600 font-medium">
-                        <ArrowUpRight size={12} /> Subscriber Collections
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-500" />
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Total Revenue">
+                                Total Revenue
+                            </p>
+                            <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                                KES {totalRevenue.toLocaleString()}
+                            </p>
+                            <p className="text-[10px] text-admin-dim mt-0.5 truncate">Subscriber Collections</p>
+                        </div>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-emerald-500/10 group-hover:border-emerald-500/30 bg-emerald-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+                            <ArrowUpRight className="text-emerald-500 w-4 h-4" />
+                        </div>
                     </div>
                 </div>
-                <div className="bg-card-bg border border-pace-border rounded-xl p-5 group hover:border-pace-purple/20 transition-all shadow-sm">
-                    <p className="text-[10px] font-bold text-admin-dim uppercase tracking-wider mb-1">Total Expenses</p>
-                    <h3 className="text-2xl font-bold text-admin-value tabular-nums">KES {totalExpenses.toLocaleString()}</h3>
-                    <div className="flex items-center gap-1.5 mt-2 text-[11px] text-rose-500 font-medium">
-                        <ArrowDownLeft size={12} /> Direct ISP Outflows
+
+                <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 to-red-500" />
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Total Expenses">
+                                Total Expenses
+                            </p>
+                            <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                                KES {totalExpenses.toLocaleString()}
+                            </p>
+                            <p className="text-[10px] text-admin-dim mt-0.5 truncate">Direct ISP Outflows</p>
+                        </div>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-rose-500/10 group-hover:border-rose-500/30 bg-rose-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+                            <ArrowDownLeft className="text-rose-500 w-4 h-4" />
+                        </div>
                     </div>
                 </div>
-                <div className="bg-card-bg border border-pace-border rounded-xl p-5 group hover:border-pace-purple/20 transition-all shadow-sm">
-                    <p className="text-[10px] font-bold text-admin-dim uppercase tracking-wider mb-1">Net Balance</p>
-                    <h3 className={cn("text-2xl font-bold tabular-nums", netBalance >= 0 ? "text-pace-purple" : "text-rose-600")}>
-                        KES {netBalance.toLocaleString()}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-2 text-[11px] text-admin-dim font-medium">
-                        <Clock size={12} /> Live synchronized
+
+                <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-pace-purple to-indigo-500" />
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Net Balance">
+                                Net Balance
+                            </p>
+                            <p className={cn("text-xl sm:text-2xl font-bold mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate", netBalance >= 0 ? "text-pace-purple" : "text-rose-600")}>
+                                KES {netBalance.toLocaleString()}
+                            </p>
+                            <p className="text-[10px] text-admin-dim mt-0.5 truncate">Live synchronized</p>
+                        </div>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-pace-purple/10 group-hover:border-pace-purple/30 bg-pace-purple/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+                            <Clock className="text-pace-purple w-4 h-4" />
+                        </div>
                     </div>
                 </div>
             </div>

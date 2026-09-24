@@ -84,28 +84,77 @@ function AccountsContent() {
                 </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-5 border border-pace-border rounded-xl bg-card-bg group hover:border-pace-purple/20 transition-all shadow-sm">
-                    <p className="text-[10px] font-bold text-admin-dim tracking-wider mb-1 uppercase">Current Subscribers</p>
-                    <h3 className="text-2xl font-bold text-admin-value tabular-nums">{stats.current_subscribers}</h3>
-                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-green-600 font-medium">
-                        <Activity size={12} /> Active and in good standing
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-500" />
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Current Subscribers">
+                                Current Subscribers
+                            </p>
+                            <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                                {stats.current_subscribers}
+                            </p>
+                            <p className="text-[10px] text-admin-dim mt-0.5 truncate">Active and paid</p>
+                        </div>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-emerald-500/10 group-hover:border-emerald-500/30 bg-emerald-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+                            <Activity className="text-emerald-500 w-4 h-4" />
+                        </div>
                     </div>
                 </div>
-                <div className="p-5 border border-pace-border rounded-xl bg-card-bg group hover:border-pace-purple/20 transition-all shadow-sm">
-                    <p className="text-[10px] font-bold text-admin-dim tracking-wider mb-1 uppercase">Expired / Owing</p>
-                    <h3 className="text-2xl font-bold text-admin-value tabular-nums">{stats.expired_owing}</h3>
-                    <p className="text-[11px] font-medium text-admin-dim mt-2">Suspended / pending payment</p>
+
+                <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 to-red-500" />
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Expired / Owing">
+                                Expired / Owing
+                            </p>
+                            <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                                {stats.expired_owing}
+                            </p>
+                            <p className="text-[10px] text-admin-dim mt-0.5 truncate">Pending renewal</p>
+                        </div>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-rose-500/10 group-hover:border-rose-500/30 bg-rose-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+                            <AlertCircle className="text-rose-500 w-4 h-4" />
+                        </div>
+                    </div>
                 </div>
-                <div className="p-5 border border-pace-border rounded-xl bg-card-bg group hover:border-pace-purple/20 transition-all shadow-sm">
-                    <p className="text-[10px] font-bold text-admin-dim tracking-wider mb-1 uppercase">Total Due</p>
-                    <h3 className="text-2xl font-bold text-rose-500 tabular-nums">KES {stats.total_due.toLocaleString()}</h3>
-                    <p className="text-[11px] font-medium text-admin-dim mt-2">Outstanding subscriber arrears</p>
+
+                <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-orange-500" />
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Total Due">
+                                Total Due
+                            </p>
+                            <p className="text-xl sm:text-2xl font-bold text-rose-500 mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                                KES {stats.total_due.toLocaleString()}
+                            </p>
+                            <p className="text-[10px] text-admin-dim mt-0.5 truncate">Subscriber arrears</p>
+                        </div>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-amber-500/10 group-hover:border-amber-500/30 bg-amber-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+                            <Clock className="text-amber-500 w-4 h-4" />
+                        </div>
+                    </div>
                 </div>
-                <div className="p-5 border border-pace-border rounded-xl bg-card-bg group hover:border-pace-purple/20 transition-all shadow-sm">
-                    <p className="text-[10px] font-bold text-admin-dim tracking-wider mb-1 uppercase">Collected Wallet Funds</p>
-                    <h3 className="text-xl font-bold text-admin-value truncate">KES {stats.collected_wallet.toLocaleString()}</h3>
-                    <p className="text-[11px] font-medium text-admin-dim mt-2">Total positive subscriber balances</p>
+
+                <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-pace-purple to-indigo-500" />
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Collected Wallet Funds">
+                                Collected Funds
+                            </p>
+                            <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                                KES {stats.collected_wallet.toLocaleString()}
+                            </p>
+                            <p className="text-[10px] text-admin-dim mt-0.5 truncate">Total positive balances</p>
+                        </div>
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-pace-purple/10 group-hover:border-pace-purple/30 bg-pace-purple/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+                            <Wallet className="text-pace-purple w-4 h-4" />
+                        </div>
+                    </div>
                 </div>
             </div>
 

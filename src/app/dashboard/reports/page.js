@@ -92,10 +92,49 @@ function ReportsContent() {
     const expenses = reportsData?.expenses || []
 
     const financialMetrics = [
-        { label: "Total Revenue", value: `KES ${Number(stats.totalRevenueMonth || 0).toLocaleString()}`, change: "+14.5%", icon: TrendingUp, color: "text-green-600", bg: "bg-green-500/10" },
-        { label: "Total Expenses", value: `KES ${Number(stats.totalExpensesMonth || 0).toLocaleString()}`, change: "+5.2%", icon: TrendingDown, color: "text-red-500", bg: "bg-red-500/10" },
-        { label: "Net Profit", value: `KES ${Number(stats.netProfitMonth || 0).toLocaleString()}`, change: "+18.2%", icon: DollarSign, color: "text-pace-purple", bg: "bg-pace-purple/10" },
-        { label: "Collection Rate", value: stats.collectionRate || '100%', change: "Active", icon: Activity, color: "text-blue-500", bg: "bg-blue-500/10" },
+        { 
+            label: "Total Revenue", 
+            value: `KES ${Number(stats.totalRevenueMonth || 0).toLocaleString()}`, 
+            sub: "Active monthly billing", 
+            icon: TrendingUp, 
+            color: "text-emerald-500", 
+            bg: "bg-emerald-500/5", 
+            iconBorder: "border-emerald-500/10 group-hover:border-emerald-500/30",
+            accent: "bg-gradient-to-b from-emerald-400 to-teal-500",
+            trend: 14.5
+        },
+        { 
+            label: "Total Expenses", 
+            value: `KES ${Number(stats.totalExpensesMonth || 0).toLocaleString()}`, 
+            sub: "Operational overhead", 
+            icon: TrendingDown, 
+            color: "text-rose-500", 
+            bg: "bg-rose-500/5", 
+            iconBorder: "border-rose-500/10 group-hover:border-rose-500/30",
+            accent: "bg-gradient-to-b from-rose-400 to-red-500",
+            trend: -5.2
+        },
+        { 
+            label: "Net Profit", 
+            value: `KES ${Number(stats.netProfitMonth || 0).toLocaleString()}`, 
+            sub: "Net monthly margin", 
+            icon: DollarSign, 
+            color: "text-pace-purple", 
+            bg: "bg-pace-purple/5", 
+            iconBorder: "border-pace-purple/10 group-hover:border-pace-purple/30",
+            accent: "bg-gradient-to-b from-pace-purple to-indigo-500",
+            trend: 18.2
+        },
+        { 
+            label: "Collection Rate", 
+            value: stats.collectionRate || '100%', 
+            sub: "Payment efficiency", 
+            icon: Activity, 
+            color: "text-blue-500", 
+            bg: "bg-blue-500/5", 
+            iconBorder: "border-blue-500/10 group-hover:border-blue-500/30",
+            accent: "bg-gradient-to-b from-blue-400 to-cyan-500"
+        },
     ]
 
     return (
@@ -120,17 +159,38 @@ function ReportsContent() {
             {/* Financial Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {financialMetrics.map((m, i) => (
-                    <div key={i} className="bg-card-bg border border-pace-border rounded-xl p-5 shadow-sm hover:border-pace-purple/20 transition-all group">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", m.bg)}>
-                                <m.icon size={20} className={m.color} />
+                    <div 
+                        key={i} 
+                        className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0"
+                    >
+                        {/* Left accent color strip */}
+                        <div className={cn("absolute left-0 top-0 bottom-0 w-1", m.accent)} />
+                        
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={m.label}>
+                                        {m.label}
+                                    </p>
+                                    {m.trend !== undefined && (
+                                        <span className={cn(
+                                            "inline-flex items-center text-[10px] font-bold px-1.5 py-0.2 rounded-full",
+                                            m.trend >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+                                        )}>
+                                            {m.trend >= 0 ? <ArrowUpRight size={10} className="mr-0.5" /> : <ArrowDownLeft size={10} className="mr-0.5" />}
+                                            {Math.abs(m.trend)}%
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                                    {m.value}
+                                </p>
+                                {m.sub && <p className="text-[10px] text-admin-dim mt-0.5 truncate">{m.sub}</p>}
                             </div>
-                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", m.color === 'text-red-500' ? 'bg-red-500/10' : 'bg-green-500/10')}>
-                                {m.change}
-                            </span>
+                            <div className={cn("w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", m.iconBorder, m.bg)}>
+                                <m.icon className={cn(m.color, "w-4 h-4")} />
+                            </div>
                         </div>
-                        <p className="text-[11px] font-bold text-admin-dim uppercase tracking-wider mb-1">{m.label}</p>
-                        <h3 className="text-xl font-bold text-admin-value tabular-nums tracking-tight">{m.value}</h3>
                     </div>
                 ))}
             </div>

@@ -82,10 +82,49 @@ function DashboardContent() {
     }, [filters])
 
     const metrics = widgets ? [
-        { label: "Active Subscribers", value: widgets.active_users.value.toLocaleString(), note: 'Live Sessions', icon: Users, color: 'text-pace-purple', bg: 'bg-pace-purple/10', href: '/dashboard/customers' },
-        { label: "Monthly Users", value: (widgets.monthly_users?.value || 0).toLocaleString(), note: 'Total unique users', icon: Network, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { label: "Today's Revenue", value: `KSH ${widgets.todays_earnings.value.toLocaleString()}`, note: 'M-Pesa Ledger', icon: Wallet, color: 'text-green-500', bg: 'bg-green-500/10', isRevenue: true },
-        { label: "SMS Balance", value: `KES ${widgets.sms_balance.value.toLocaleString()}`, note: 'Credit Nexus', icon: MessageSquare, color: 'text-orange-500', bg: 'bg-orange-500/10', href: '/dashboard/sms' },
+        { 
+            label: "Active Subscribers", 
+            value: widgets.active_users.value.toLocaleString(), 
+            sub: 'Live Sessions', 
+            icon: Users, 
+            color: 'text-pace-purple', 
+            bg: 'bg-pace-purple/5', 
+            iconBorder: 'border-pace-purple/10 group-hover:border-pace-purple/30',
+            accent: 'bg-gradient-to-b from-pace-purple to-indigo-500', 
+            href: '/dashboard/customers' 
+        },
+        { 
+            label: "Monthly Users", 
+            value: (widgets.monthly_users?.value || 0).toLocaleString(), 
+            sub: 'Total unique users', 
+            icon: Network, 
+            color: 'text-blue-500', 
+            bg: 'bg-blue-500/5', 
+            iconBorder: 'border-blue-500/10 group-hover:border-blue-500/30',
+            accent: 'bg-gradient-to-b from-blue-400 to-cyan-500' 
+        },
+        { 
+            label: "Today's Revenue", 
+            value: `KES ${widgets.todays_earnings.value.toLocaleString()}`, 
+            sub: 'M-Pesa Ledger', 
+            icon: Wallet, 
+            color: 'text-emerald-500', 
+            bg: 'bg-emerald-500/5', 
+            iconBorder: 'border-emerald-500/10 group-hover:border-emerald-500/30',
+            accent: 'bg-gradient-to-b from-emerald-400 to-teal-500', 
+            isRevenue: true 
+        },
+        { 
+            label: "SMS Balance", 
+            value: `KES ${widgets.sms_balance.value.toLocaleString()}`, 
+            sub: 'Credit Nexus', 
+            icon: MessageSquare, 
+            color: 'text-amber-500', 
+            bg: 'bg-amber-500/5', 
+            iconBorder: 'border-amber-500/10 group-hover:border-amber-500/30',
+            accent: 'bg-gradient-to-b from-amber-400 to-orange-500', 
+            href: '/dashboard/sms' 
+        },
     ] : []
 
     return (
@@ -135,31 +174,35 @@ function DashboardContent() {
                             key={i}
                             {...wrapperProps}
                             className={cn(
-                                "bg-card-bg border border-pace-border rounded-xl p-5 hover:border-pace-purple/20 transition-all group",
+                                "relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0",
                                 (metric.href || metric.isRevenue) && "cursor-pointer"
                             )}
                         >
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-all", metric.bg)}>
-                                    <metric.icon size={20} className={metric.color} />
-                                </div>
-                            </div>
-                            <div className="relative">
-                                <h3 className={cn(
-                                    "text-xl font-bold text-admin-value tracking-tight transition-all",
-                                    metric.isRevenue && isRevenueBlurred && "blur-md select-none"
-                                )}>
-                                    {metric.value}
-                                </h3>
-                                <div className="flex items-center justify-between mt-1">
-                                    <p className="text-[11px] font-medium text-gray-400">
+                            {/* Left accent color strip */}
+                            <div className={cn("absolute left-0 top-0 bottom-0 w-1", metric.accent)} />
+                            
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={metric.label}>
                                         {metric.label}
                                     </p>
-                                    {metric.isRevenue && (
-                                        <span className="text-[10px] text-pace-purple font-semibold">
-                                            {isRevenueBlurred ? "Reveal" : "Hide"}
-                                        </span>
-                                    )}
+                                    <p className={cn(
+                                        "text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate",
+                                        metric.isRevenue && isRevenueBlurred && "blur-md select-none"
+                                    )}>
+                                        {metric.value}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <p className="text-[10px] text-admin-dim truncate">{metric.sub}</p>
+                                        {metric.isRevenue && (
+                                            <span className="text-[9px] text-pace-purple font-bold">
+                                                {isRevenueBlurred ? "Reveal" : "Hide"}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className={cn("w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", metric.iconBorder, metric.bg)}>
+                                    <metric.icon className={cn(metric.color, "w-4 h-4")} />
                                 </div>
                             </div>
                         </CardWrapper>
