@@ -25,10 +25,10 @@ export const NAVIGATION_SCHEMA = [
                 keywords: ['clients', 'members', 'directory', 'phone numbers', 'list']
             },
             {
-                name: 'Active Connections',
+                name: 'Active Users',
                 href: '/dashboard/customers/active',
                 policy: 'view_active_users',
-                keywords: ['logs', 'history', 'connections', 'activity', 'live', 'sessions']
+                keywords: ['active users', 'active subscribers', 'connections', 'activity', 'live', 'sessions']
             }
         ]
     },

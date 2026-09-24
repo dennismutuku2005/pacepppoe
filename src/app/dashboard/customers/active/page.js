@@ -1,141 +1,103 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Clock, Ticket, Smartphone, Activity, RefreshCcw } from 'lucide-react'
+import Link from 'next/link'
+import { Search, RefreshCw, Users, ShieldCheck, CreditCard, Network, ArrowUpRight, LifeBuoy, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/Badge'
-import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
+import { TablePageSkeleton } from '@/components/Skeleton'
 import { activeConnectionsService } from '@/services/isp/activeConnections'
 
-function ActiveConnectionsContent() {
+function ActiveUsersContent() {
     const router = useRouter()
-    
     const [isLoading, setIsLoading] = useState(true)
-    const [isLoadingMore, setIsLoadingMore] = useState(false)
     const [entries, setEntries] = useState([])
-    const [hasMore, setHasMore] = useState(true)
-    const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
-    const [total, setTotal] = useState(0)
     const [isRefreshing, setIsRefreshing] = useState(false)
 
-    const observer = useRef()
-    const fetchLock = useRef(false)
-
-    const loadEntries = async (pageNum, isAppend = false) => {
-        if (fetchLock.current) return
-        fetchLock.current = true
-
+    const loadEntries = async (searchTerm = search) => {
         try {
-            if (!isAppend) setIsLoading(true)
-            else setIsLoadingMore(true)
-
             const response = await activeConnectionsService.getActiveConnections({
-                page: pageNum,
-                limit: 15,
-                search
+                search: searchTerm,
+                limit: 100
             })
 
             if (response?.status === 'success') {
-                const newItems = response.data || []
-                const serverTotal = response.pagination?.total || 0
-                const serverHasMore = response.pagination?.has_more ?? false
-
-                if (isAppend) {
-                    setEntries(prev => [...prev, ...newItems])
-                } else {
-                    setEntries(newItems)
-                }
-
-                setTotal(serverTotal)
-                setHasMore(serverHasMore)
-                setPage(pageNum)
+                setEntries(response.data || [])
             } else {
-                setHasMore(false)
+                setEntries([])
             }
         } catch (error) {
-            console.error("Failed to load active connections", error)
-            setHasMore(false)
+            console.error("Failed to load active subscribers", error)
         } finally {
             setIsLoading(false)
-            setIsLoadingMore(false)
             setIsRefreshing(false)
-            fetchLock.current = false
         }
     }
 
     useEffect(() => {
+        setIsLoading(true)
         const timer = setTimeout(() => {
-            setEntries([])
-            setPage(1)
-            setHasMore(true)
-            loadEntries(1, false)
-        }, 500)
+            loadEntries(search)
+        }, 300)
         return () => clearTimeout(timer)
     }, [search])
 
     const handleRefresh = () => {
         setIsRefreshing(true)
-        setEntries([])
-        setPage(1)
-        setHasMore(true)
-        loadEntries(1, false)
+        loadEntries(search)
     }
-
-    const lastElementRef = useCallback(node => {
-        if (isLoading || isLoadingMore) return
-        if (observer.current) observer.current.disconnect()
-        observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore && !fetchLock.current) {
-                loadEntries(page + 1, true)
-            }
-        })
-        if (node) observer.current.observe(node)
-    }, [isLoading, isLoadingMore, hasMore, page])
 
     if (isLoading && entries.length === 0) {
         return <TablePageSkeleton />
     }
+
+    const totalActive = entries.length
+    const totalRevenuePaid = entries.reduce((acc, curr) => acc + Number(curr.totalPaid || 0), 0)
 
     return (
         <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10">
             {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-xl font-medium text-admin-value tracking-tight">Active Sessions</h1>
-                    <p className="text-xs font-medium text-gray-400 mt-1">Real-time tracking of paid hotspot and PPPoE sessions</p>
+                    <h1 className="text-xl font-medium text-admin-value tracking-tight">Active Users</h1>
+                    <p className="text-xs font-medium text-gray-400 mt-1">
+                        Real-time active subscribers, PPPoE credentials, QoS profiles, payment history, and account balances
+                    </p>
                 </div>
 
-                <div className="flex gap-4">
-                    <div className="px-4 py-2 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex flex-col items-end shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex flex-col items-end shadow-sm">
                         <div className="flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-lg font-bold text-emerald-600 tabular-nums">{total}</span>
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-lg font-bold text-emerald-600 tabular-nums">{totalActive}</span>
                         </div>
-                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Live Nodes</span>
+                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Active Users</span>
                     </div>
                 </div>
             </div>
 
             {/* Control Bar */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between gap-3">
                 <div className="relative w-full sm:w-80 group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
                     <input
                         type="text"
-                        placeholder="Search session identity..."
+                        placeholder="Search by name, username, phone, account…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-card-bg border border-pace-border rounded-xl text-sm font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
                     />
                 </div>
                 <button 
                    onClick={handleRefresh}
-                   className="p-2.5 bg-card-bg border border-pace-border rounded-xl text-admin-dim hover:text-pace-purple transition-all active:scale-95 shadow-sm"
-                   title="Refresh live sessions"
+                   disabled={isRefreshing}
+                   className="flex items-center gap-2 px-4 py-2.5 bg-card-bg border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                   title="Refresh active users"
                 >
-                    <RefreshCcw size={16} className={isRefreshing ? "animate-spin" : ""} />
+                    <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+                    <span className="hidden sm:inline">Refresh</span>
                 </button>
             </div>
 
@@ -145,86 +107,155 @@ function ActiveConnectionsContent() {
                     <table className="w-full text-left whitespace-nowrap">
                         <thead>
                             <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
-                                <th className="px-6 py-3">Session Identity</th>
-                                <th className="px-6 py-3">Service Profile</th>
-                                <th className="px-6 py-3">Financial Nexus</th>
-                                <th className="px-6 py-3">Session Start</th>
-                                <th className="px-6 py-3">Expiration</th>
+                                <th className="px-6 py-3">Subscriber Identity</th>
+                                <th className="px-6 py-3">MikroTik Gateway</th>
+                                <th className="px-6 py-3">Service QoS Plan</th>
+                                <th className="px-6 py-3 text-right">Plan Rate</th>
+                                <th className="px-6 py-3">Latest M-Pesa Payment</th>
+                                <th className="px-6 py-3 text-center">Renewal Expiry</th>
                                 <th className="px-6 py-3 text-center">Status</th>
+                                <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
                             {entries.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="py-24 text-center text-admin-dim text-sm font-medium">No active sessions found</td>
+                                    <td colSpan="8" className="py-20 text-center text-admin-dim text-sm font-medium">
+                                        <div className="flex flex-col items-center justify-center gap-2">
+                                            <Users size={28} className="text-gray-300" />
+                                            <p className="font-semibold text-admin-value">No active subscribers found</p>
+                                            <p className="text-xs text-gray-400">All suspended or disabled users are excluded from this list.</p>
+                                        </div>
+                                    </td>
                                 </tr>
                             ) : (
-                                entries.map((entry, index) => {
-                                    const isLast = index === entries.length - 1
+                                entries.map((user) => {
+                                    const hasPayment = Boolean(user.lastReceipt || user.lastPaymentAmount);
                                     return (
-                                        <tr
-                                            key={entry.id}
-                                            ref={isLast ? lastElementRef : null}
-                                            className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group"
-                                        >
-                                            <td className="px-6 py-2">
+                                        <tr key={user.id} className="hover:bg-pace-bg-subtle/50 transition-colors group">
+                                            {/* Subscriber Identity */}
+                                            <td className="px-6 py-3">
                                                 <div className="flex flex-col">
-                                                    <span className="font-semibold text-admin-value text-xs group-hover:text-pace-purple transition-colors">{entry.phone}</span>
-                                                    <span className="text-[10px] text-admin-dim font-mono">CONN-{entry.id}</span>
+                                                    <span className="text-xs font-semibold text-admin-value group-hover:text-pace-purple transition-colors">
+                                                        {user.name}
+                                                    </span>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-[10px] font-mono font-bold text-pace-purple">
+                                                            {user.username}
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-300">•</span>
+                                                        <span className="text-[10px] text-admin-dim font-mono">
+                                                            Acc: {user.accountNumber || user.phone}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-2">
+
+                                            {/* Router / NAS */}
+                                            <td className="px-6 py-3">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-7 h-7 rounded-lg bg-pace-purple/5 flex items-center justify-center text-pace-purple border border-pace-purple/10">
-                                                        <Ticket size={14} />
-                                                    </div>
-                                                    <span className="font-semibold text-admin-value text-xs uppercase">{entry.plan}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-2">
-                                                <div className="flex flex-col">
-                                                    <div className="flex items-center gap-1.5 font-bold text-[9px] uppercase">
-                                                        {entry.type === 'M-Pesa' ? (
-                                                            <Smartphone size={10} className="text-green-600" />
-                                                        ) : (
-                                                            <Ticket size={10} className="text-pace-purple" />
-                                                        )}
-                                                        <span className={cn(
-                                                            "tracking-widest",
-                                                            entry.type === 'M-Pesa' ? "text-green-600" : "text-pace-purple"
-                                                        )}>{entry.type}</span>
-                                                    </div>
-                                                    <span className="text-[10px] font-mono text-admin-dim mt-0.5 tabular-nums">
-                                                        {entry.mpesa_code} (KES {entry.amount})
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                    <span className="text-xs font-semibold text-admin-value font-mono">
+                                                        {user.router || 'Default Router'}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-2">
-                                                <div className="flex items-center gap-2 text-admin-dim">
-                                                    <Clock size={12} />
-                                                    <span className="font-medium text-[10px] tabular-nums">{entry.created_at}</span>
+
+                                            {/* QoS Plan & Bandwidth */}
+                                            <td className="px-6 py-3">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-semibold text-admin-value">
+                                                        {user.plan || 'Standard Plan'}
+                                                    </span>
+                                                    {user.bandwidth && (
+                                                        <span className="text-[10px] text-pace-purple font-mono font-bold">
+                                                            {user.bandwidth}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-2">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="p-1 rounded bg-red-500/5 text-red-500 border border-red-500/10">
-                                                        <Clock size={11} />
+
+                                            {/* Plan Rate & Balance */}
+                                            <td className="px-6 py-3 text-right">
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-xs font-bold text-admin-value font-mono">
+                                                        KES {Number(user.price || 0).toLocaleString()}
+                                                    </span>
+                                                    <span className="text-[9px] text-admin-dim font-medium">
+                                                        Total Paid: KES {Number(user.totalPaid || 0).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            </td>
+
+                                            {/* Latest M-Pesa Payment */}
+                                            <td className="px-6 py-3">
+                                                {hasPayment ? (
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-xs font-bold text-emerald-600 font-mono">
+                                                                KES {Number(user.lastPaymentAmount || 0).toLocaleString()}
+                                                            </span>
+                                                            <span className="text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-700 px-1.5 py-0.2 rounded">
+                                                                {user.lastReceipt}
+                                                            </span>
+                                                        </div>
+                                                        {user.lastPaymentDate && (
+                                                            <span className="text-[9px] text-admin-dim font-medium mt-0.5">
+                                                                {user.lastPaymentDate}
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    <span className="font-bold text-admin-value text-[10px] tabular-nums">{entry.expire_time}</span>
+                                                ) : (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[11px] font-medium text-admin-dim">
+                                                            Setup Balance: KES {Number(user.balance || 0).toLocaleString()}
+                                                        </span>
+                                                        <span className="text-[9px] text-gray-400 italic">No M-Pesa tx yet</span>
+                                                    </div>
+                                                )}
+                                            </td>
+
+                                            {/* Renewal Due Date */}
+                                            <td className="px-6 py-3 text-center">
+                                                <div className="flex flex-col items-center">
+                                                    <span className="text-xs font-semibold text-admin-value font-mono">
+                                                        {user.nextPayment ? user.nextPayment.split(' ')[0] : 'N/A'}
+                                                    </span>
+                                                    <span className="text-[9px] text-emerald-600 font-medium">
+                                                        Active Session
+                                                    </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-2 text-center">
-                                                <Badge variant="success" className="text-[10px] font-medium border-none">
-                                                    Live Session
+
+                                            {/* Connection Status */}
+                                            <td className="px-6 py-3 text-center">
+                                                <Badge className="border-none px-2.5 py-0.5 text-[8px] font-black tracking-widest uppercase bg-emerald-500/10 text-emerald-600">
+                                                    Active
                                                 </Badge>
                                             </td>
-                                        </tr>
-                                    )
-                                })
-                            )}
 
-                            {isLoadingMore && (
-                                <TableRowSkeleton cols={6} rows={3} />
+                                            {/* Actions */}
+                                            <td className="px-6 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Link 
+                                                        href={`/dashboard/tickets?customer=${encodeURIComponent(user.name)}`}
+                                                        className="p-1.5 text-admin-dim hover:text-orange-500 hover:bg-orange-500/5 rounded-lg transition-all"
+                                                        title="Open Support Ticket"
+                                                    >
+                                                        <LifeBuoy size={14} />
+                                                    </Link>
+                                                    <Link 
+                                                        href="/dashboard/customers"
+                                                        className="p-1.5 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
+                                                        title="View in Subscribers"
+                                                    >
+                                                        <ArrowUpRight size={14} />
+                                                    </Link>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
@@ -234,10 +265,10 @@ function ActiveConnectionsContent() {
     )
 }
 
-export default function ActiveConnectionsPage() {
+export default function ActiveUsersPage() {
     return (
-        <Suspense fallback={<div className="p-10 text-center text-admin-dim text-sm font-medium animate-pulse">Syncing active sessions...</div>}>
-            <ActiveConnectionsContent />
+        <Suspense fallback={<TablePageSkeleton />}>
+            <ActiveUsersContent />
         </Suspense>
     )
 }
