@@ -6,7 +6,7 @@ import {
   Info, Search, X, Loader2, Lock, Key 
 } from 'lucide-react'
 import { ispService } from '@/services/admin/isps'
-import { Skeleton } from '@/components/Skeleton'
+import { Skeleton, AdminCardSkeleton } from '@/components/Skeleton'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -295,15 +295,7 @@ export default function AdminISPsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {isLoading && isps.length === 0 ? (
           [...Array(4)].map((_, i) => (
-            <div key={i} className="relative overflow-hidden bg-card-bg border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-3 w-16 sm:w-24" />
-                  <Skeleton className="h-6 w-12 sm:w-16" />
-                </div>
-                <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl shrink-0" />
-              </div>
-            </div>
+            <AdminCardSkeleton key={i} />
           ))
         ) : cards.map((card) => (
           <div key={card.label} className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-[0_12px_24px_-10px_rgba(75,29,143,0.1)] transition-all duration-300 min-w-0">

@@ -6,6 +6,17 @@ export const Skeleton = ({ className }) => (
     <div className={cn("shimmer-wrapper rounded", className)} />
 );
 
+// Admin stats card skeleton — Exactly matches 1:1 with admin metric cards
+export const AdminCardSkeleton = ({ className }) => (
+    <div className={cn("relative overflow-hidden bg-card-bg border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm min-w-0 flex items-center justify-between gap-3", className)}>
+        <div className="space-y-1.5 flex-1 min-w-0">
+            <Skeleton className="h-4 w-20 sm:w-28 rounded-md" />
+            <Skeleton className="h-7 sm:h-8 w-14 sm:w-20 rounded-md mt-1" />
+        </div>
+        <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl shrink-0" />
+    </div>
+);
+
 // Card skeleton for dashboard metrics
 export const CardSkeleton = () => (
     <div className="bg-card-bg border border-pace-border rounded-xl p-5">

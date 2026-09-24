@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Network, Users, Wallet, Smartphone, ArrowUpRight, LifeBuoy, ServerCog } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { dashboardService } from '@/services/admin/dashboard'
-import { Skeleton } from '@/components/Skeleton'
+import { Skeleton, AdminCardSkeleton } from '@/components/Skeleton'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -106,21 +106,10 @@ export default function AdminHomePage() {
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         {isLoading && !widgets ? (
           [...Array(5)].map((_, i) => (
-            <div 
+            <AdminCardSkeleton 
               key={i} 
-              className={cn(
-                "relative overflow-hidden bg-card-bg border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm min-w-0",
-                i === 4 && "col-span-2 md:col-span-1"
-              )}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-3 w-16 sm:w-24" />
-                  <Skeleton className="h-6 w-12 sm:w-16" />
-                </div>
-                <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl shrink-0" />
-              </div>
-            </div>
+              className={cn(i === 4 && "col-span-2 md:col-span-1")} 
+            />
           ))
         ) : cards.map((card) => (
           <div 

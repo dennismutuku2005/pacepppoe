@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Plus, Search, MessageSquare, Send, Calendar, Layers, Smartphone, AlertCircle, RefreshCw, Eye, ShieldCheck, CheckCircle } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
-import { Skeleton } from '@/components/Skeleton'
+import { Skeleton, AdminCardSkeleton } from '@/components/Skeleton'
 import { smsService } from '@/services/admin/sms'
 import { ispService } from '@/services/admin/isps'
 import { toast } from 'sonner'
@@ -277,13 +277,7 @@ export default function AdminSmsLogsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {isLoading && smsLogs.length === 0 ? (
           [...Array(4)].map((_, i) => (
-            <div key={i} className="bg-card-bg border border-pace-border rounded-xl p-3.5 sm:p-5 shadow-sm min-w-0">
-              <div className="flex items-center justify-between gap-2 mb-4">
-                <Skeleton className="h-4 w-16 sm:w-24" />
-                <Skeleton className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl shrink-0" />
-              </div>
-              <Skeleton className="h-7 w-12 sm:w-16" />
-            </div>
+            <AdminCardSkeleton key={i} />
           ))
         ) : cards.map((card) => (
           <div key={card.label} className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
