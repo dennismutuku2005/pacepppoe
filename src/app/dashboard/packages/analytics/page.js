@@ -13,6 +13,7 @@ import {
 } from 'recharts'
 import { mockPackages, mockCustomers, mockPlanMonthlyRevenue, mockPlanSubscriberHistory } from '@/services/mockData'
 import { cn } from '@/lib/utils'
+import { AdminCardSkeleton } from '@/components/Skeleton'
 
 const PLAN_COLORS = ['#7c3aed', '#3b82f6', '#10b981', '#f59e0b']
 
@@ -48,23 +49,36 @@ const CustomPieTooltip = ({ active, payload }) => {
     )
 }
 
-const StatCard = ({ icon: Icon, label, value, sub, color, trend }) => (
-    <div className="bg-card-bg border border-pace-border rounded-xl p-5 hover:border-pace-purple/20 transition-all group">
-        <div className="flex justify-between items-start mb-4">
-            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", color)}>
-                <Icon size={20} />
-            </div>
-            {trend !== undefined && (
-                <div className={cn("flex items-center gap-0.5 text-[10px] font-bold",
-                    trend >= 0 ? 'text-emerald-500' : 'text-red-500')}>
-                    {trend >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                    {Math.abs(trend)}%
+const StatCard = ({ icon: Icon, label, value, sub, accent, color, bg, iconBorder, trend }) => (
+    <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+        {/* Left accent color strip */}
+        <div className={cn("absolute left-0 top-0 bottom-0 w-1", accent)} />
+        
+        <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                    <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={label}>
+                        {label}
+                    </p>
+                    {trend !== undefined && (
+                        <span className={cn(
+                            "inline-flex items-center text-[10px] font-bold px-1.5 py-0.2 rounded-full",
+                            trend >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+                        )}>
+                            {trend >= 0 ? <ArrowUpRight size={10} className="mr-0.5" /> : <ArrowDownRight size={10} className="mr-0.5" />}
+                            {Math.abs(trend)}%
+                        </span>
+                    )}
                 </div>
-            )}
+                <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                    {value}
+                </p>
+                {sub && <p className="text-[10px] text-admin-dim mt-0.5 truncate">{sub}</p>}
+            </div>
+            <div className={cn("w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", iconBorder, bg)}>
+                <Icon className={cn(color, "w-4 h-4")} />
+            </div>
         </div>
-        <h3 className="text-xl font-bold text-admin-value tracking-tight tabular-nums">{value}</h3>
-        <p className="text-[11px] font-medium text-gray-400 mt-1">{label}</p>
-        {sub && <p className="text-[10px] text-admin-dim mt-0.5">{sub}</p>}
     </div>
 )
 
@@ -145,7 +159,7 @@ function AnalyticsContent() {
             <div className="space-y-6 font-figtree max-w-[1600px] mx-auto pb-10">
                 <div className="h-10 w-72 bg-pace-bg-subtle rounded-xl animate-pulse" />
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-pace-bg-subtle rounded-xl animate-pulse" />)}
+                    {[...Array(4)].map((_, i) => <AdminCardSkeleton key={i} />)}
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {[...Array(4)].map((_, i) => <div key={i} className="h-80 bg-pace-bg-subtle rounded-xl animate-pulse" />)}
@@ -184,7 +198,10 @@ function AnalyticsContent() {
                     label="Total Subscribers"
                     value={totalCurrSubs}
                     sub="Active this month"
-                    color="bg-pace-purple/10 text-pace-purple"
+                    accent="bg-gradient-to-b from-pace-purple to-indigo-500"
+                    color="text-pace-purple"
+                    bg="bg-pace-purple/5"
+                    iconBorder="border-pace-purple/10 group-hover:border-pace-purple/30"
                     trend={subGrowth}
                 />
                 <StatCard
@@ -192,7 +209,10 @@ function AnalyticsContent() {
                     label="Monthly Revenue"
                     value={`KES ${totalMonthlyRev.toLocaleString()}`}
                     sub="All plans combined"
-                    color="bg-emerald-500/10 text-emerald-600"
+                    accent="bg-gradient-to-b from-emerald-400 to-teal-500"
+                    color="text-emerald-500"
+                    bg="bg-emerald-500/5"
+                    iconBorder="border-emerald-500/10 group-hover:border-emerald-500/30"
                     trend={revGrowth}
                 />
                 <StatCard
@@ -200,14 +220,20 @@ function AnalyticsContent() {
                     label="Top Plan by Users"
                     value={topPlan?.name?.split(' ')[0] || '—'}
                     sub={`${topPlan?.value || 0} subscribers`}
-                    color="bg-blue-500/10 text-blue-600"
+                    accent="bg-gradient-to-b from-blue-400 to-cyan-500"
+                    color="text-blue-500"
+                    bg="bg-blue-500/5"
+                    iconBorder="border-blue-500/10 group-hover:border-blue-500/30"
                 />
                 <StatCard
                     icon={TrendingUp}
                     label="Avg Revenue / Sub"
                     value={`KES ${avgRevPerSub.toLocaleString()}`}
                     sub={topRevPlan ? `Top earner: ${topRevPlan.name.split(' ')[0]}` : ''}
-                    color="bg-amber-500/10 text-amber-600"
+                    accent="bg-gradient-to-b from-amber-400 to-orange-500"
+                    color="text-amber-500"
+                    bg="bg-amber-500/5"
+                    iconBorder="border-amber-500/10 group-hover:border-amber-500/30"
                 />
             </div>
 
