@@ -1,9 +1,9 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Plus, Edit3, Trash2, Zap, Search, DollarSign, Network, Users, RefreshCw } from 'lucide-react'
+import { Plus, Edit3, Trash2, Zap, Activity, Search, DollarSign, Network, Users, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { TablePageSkeleton } from '@/components/Skeleton'
+import { AdminCardSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { planService } from '@/services/isp/plans'
 import { routerService } from '@/services/isp/routers'
 import { toast } from 'sonner'
@@ -167,6 +167,45 @@ function PackagesContent() {
     const totalSubscribers = packages.reduce((sum, p) => sum + (p.subscribers || 0), 0)
     const avgPrice = totalPlans ? Math.round(packages.reduce((sum, p) => sum + Number(p.price || 0), 0) / totalPlans) : 0
 
+    const cards = [
+        {
+            label: 'Total Tiers',
+            value: totalPlans,
+            icon: Zap,
+            color: 'text-pace-purple',
+            bg: 'bg-pace-purple/5',
+            accent: 'bg-gradient-to-b from-pace-purple to-indigo-500',
+            iconBorder: 'border-pace-purple/10 group-hover:border-pace-purple/30'
+        },
+        {
+            label: 'Active Profiles',
+            value: totalPlans,
+            icon: Activity,
+            color: 'text-emerald-500',
+            bg: 'bg-emerald-500/5',
+            accent: 'bg-gradient-to-b from-emerald-400 to-teal-500',
+            iconBorder: 'border-emerald-500/10 group-hover:border-emerald-500/30'
+        },
+        {
+            label: 'Avg Plan Price',
+            value: `KES ${avgPrice.toLocaleString()}`,
+            icon: DollarSign,
+            color: 'text-blue-500',
+            bg: 'bg-blue-500/5',
+            accent: 'bg-gradient-to-b from-blue-400 to-cyan-500',
+            iconBorder: 'border-blue-500/10 group-hover:border-blue-500/30'
+        },
+        {
+            label: 'Total Subscribers',
+            value: totalSubscribers,
+            icon: Users,
+            color: 'text-orange-500',
+            bg: 'bg-orange-500/5',
+            accent: 'bg-gradient-to-b from-orange-400 to-amber-500',
+            iconBorder: 'border-orange-500/10 group-hover:border-orange-500/30'
+        }
+    ]
+
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree">
             {/* Header */}
@@ -197,42 +236,33 @@ function PackagesContent() {
 
             {/* Metrics Row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-card-bg border border-pace-border rounded-xl p-5 hover:border-pace-purple/20 transition-all group">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-pace-purple/10">
-                            <Zap size={20} className="text-pace-purple" />
+                {isLoading && packages.length === 0 ? (
+                    [...Array(4)].map((_, i) => <AdminCardSkeleton key={i} />)
+                ) : (
+                    cards.map((card) => (
+                        <div 
+                            key={card.label} 
+                            className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0"
+                        >
+                            {/* Left accent color strip */}
+                            <div className={cn("absolute left-0 top-0 bottom-0 w-1", card.accent)} />
+                            
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={card.label}>
+                                        {card.label}
+                                    </p>
+                                    <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300">
+                                        {card.value}
+                                    </p>
+                                </div>
+                                <div className={cn("w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", card.iconBorder, card.bg)}>
+                                    <card.icon className={cn(card.color, "w-4 h-4")} />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-admin-value tracking-tight tabular-nums">{totalPlans}</h3>
-                    <p className="text-[11px] font-medium text-gray-400 mt-1">Total Tiers</p>
-                </div>
-                <div className="bg-card-bg border border-pace-border rounded-xl p-5 hover:border-pace-purple/20 transition-all group">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-500/10">
-                            <Zap size={20} className="text-emerald-500" />
-                        </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-admin-value tracking-tight tabular-nums">{totalPlans}</h3>
-                    <p className="text-[11px] font-medium text-gray-400 mt-1">Active Profiles</p>
-                </div>
-                <div className="bg-card-bg border border-pace-border rounded-xl p-5 hover:border-pace-purple/20 transition-all group">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/10">
-                            <DollarSign size={20} className="text-blue-500" />
-                        </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-admin-value tracking-tight tabular-nums">KES {avgPrice.toLocaleString()}</h3>
-                    <p className="text-[11px] font-medium text-gray-400 mt-1">Avg Plan Price</p>
-                </div>
-                <div className="bg-card-bg border border-pace-border rounded-xl p-5 hover:border-pace-purple/20 transition-all group">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-orange-500/10">
-                            <Users size={20} className="text-orange-500" />
-                        </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-admin-value tracking-tight tabular-nums">{totalSubscribers}</h3>
-                    <p className="text-[11px] font-medium text-gray-400 mt-1">Total Subscribers</p>
-                </div>
+                    ))
+                )}
             </div>
 
             {/* Controls */}
