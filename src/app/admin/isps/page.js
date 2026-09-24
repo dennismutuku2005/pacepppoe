@@ -549,19 +549,19 @@ export default function AdminISPsPage() {
                 </select>
               </div>
 
-              {/* Clean Footer Buttons Grouped on Right */}
-              <div className="flex items-center justify-end gap-3 pt-5 border-t border-pace-border">
+              {/* Evenly Distributed Footer Buttons */}
+              <div className="grid grid-cols-2 gap-3 pt-5 border-t border-pace-border">
                 <button
                   type="button"
                   onClick={() => setIsCreateEditModalOpen(false)}
-                  className="px-4 py-2 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value hover:bg-pace-border/30 transition-all cursor-pointer"
+                  className="w-full py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value hover:bg-pace-border/30 transition-all cursor-pointer text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm"
+                  className="w-full py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm text-center"
                 >
                   {isSaving && <Loader2 className="animate-spin" size={12} />}
                   {modalMode === 'create' ? 'Create ISP' : 'Save Changes'}
@@ -626,20 +626,20 @@ export default function AdminISPsPage() {
                 </p>
               </div>
               
-              {/* Clean Footer Buttons Grouped on Right */}
-              <div className="pt-4 border-t border-pace-border flex items-center justify-end gap-2.5">
+              {/* Evenly Distributed Footer Buttons */}
+              <div className="grid grid-cols-2 gap-3 pt-5 border-t border-pace-border">
                 <button
                   onClick={() => {
                     setIsViewModalOpen(false)
                     openEditModal(selectedIsp)
                   }}
-                  className="px-4 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all cursor-pointer shadow-sm"
+                  className="w-full py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all cursor-pointer shadow-sm text-center"
                 >
                   Edit ISP
                 </button>
                 <button
                   onClick={() => setIsViewModalOpen(false)}
-                  className="px-4 py-2 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value hover:bg-pace-border/30 transition-all cursor-pointer"
+                  className="w-full py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value hover:bg-pace-border/30 transition-all cursor-pointer text-center"
                 >
                   Close
                 </button>
@@ -664,19 +664,19 @@ export default function AdminISPsPage() {
                 </p>
               </div>
               
-              {/* Clean Footer Buttons Grouped Together */}
-              <div className="flex items-center justify-center gap-3 pt-3 border-t border-pace-border">
+              {/* Evenly Distributed Footer Buttons */}
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-pace-border">
                 <button
                   onClick={() => setIsDeleteModalOpen(false)}
                   disabled={isSaving}
-                  className="px-4 py-2 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value transition-all disabled:opacity-50 cursor-pointer"
+                  className="w-full py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value transition-all disabled:opacity-50 cursor-pointer text-center"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteSubmit}
                   disabled={isSaving}
-                  className="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-500 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm"
+                  className="w-full py-2.5 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-500 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm text-center"
                 >
                   {isSaving && <Loader2 className="animate-spin" size={12} />}
                   Confirm Delete
