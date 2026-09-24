@@ -19,15 +19,18 @@ export const customerService = {
                         id: c.id,
                         name: c.name,
                         username: c.username,
+                        password: c.password || '',
                         phone: c.phone || '0712345678',
-                        status: c.status === 'enabled' ? 'Active' : (c.status === 'suspended' ? 'Suspended' : 'Disabled'),
+                        status: c.status === 'enabled' ? 'enabled' : (c.status === 'suspended' ? 'suspended' : 'disabled'),
                         totalSpent: parseFloat(c.balance || 0),
-                        mac: '00:00:00:00:00:00', // Mock/default value
+                        mac: '00:00:00:00:00:00',
                         accountNumber: c.account_number,
                         plan: c.plan,
+                        plan_id: c.plan_id,
                         bandwidth: c.bandwidth_limit,
                         price: parseFloat(c.price || 0),
                         router: c.router,
+                        router_id: c.router_id,
                         nextPayment: c.next_payment,
                         createdAt: c.created_at
                     }))

@@ -1,21 +1,17 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Plus, Search, Filter, UserPlus, Edit2, Trash2, Smartphone, Network, ShieldCheck, Activity, X, Database, MapPin, LifeBuoy, Wallet } from 'lucide-react'
+import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { Skeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
-import { mockCustomers, mockRouters, mockPackages } from '@/services/mockData'
+import { Skeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { customerService } from '@/services/isp/customers'
+import { routerService } from '@/services/isp/routers'
+import { planService } from '@/services/isp/plans'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-
-const MapView = dynamic(() => import('@/components/MapView'), { 
-    ssr: false,
-    loading: () => <div className="h-[200px] w-full bg-pace-bg-subtle animate-pulse rounded-xl border border-pace-border flex items-center justify-center text-[10px] font-bold uppercase text-admin-dim tracking-widest">Loading Mapping...</div>
-})
 
 const MapPicker = dynamic(() => import('@/components/MapPicker'), { 
     ssr: false,
@@ -25,7 +21,11 @@ const MapPicker = dynamic(() => import('@/components/MapPicker'), {
 function CustomersContent() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
+    const [isSaving, setIsSaving] = useState(false)
     const [customers, setCustomers] = useState([])
+    const [routersList, setRoutersList] = useState([])
+    const [allPlansList, setAllPlansList] = useState([])
+    
     const [search, setSearch] = useState('')
     const [filterRouter, setFilterRouter] = useState('')
     const [filterPlan, setFilterPlan] = useState('')
@@ -35,344 +35,262 @@ function CustomersContent() {
     const [currentCustomer, setCurrentCustomer] = useState(null)
     const [accountType, setAccountType] = useState('phone')
     const [formData, setFormData] = useState({ 
-        firstName: '', lastName: '', phone: '', plan: '', price: 0, 
-        username: '', password: '', status: 'disabled',
-        router: '', accountNumber: '', activationFee: 1000, amountPaid: 0,
+        firstName: '', 
+        lastName: '', 
+        phone: '', 
+        router_id: '',
+        router: '',
+        plan_id: '',
+        plan: '', 
+        price: 0, 
+        username: '', 
+        password: '', 
+        status: 'enabled',
+        accountNumber: '', 
+        activationFee: 0, 
         nextPayment: '',
-        lat: '', lng: '', walletHistory: []
+        lat: '', 
+        lng: ''
     })
 
-    // Wallet & Reconnect Modal State
-    const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
-    const [walletCustomer, setWalletCustomer] = useState(null)
-    const [walletPaymentAmount, setWalletPaymentAmount] = useState('')
-    const [walletNextPayment, setWalletNextPayment] = useState('')
-    const [walletStatusChange, setWalletStatusChange] = useState('enabled')
+    const fetchInitialData = async () => {
+        setIsLoading(true);
+        try {
+            const [subRes, routerRes, planRes] = await Promise.all([
+                customerService.getCustomers(),
+                routerService.getRouters(),
+                planService.getPlans()
+            ]);
 
-    useEffect(() => {
-        setFormData(prev => ({
-            ...prev,
-            nextPayment: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        }))
-
-        async function fetchInitialData() {
-            setIsLoading(true);
-            try {
-                const subRes = await customerService.getCustomers();
-                if (subRes.status === 'success') {
-                    const enriched = subRes.data.map(c => {
-                        const names = c.name ? c.name.split(' ') : ['Subscriber', 'Node']
-                        const firstName = names[0] || 'Subscriber'
-                        const lastName = names.slice(1).join(' ') || 'Node'
-                        return {
-                            ...c,
-                            firstName,
-                            lastName,
-                            lat: c.lat || -1.286389,
-                            lng: c.lng || 36.817223,
-                            walletHistory: [
-                                { date: c.createdAt ? c.createdAt.split(' ')[0] : '2026-08-20', type: 'Package Cost', amount: c.price || 0, description: `${c.plan || 'Bronze'} Subscription` },
-                                { date: c.createdAt ? c.createdAt.split(' ')[0] : '2026-08-20', type: 'Payment', amount: c.price || 0, description: 'Automatic check-in payment' }
-                            ]
-                        }
-                    });
-                    setCustomers(enriched);
-                } else {
-                    throw new Error(subRes.message);
-                }
-            } catch (err) {
-                console.warn("Failed to load dynamic subscribers, using mocks as fallback:", err);
-                const enriched = mockCustomers.map(c => {
-                    const names = c.name ? c.name.split(' ') : ['Subscriber', 'Node']
+            if (subRes.status === 'success') {
+                const enriched = subRes.data.map(c => {
+                    const names = c.name ? c.name.split(' ') : ['Subscriber', '']
                     const firstName = names[0] || 'Subscriber'
-                    const lastName = names.slice(1).join(' ') || 'Node'
+                    const lastName = names.slice(1).join(' ') || ''
                     return {
                         ...c,
                         firstName,
-                        lastName,
-                        activationFee: 0,
-                        amountPaid: c.price,
-                        walletStatus: 'complete',
-                        lat: c.lat || -1.286389,
-                        lng: c.lng || 36.817223,
-                        walletHistory: [
-                            { date: '2026-05-01', type: 'Package Cost', amount: c.price, description: `${c.plan} Subscription` },
-                            { date: '2026-05-01', type: 'Payment', amount: c.price, description: 'Automatic check-in payment' }
-                        ]
+                        lastName
                     }
                 });
                 setCustomers(enriched);
-            } finally {
-                setIsLoading(false);
             }
-        }
 
+            if (routerRes.status === 'success') {
+                setRoutersList(routerRes.data || []);
+            }
+
+            if (planRes.status === 'success') {
+                setAllPlansList(planRes.data || []);
+            }
+        } catch (err) {
+            console.error("Failed to load initial customer data:", err);
+            toast.error("Data Load Error", { description: "Failed to load live subscribers or routers from server." });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchInitialData();
-    }, [])
+    }, []);
 
     const handleNameChange = (field, value) => {
         const nextData = { ...formData, [field]: value }
-        const fName = nextData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '')
-        const lName = nextData.lastName.toLowerCase().replace(/[^a-z0-9]/g, '')
-        if (fName || lName) {
+        const fName = (field === 'firstName' ? value : formData.firstName).toLowerCase().replace(/[^a-z0-9]/g, '')
+        const lName = (field === 'lastName' ? value : formData.lastName).toLowerCase().replace(/[^a-z0-9]/g, '')
+        if (!currentCustomer && (fName || lName)) {
             nextData.username = `${fName}_${lName}`.replace(/^_|_$/, '')
         }
         setFormData(nextData)
     }
 
+    const handleRouterChange = (routerId) => {
+        const selected = routersList.find(r => String(r.id) === String(routerId));
+        setFormData(prev => ({
+            ...prev,
+            router_id: routerId,
+            router: selected ? selected.name : '',
+            // Reset plan when router changes so user picks from this router's packages
+            plan_id: '',
+            plan: '',
+            price: 0
+        }));
+    }
+
+    const handlePlanChange = (planId) => {
+        const selected = allPlansList.find(p => String(p.id) === String(planId));
+        setFormData(prev => ({
+            ...prev,
+            plan_id: planId,
+            plan: selected ? selected.name : '',
+            price: selected ? Number(selected.price) : 0
+        }));
+    }
+
     const handleOpenModal = (c = null) => {
+        const defaultNextPay = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         if (c) {
-            setCurrentCustomer(c)
+            setCurrentCustomer(c);
             setFormData({ 
-                ...c,
-                firstName: c.firstName || c.name.split(' ')[0] || '',
-                lastName: c.lastName || c.name.split(' ').slice(1).join(' ') || '',
-                nextPayment: c.nextPayment || new Date().toISOString().split('T')[0],
-                activationFee: c.activationFee !== undefined ? c.activationFee : 0,
-                amountPaid: c.amountPaid || 0,
-                lat: c.lat ? c.lat.toString() : '',
-                lng: c.lng ? c.lng.toString() : ''
-            })
-            setAccountType(c.accountNumber === c.phone ? 'phone' : 'generate')
+                firstName: c.firstName || c.name?.split(' ')[0] || '',
+                lastName: c.lastName || c.name?.split(' ').slice(1).join(' ') || '',
+                phone: c.phone || '',
+                router_id: c.router_id ? String(c.router_id) : '',
+                router: c.router || '',
+                plan_id: c.plan_id ? String(c.plan_id) : '',
+                plan: c.plan || '',
+                price: Number(c.price || 0),
+                username: c.username || '',
+                password: c.password || '',
+                status: c.status || 'enabled',
+                accountNumber: c.accountNumber || c.phone || '',
+                activationFee: Number(c.totalSpent || 0),
+                nextPayment: c.nextPayment ? c.nextPayment.split(' ')[0] : defaultNextPay,
+                lat: c.lat ? String(c.lat) : '',
+                lng: c.lng ? String(c.lng) : ''
+            });
+            setAccountType(c.accountNumber === c.phone ? 'phone' : 'generate');
         } else {
-            setCurrentCustomer(null)
+            setCurrentCustomer(null);
             setFormData({ 
-                firstName: '', lastName: '', phone: '', plan: '', price: 0, 
-                username: '', password: '', status: 'disabled',
-                router: '', accountNumber: '', activationFee: 1000, amountPaid: 0,
-                nextPayment: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                lat: '', lng: '', walletHistory: []
-            })
-            setAccountType('phone')
+                firstName: '', 
+                lastName: '', 
+                phone: '', 
+                router_id: routersList.length > 0 ? String(routersList[0].id) : '',
+                router: routersList.length > 0 ? routersList[0].name : '',
+                plan_id: '',
+                plan: '', 
+                price: 0, 
+                username: '', 
+                password: '', 
+                status: 'enabled',
+                accountNumber: '', 
+                activationFee: 0, 
+                nextPayment: defaultNextPay,
+                lat: '', 
+                lng: ''
+            });
+            setAccountType('phone');
         }
-        setIsModalOpen(true)
+        setIsModalOpen(true);
     }
 
-    const handleSave = (e) => {
-        e.preventDefault()
-        if (!formData.firstName || !formData.lastName || !formData.phone || !formData.username || !formData.router || !formData.plan) {
-            toast.error('Missing Required Parameters', {
-                description: 'Please fill all subscriber fields and choose a service plan.'
-            })
-            return
+    const handleSave = async (e) => {
+        e.preventDefault();
+        if (!formData.firstName || !formData.lastName || !formData.phone || !formData.username || !formData.password || !formData.router_id || !formData.plan_id) {
+            toast.error('Missing Required Fields', {
+                description: 'Please ensure First Name, Last Name, Phone, Router, QoS Plan, PPPoE Username, and Password are provided.'
+            });
+            return;
         }
 
-        const planPrice = Number(formData.price || 0)
-        const activationFee = Number(formData.activationFee || 0)
-        const requiredToConnect = planPrice + activationFee
-        const initialPayment = Number(formData.amountPaid || 0)
-        
-        const meetsReq = initialPayment >= requiredToConnect
-        const status = meetsReq ? formData.status : 'disabled' // Force disabled if not paid enough!
-        const walletStatus = initialPayment >= requiredToConnect 
-            ? 'complete' 
-            : (initialPayment > 0 ? 'pending' : 'not-paid')
+        setIsSaving(true);
+        const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
+        const payload = {
+            name: fullName,
+            username: formData.username.trim(),
+            password: formData.password.trim(),
+            phone: formData.phone.trim(),
+            account_number: formData.accountNumber || formData.phone.trim(),
+            router_id: Number(formData.router_id),
+            plan_id: Number(formData.plan_id),
+            activation_fee: Number(formData.activationFee || 0),
+            next_payment: formData.nextPayment || null,
+            status: formData.status || 'enabled'
+        };
 
-        const fullName = `${formData.firstName} ${formData.lastName}`
-
-        if (currentCustomer) {
-            const nextHistory = [
-                ...(formData.walletHistory || []),
-            ]
-            if (Number(formData.amountPaid) !== Number(currentCustomer.amountPaid)) {
-                const diff = Number(formData.amountPaid) - Number(currentCustomer.amountPaid)
-                if (diff > 0) {
-                    nextHistory.push({
-                        date: new Date().toISOString().split('T')[0],
-                        type: 'Payment',
-                        amount: diff,
-                        description: 'Manual wallet update'
-                    })
+        try {
+            if (currentCustomer) {
+                const res = await customerService.updateCustomer(currentCustomer.id, payload);
+                if (res?.status === 'success') {
+                    toast.success('Subscriber Updated', {
+                        description: `Profile for ${formData.username} has been saved.`
+                    });
+                    setIsModalOpen(false);
+                    await fetchInitialData();
+                } else {
+                    toast.error('Update Failed', { description: res?.message || 'Could not update subscriber.' });
+                }
+            } else {
+                const res = await customerService.createCustomer(payload);
+                if (res?.status === 'success') {
+                    toast.success('Subscriber Created', {
+                        description: `New PPPoE subscriber ${formData.username} provisioned on ${formData.router}.`
+                    });
+                    setIsModalOpen(false);
+                    await fetchInitialData();
+                } else {
+                    toast.error('Creation Failed', { description: res?.message || 'Could not create subscriber.' });
                 }
             }
-
-            setCustomers(prev => prev.map(c => c.id === currentCustomer.id ? { 
-                ...c, 
-                ...formData, 
-                name: fullName, 
-                status, 
-                walletStatus,
-                walletHistory: nextHistory
-            } : c))
-            
-            toast.success('Subscriber Saved', {
-                description: `Subscriber profile for ${formData.username} has been updated.`
-            })
-        } else {
-            const history = []
-            if (activationFee > 0) {
-                history.push({
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'Activation Fee',
-                    amount: activationFee,
-                    description: 'Subscriber setup fee'
-                })
-            }
-            if (planPrice > 0) {
-                history.push({
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'Package Cost',
-                    amount: planPrice,
-                    description: `${formData.plan} monthly cost`
-                })
-            }
-            if (initialPayment > 0) {
-                history.push({
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'Payment',
-                    amount: initialPayment,
-                    description: 'Initial setup payment'
-                })
-            }
-
-            const newCust = { 
-                ...formData, 
-                id: Date.now(),
-                name: fullName,
-                status,
-                walletStatus,
-                walletHistory: history
-            }
-            setCustomers(prev => [newCust, ...prev])
-            toast.success('Subscriber Added', {
-                description: `New subscriber profile created on ${formData.router}.`
-            })
+        } catch (err) {
+            console.error("Save customer error:", err);
+            toast.error('Network Error', { description: 'Failed to communicate with server.' });
+        } finally {
+            setIsSaving(false);
         }
-        setIsModalOpen(false)
     }
 
-    const handleDelete = (id, name) => {
-        setCustomers(prev => prev.filter(c => c.id !== id))
-        toast.error('Subscriber Deleted', {
-            description: `Subscriber ${name} has been deleted.`
-        })
-    }
-
-    const handleToggleStatus = (id, currentStatus) => {
-        const newStatus = currentStatus === 'enabled' ? 'disabled' : 'enabled'
-        setCustomers(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c))
-        toast.info(newStatus === 'enabled' ? 'Access Restored' : 'Access Suspended', {
-            description: `Subscriber state set to ${newStatus}.`
-        })
-    }
-
-    // Wallet / Reconnect Actions
-    const handleOpenWalletModal = (c) => {
-        setWalletCustomer(c)
-        setWalletPaymentAmount('')
-        setWalletNextPayment(c.nextPayment || new Date().toISOString().split('T')[0])
-        setWalletStatusChange(c.status || 'enabled')
-        setIsWalletModalOpen(true)
-    }
-
-    const handleSaveWallet = (e) => {
-        e.preventDefault()
-        if (!walletCustomer) return
-
-        const price = Number(walletCustomer.price || 0)
-        const activationFee = Number(walletCustomer.activationFee || 0)
-        const required = price + activationFee
-        const additionalPayment = Number(walletPaymentAmount || 0)
-        const totalPaid = Number(walletCustomer.amountPaid || 0) + additionalPayment
-
-        let newWalletStatus = 'not-paid'
-        if (totalPaid >= required) {
-            newWalletStatus = 'complete'
-        } else if (totalPaid > 0) {
-            newWalletStatus = 'pending'
-        }
-
-        // Auto-enable if fully paid
-        const finalStatus = totalPaid >= required ? walletStatusChange : 'disabled'
-
-        const nextHistory = [
-            ...(walletCustomer.walletHistory || []),
-        ]
-        if (additionalPayment > 0) {
-            nextHistory.push({
-                date: new Date().toISOString().split('T')[0],
-                type: 'Payment',
-                amount: additionalPayment,
-                description: 'Manual wallet replenishment'
-            })
-        }
-
-        setCustomers(prev => prev.map(c => {
-            if (c.id === walletCustomer.id) {
-                return {
-                    ...c,
-                    amountPaid: totalPaid,
-                    walletStatus: newWalletStatus,
-                    nextPayment: walletNextPayment,
-                    status: finalStatus,
-                    walletHistory: nextHistory
-                }
+    const handleDelete = async (id, name) => {
+        if (!window.confirm(`Are you sure you want to delete subscriber ${name}?`)) return;
+        try {
+            const res = await customerService.deleteCustomer(id);
+            if (res?.status === 'success') {
+                toast.success('Subscriber Deleted', {
+                    description: `Subscriber ${name} has been removed.`
+                });
+                await fetchInitialData();
+            } else {
+                toast.error('Delete Failed', { description: res?.message || 'Could not delete subscriber.' });
             }
-            return c
-        }))
-
-        toast.success('Wallet & Access Synchronized', {
-            description: `Payment of KES ${additionalPayment} recorded for ${walletCustomer.name}. Expiry updated to ${walletNextPayment}.`
-        })
-        setIsWalletModalOpen(false)
-    }
-
-    const handleQuickFullPay = () => {
-        if (!walletCustomer) return
-        const price = Number(walletCustomer.price || 0)
-        const activationFee = Number(walletCustomer.activationFee || 0)
-        const required = price + activationFee
-        const remaining = required - Number(walletCustomer.amountPaid || 0)
-
-        const nextHistory = [
-            ...(walletCustomer.walletHistory || []),
-        ]
-        if (remaining > 0) {
-            nextHistory.push({
-                date: new Date().toISOString().split('T')[0],
-                type: 'Payment',
-                amount: remaining,
-                description: 'Quick payment clearance'
-            })
+        } catch (err) {
+            console.error("Delete customer error:", err);
+            toast.error('Delete Failed', { description: 'Failed to contact backend.' });
         }
-
-        setCustomers(prev => prev.map(c => {
-            if (c.id === walletCustomer.id) {
-                return {
-                    ...c,
-                    amountPaid: required,
-                    walletStatus: 'complete',
-                    nextPayment: walletNextPayment,
-                    status: 'enabled',
-                    walletHistory: nextHistory
-                }
-            }
-            return c
-        }))
-
-        toast.success('Account Reconnected', {
-            description: `${walletCustomer.name} marked as Fully Paid. Status set to enabled.`
-        })
-        setIsWalletModalOpen(false)
     }
 
-    // Unique routers and plans from loaded data for dropdown options
-    const routerOptions = [...new Set(customers.map(c => c.router).filter(Boolean))]
-    const planOptions = [...new Set(customers.map(c => c.plan).filter(Boolean))]
+    const handleToggleStatus = async (id, currentStatus) => {
+        const newStatus = currentStatus === 'enabled' ? 'disabled' : 'enabled';
+        try {
+            const res = await customerService.toggleStatus(id, newStatus);
+            if (res?.status === 'success') {
+                toast.info(newStatus === 'enabled' ? 'Access Enabled' : 'Access Suspended', {
+                    description: `Subscriber state updated to ${newStatus}.`
+                });
+                await fetchInitialData();
+            } else {
+                toast.error('Status Toggle Failed', { description: res?.message || 'Could not update status.' });
+            }
+        } catch (err) {
+            console.error("Toggle status error:", err);
+            toast.error('Status Toggle Failed', { description: 'Network error.' });
+        }
+    }
+
+    // Filter plans attached to the currently selected router in the modal
+    const availablePlansForSelectedRouter = allPlansList.filter(
+        p => String(p.router_id) === String(formData.router_id)
+    );
+
+    // Filters for table
+    const routerOptions = [...new Set(customers.map(c => c.router).filter(Boolean))];
+    const planOptions = [...new Set(customers.map(c => c.plan).filter(Boolean))];
 
     const filteredCustomers = customers.filter(c => {
-        const fullName = c.name || `${c.firstName} ${c.lastName}`
+        const fullName = c.name || `${c.firstName} ${c.lastName}`;
         const matchesSearch =
             fullName.toLowerCase().includes(search.toLowerCase()) ||
             c.username?.toLowerCase().includes(search.toLowerCase()) ||
-            c.phone?.includes(search)
-        const matchesRouter = filterRouter === '' || c.router === filterRouter
-        const matchesPlan = filterPlan === '' || c.plan === filterPlan
-        return matchesSearch && matchesRouter && matchesPlan
-    })
+            c.phone?.includes(search) ||
+            c.accountNumber?.includes(search);
+        const matchesRouter = filterRouter === '' || c.router === filterRouter;
+        const matchesPlan = filterPlan === '' || c.plan === filterPlan;
+        return matchesSearch && matchesRouter && matchesPlan;
+    });
 
     if (isLoading) {
-        return <TablePageSkeleton />
+        return <TablePageSkeleton />;
     }
 
     return (
@@ -380,16 +298,26 @@ function CustomersContent() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
-                    <h1 className="text-xl font-medium text-admin-value tracking-tight">Subscriber List</h1>
-                    <p className="text-xs font-medium text-gray-400 mt-1">PPPoE node authentication and session control</p>
+                    <h1 className="text-xl font-medium text-admin-value tracking-tight">Subscriber Management</h1>
+                    <p className="text-xs font-medium text-gray-400 mt-1">PPPoE subscriber provisioning, authentication secrets, and QoS profiles</p>
                 </div>
-                <button 
-                    onClick={() => handleOpenModal()}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95"
-                >
-                    <UserPlus size={16} />
-                    <span>Add Subscriber</span>
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={fetchInitialData}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold"
+                        title="Refresh list"
+                    >
+                        <RefreshCw size={14} />
+                        <span>Refresh</span>
+                    </button>
+                    <button 
+                        onClick={() => handleOpenModal()}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-semibold shadow-sm active:scale-95"
+                    >
+                        <UserPlus size={15} />
+                        <span>Add Subscriber</span>
+                    </button>
+                </div>
             </div>
 
             {/* Controls */}
@@ -399,7 +327,7 @@ function CustomersContent() {
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
                     <input
                         type="text"
-                        placeholder="Search by name, username, phone…"
+                        placeholder="Search by name, username, phone, account…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
@@ -441,7 +369,7 @@ function CustomersContent() {
                 )}
             </div>
 
-            {/* Matrix Table */}
+            {/* Subscribers Matrix Table */}
             <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left whitespace-nowrap">
@@ -449,9 +377,9 @@ function CustomersContent() {
                             <tr className="bg-pace-bg-subtle/50 border-b border-pace-border">
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Subscriber / Account</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">PPPoE Credentials</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">NAS / Router</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Service Tier</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Wallet Status</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">MikroTik Router</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Assigned QoS Plan</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Billing / Expiry</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Status</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-right">Actions</th>
                             </tr>
@@ -459,117 +387,96 @@ function CustomersContent() {
                         <tbody className="divide-y divide-pace-border">
                             {filteredCustomers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="py-24 text-center text-admin-dim text-sm font-medium">No records found in identity pool</td>
+                                    <td colSpan="7" className="py-24 text-center text-admin-dim text-sm font-medium">
+                                        No subscribers found in database. Click "Add Subscriber" to provision one.
+                                    </td>
                                 </tr>
                             ) : (
                                 filteredCustomers.map((c) => {
-                                    const fullName = c.name || `${c.firstName} ${c.lastName}`
-                                    const requiredAmount = Number(c.price || 0) + Number(c.activationFee || 0)
-                                    const pkg = mockPackages.find(p => p.limit === c.plan || p.name === c.plan)
-                                    const packageName = pkg ? pkg.name : c.plan
+                                    const fullName = c.name || `${c.firstName} ${c.lastName}`;
                                     return (
                                         <tr key={c.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
-                                            <td className="px-6 py-2">
+                                            <td className="px-6 py-3">
                                                 <div className="flex flex-col">
                                                     <span className="font-semibold text-admin-value text-xs group-hover:text-pace-purple transition-colors">{fullName}</span>
-                                                    <span className="text-[10px] text-admin-dim font-medium uppercase tracking-tighter">Acc: {c.accountNumber}</span>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-[10px] text-admin-dim font-mono">Acc: {c.accountNumber || c.phone}</span>
+                                                        <span className="text-[10px] text-gray-400">•</span>
+                                                        <span className="text-[10px] text-admin-dim">{c.phone}</span>
+                                                    </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-2">
+                                            <td className="px-6 py-3">
                                                 <div className="flex flex-col">
                                                     <span className="text-[11px] font-semibold text-pace-purple font-mono">{c.username}</span>
-                                                    <span className="text-[9px] text-gray-400 font-medium">Secured CHAP</span>
+                                                    <span className="text-[9px] text-gray-400 font-medium">PAP/CHAP Auth</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-2">
+                                            <td className="px-6 py-3">
                                                 <span className="text-xs font-semibold text-admin-value">{c.router || 'Unassigned'}</span>
                                             </td>
-                                            <td className="px-6 py-2">
+                                            <td className="px-6 py-3">
                                                 <div className="flex flex-col">
-                                                    <span className="font-semibold text-admin-value text-[11px]">{packageName}</span>
-                                                    <span className="text-[9px] text-gray-400 font-mono">{c.plan}</span>
-                                                    <span className="text-[9px] text-admin-dim font-medium italic mt-0.5">Expires: {c.nextPayment || 'N/A'}</span>
+                                                    <span className="font-semibold text-admin-value text-[11px]">{c.plan || 'Standard Plan'}</span>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        {c.bandwidth && <span className="text-[9px] text-pace-purple font-mono font-bold">{c.bandwidth}</span>}
+                                                        <span className="text-[9px] text-admin-dim font-mono font-medium">KES {Number(c.price || 0).toLocaleString()}</span>
+                                                    </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-2 text-center">
+                                            <td className="px-6 py-3 text-center">
                                                 <div className="flex flex-col items-center">
-                                                    <Badge className={cn(
-                                                        "border-none px-2 py-0.5 text-[8px] font-black tracking-widest uppercase min-w-[70px] text-center",
-                                                        c.walletStatus === 'complete' 
-                                                            ? "bg-green-500/10 text-green-600 hover:bg-green-500/20" 
-                                                            : c.walletStatus === 'pending'
-                                                                ? "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20"
-                                                                : "bg-red-500/10 text-red-600 hover:bg-red-500/20"
-                                                    )}>
-                                                        {c.walletStatus === 'complete' ? 'Complete' : c.walletStatus === 'pending' ? 'Pending' : 'Not Paid'}
-                                                    </Badge>
-                                                    <span className="text-[9px] text-admin-dim font-mono mt-0.5">
-                                                        Paid: {c.amountPaid || 0} / Target: {requiredAmount}
+                                                    <span className="text-[11px] font-bold text-admin-value font-mono">
+                                                        {c.nextPayment ? c.nextPayment.split(' ')[0] : 'No Expiry'}
+                                                    </span>
+                                                    <span className="text-[9px] text-admin-dim font-medium mt-0.5">
+                                                        {c.totalSpent > 0 ? `Setup: KES ${Number(c.totalSpent).toLocaleString()}` : 'Regular Plan'}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-2 text-center">
+                                            <td className="px-6 py-3 text-center">
                                                 <button 
                                                     onClick={() => handleToggleStatus(c.id, c.status)}
                                                     className="transition-transform active:scale-95"
+                                                    title="Click to toggle status"
                                                 >
                                                     <Badge className={cn(
-                                                        "border-none px-2 py-0.5 text-[8px] font-black tracking-widest uppercase min-w-[58px] block text-center transition-all",
+                                                        "border-none px-2.5 py-0.5 text-[8px] font-black tracking-widest uppercase min-w-[62px] block text-center transition-all cursor-pointer",
                                                         c.status === 'enabled' 
                                                             ? "bg-green-500/10 text-green-600 hover:bg-green-500/20" 
                                                             : "bg-red-500/10 text-red-600 hover:bg-red-500/20"
                                                     )}>
-                                                        {c.status}
+                                                        {c.status === 'enabled' ? 'Active' : 'Disabled'}
                                                     </Badge>
                                                 </button>
                                             </td>
-                                            <td className="px-6 py-2 text-right">
-                                                <div className="flex justify-end items-center gap-1">
-                                                    <button 
-                                                        onClick={() => handleOpenWalletModal(c)}
-                                                        className="p-1 text-admin-dim hover:text-green-600 hover:bg-green-500/5 rounded-lg transition-all"
-                                                        title="Wallet & Manual Reconnect"
-                                                    >
-                                                        <Wallet size={13} />
-                                                    </button>
+                                            <td className="px-6 py-3 text-right">
+                                                <div className="flex justify-end items-center gap-1.5">
                                                     <button 
                                                         onClick={() => handleOpenModal(c)}
-                                                        className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
-                                                        title="View Location & Edit"
+                                                        className="p-1.5 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
+                                                        title="Edit Subscriber"
                                                     >
-                                                        <MapPin size={13} />
+                                                        <Edit2 size={14} />
                                                     </button>
                                                     <button 
-                                                        onClick={() => handleOpenModal(c)}
-                                                        className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
-                                                        title="Edit Details"
+                                                        className="p-1.5 text-admin-dim hover:text-orange-500 hover:bg-orange-500/5 rounded-lg transition-all"
+                                                        title="Open Support Ticket"
+                                                        onClick={() => router.push(`/dashboard/tickets?customer=${encodeURIComponent(fullName)}`)}
                                                     >
-                                                        <Edit2 size={13} />
-                                                    </button>
-                                                    <button 
-                                                        className="p-1 text-admin-dim hover:text-green-500 hover:bg-green-500/5 rounded-lg transition-all"
-                                                        title="Quick SMS"
-                                                    >
-                                                        <Smartphone size={13} />
-                                                    </button>
-                                                    <button 
-                                                        className="p-1 text-admin-dim hover:text-orange-500 hover:bg-orange-500/5 rounded-lg transition-all"
-                                                        title="Log Incident"
-                                                        onClick={() => router.push(`/dashboard/tickets?customer=${fullName}`)}
-                                                    >
-                                                        <LifeBuoy size={13} />
+                                                        <LifeBuoy size={14} />
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDelete(c.id, fullName)}
-                                                        className="p-1 text-admin-dim hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
+                                                        className="p-1.5 text-admin-dim hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
                                                         title="Delete Subscriber"
                                                     >
-                                                        <Trash2 size={13} />
+                                                        <Trash2 size={14} />
                                                     </button>
                                                 </div>
                                             </td>
                                         </tr>
-                                    )
+                                    );
                                 })
                             )}
                         </tbody>
@@ -582,403 +489,221 @@ function CustomersContent() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 title={currentCustomer ? 'Edit Subscriber' : 'Add Subscriber'}
-                description={currentCustomer ? `Updating subscriber info for ${currentCustomer.username}` : 'Configure credentials and billing rules for a new subscriber.'}
-                maxWidth="max-w-md"
+                description={currentCustomer ? `Update PPPoE configuration for ${currentCustomer.username}` : 'Select target MikroTik router, attach QoS package, and configure credentials.'}
+                maxWidth="max-w-lg"
             >
-                <form onSubmit={handleSave} className="space-y-5 font-figtree">
+                <form onSubmit={handleSave} className="space-y-4 font-figtree">
                     {/* First Name & Second Name */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
                             <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">First Name</label>
                             <input 
                                 type="text" required
                                 value={formData.firstName}
                                 onChange={(e) => handleNameChange('firstName', e.target.value)}
                                 placeholder="First Name"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
+                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
                             />
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Second Name</label>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Last / Second Name</label>
                             <input 
                                 type="text" required
                                 value={formData.lastName}
                                 onChange={(e) => handleNameChange('lastName', e.target.value)}
-                                placeholder="Second Name"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
+                                placeholder="Last Name"
+                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
                             />
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
+                    {/* Mobile Contact & Billing Account Number */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
                             <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Mobile Contact</label>
                             <input 
                                 type="text" required
                                 value={formData.phone}
-                                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        phone: val,
+                                        accountNumber: accountType === 'phone' ? val : prev.accountNumber
+                                    }));
+                                }}
                                 placeholder="07XXXXXXXX"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
+                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
                             />
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Target NAS</label>
-                            <select 
-                                required
-                                value={formData.router}
-                                onChange={(e) => setFormData({...formData, router: e.target.value})}
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
-                            >
-                                <option value="">Select Router</option>
-                                {mockRouters.map(r => (
-                                    <option key={r.id} value={r.name}>{r.name}</option>
-                                ))}
-                            </select>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Billing Account Number</label>
+                            <div className="flex gap-1.5">
+                                <input 
+                                    type="text" required
+                                    value={formData.accountNumber}
+                                    onChange={(e) => setFormData({...formData, accountNumber: e.target.value})}
+                                    placeholder="Account Number"
+                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setAccountType('generate');
+                                        const rand = Math.floor(100000 + Math.random() * 900000).toString();
+                                        setFormData({...formData, accountNumber: rand});
+                                    }}
+                                    className="px-2.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-[10px] font-bold text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 transition-all whitespace-nowrap"
+                                    title="Generate 6-digit number"
+                                >
+                                    Gen
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Optional Site Pin */}
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Location Pin (Optional)</label>
-                            {formData.lat && formData.lng ? (
-                                <span className="text-[9px] font-black uppercase tracking-widest text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">Pinned</span>
-                            ) : (
-                                <span className="text-[9px] font-black uppercase tracking-widest text-admin-dim">Optional</span>
-                            )}
-                        </div>
-                        <MapPicker
-                            value={formData.lat && formData.lng ? { lat: Number(formData.lat), lng: Number(formData.lng) } : null}
-                            onChange={(pos) => setFormData({ ...formData, lat: pos.lat.toString(), lng: pos.lng.toString() })}
-                        />
-                        <p className="text-[10px] text-admin-dim font-medium pl-1">Pick a site on the map if you want to pin the subscriber location. Leaving it blank is fine.</p>
-                    </div>
-
-                    <div className="space-y-1.5 pt-2">
-                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Billing Account Number</label>
-                        <div className="grid grid-cols-2 gap-2">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setAccountType('phone')
-                                    setFormData({...formData, accountNumber: formData.phone})
-                                }}
-                                className={cn(
-                                    "py-2 px-3 rounded-xl border text-[11px] font-bold transition-all",
-                                    accountType === 'phone' ? "bg-pace-purple text-white border-pace-purple" : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:bg-pace-purple/5"
-                                )}
-                            >
-                                Use Phone Number
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setAccountType('generate')
-                                    const rand = Math.floor(100000 + Math.random() * 900000).toString()
-                                    setFormData({...formData, accountNumber: rand})
-                                }}
-                                className={cn(
-                                    "py-2 px-3 rounded-xl border text-[11px] font-bold transition-all",
-                                    accountType === 'generate' ? "bg-pace-purple text-white border-pace-purple" : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:bg-pace-purple/5"
-                                )}
-                            >
-                                Generate 6-Digit
-                            </button>
-                        </div>
-                        {formData.accountNumber && (
-                            <p className="text-[10px] font-bold text-pace-purple mt-1 pl-1">Assigned: {formData.accountNumber}</p>
+                    {/* STEP 1: Select Router */}
+                    <div className="space-y-1 border-t border-pace-border pt-3">
+                        <label className="text-[10px] font-bold text-pace-purple uppercase tracking-wider pl-1">
+                            1. Select MikroTik Router
+                        </label>
+                        <select 
+                            required
+                            value={formData.router_id}
+                            onChange={(e) => handleRouterChange(e.target.value)}
+                            className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
+                        >
+                            <option value="">-- Choose Router --</option>
+                            {routersList.map(r => (
+                                <option key={r.id} value={r.id}>
+                                    {r.name} ({r.ip || 'No IP'}) {r.status ? `• ${r.status}` : ''}
+                                </option>
+                            ))}
+                        </select>
+                        {routersList.length === 0 && (
+                            <p className="text-[10px] text-red-500 font-medium pl-1">No routers registered. Please add a router first.</p>
                         )}
                     </div>
 
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Service QoS Plan</label>
+                    {/* STEP 2: Select Package / Plan Attached to that Router */}
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-pace-purple uppercase tracking-wider pl-1">
+                            2. Service QoS Plan (Attached to Router)
+                        </label>
                         <select 
                             required
-                            value={formData.plan}
-                            onChange={(e) => {
-                                const pkg = mockPackages.find(p => p.name === e.target.value || p.limit === e.target.value || p.limit === e.target.value);
-                                const selectedLimit = pkg ? pkg.limit : e.target.value
-                                const selectedPrice = pkg ? pkg.price : 0
-                                setFormData({...formData, plan: selectedLimit, price: selectedPrice});
-                            }}
-                            className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
+                            disabled={!formData.router_id}
+                            value={formData.plan_id}
+                            onChange={(e) => handlePlanChange(e.target.value)}
+                            className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <option value="">Select QoS Profile</option>
-                            {mockPackages.map(p => (
-                                <option key={p.id} value={p.limit}>{p.name} ({p.limit}) - KES {p.price}</option>
-                            ))}
+                            {!formData.router_id ? (
+                                <option value="">Please select a router first</option>
+                            ) : availablePlansForSelectedRouter.length === 0 ? (
+                                <option value="">No service plans created for this router</option>
+                            ) : (
+                                <>
+                                    <option value="">-- Choose QoS Plan --</option>
+                                    {availablePlansForSelectedRouter.map(p => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.name} ({p.bandwidth}) — KES {Number(p.price).toLocaleString()}
+                                        </option>
+                                    ))}
+                                </>
+                            )}
+                        </select>
+                        {formData.router_id && availablePlansForSelectedRouter.length === 0 && (
+                            <p className="text-[10px] text-amber-500 font-medium pl-1">
+                                No plans attached to this router yet. Create a plan for this router under Service Plans.
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Activation Fee & Next Payment Date */}
+                    <div className="grid grid-cols-2 gap-3 border-t border-pace-border pt-3">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">
+                                Activation Fee (KES)
+                            </label>
+                            <input 
+                                type="number"
+                                min="0"
+                                value={formData.activationFee}
+                                onChange={(e) => setFormData({...formData, activationFee: Number(e.target.value)})}
+                                placeholder="0"
+                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
+                            />
+                            <p className="text-[9px] text-admin-dim pl-1">Setup / installation fee (0 or any amount)</p>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">
+                                Next Payment Due Date
+                            </label>
+                            <input 
+                                type="date"
+                                value={formData.nextPayment}
+                                onChange={(e) => setFormData({...formData, nextPayment: e.target.value})}
+                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
+                            />
+                            <p className="text-[9px] text-admin-dim pl-1">Subscription expiry / renewal date</p>
+                        </div>
+                    </div>
+
+                    {/* Connection State Policy */}
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Connection State Policy</label>
+                        <select 
+                            value={formData.status}
+                            onChange={(e) => setFormData({...formData, status: e.target.value})}
+                            className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
+                        >
+                            <option value="enabled">Enabled (Active Internet Access)</option>
+                            <option value="disabled">Disabled (Suspended Session)</option>
                         </select>
                     </div>
 
-                    {/* Activation Pay & Initial Wallet Deposit */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Activation Fee (KES)</label>
-                            <input 
-                                type="number" required
-                                value={formData.activationFee}
-                                onChange={(e) => setFormData({...formData, activationFee: Number(e.target.value)})}
-                                placeholder="1000"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Initial Pay Deposit (KES)</label>
-                            <input 
-                                type="number" required
-                                value={formData.amountPaid}
-                                onChange={(e) => setFormData({...formData, amountPaid: Number(e.target.value)})}
-                                placeholder="0"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Payment Due Date</label>
-                            <input 
-                                type="date"
-                                value={formData.nextPayment ? formData.nextPayment.split(' ')[0] : ''}
-                                onChange={(e) => setFormData({...formData, nextPayment: e.target.value})}
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Connection State Policy</label>
-                            <select 
-                                value={formData.status}
-                                onChange={(e) => setFormData({...formData, status: e.target.value})}
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
-                            >
-                                <option value="enabled">Enabled (Active)</option>
-                                <option value="disabled">Disabled (Suspended)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Calculated connection eligibility */}
-                    {(() => {
-                        const req = Number(formData.price || 0) + Number(formData.activationFee || 0)
-                        const paid = Number(formData.amountPaid || 0)
-                        const meetsReq = paid >= req
-                        return (
-                            <div className={cn(
-                                "p-3.5 rounded-xl border text-xs font-medium space-y-1 transition-all",
-                                meetsReq 
-                                    ? "bg-green-500/5 border-green-500/20 text-green-600" 
-                                    : "bg-red-500/5 border-red-500/20 text-red-500"
-                            )}>
-                                <div className="flex justify-between font-bold">
-                                    <span>Total Required: KES {req.toLocaleString()}</span>
-                                    <span>Paid Now: KES {paid.toLocaleString()}</span>
-                                </div>
-                                <p className="text-[11px] font-semibold mt-1">
-                                    {meetsReq 
-                                        ? "✅ Subscriber is eligible to connect. Account status will be set to Enabled." 
-                                        : `❌ Insufficient payment to connect. Subscriber requires KES ${(req - paid).toLocaleString()} more and status will be Disabled.`
-                                    }
-                                </p>
-                            </div>
-                        )
-                    })()}
-
-                    <div className="grid grid-cols-2 gap-4 border-t border-pace-border pt-5">
-                        <div className="space-y-1.5">
+                    {/* PPPoE Credentials */}
+                    <div className="grid grid-cols-2 gap-3 border-t border-pace-border pt-3">
+                        <div className="space-y-1">
                             <label className="text-[10px] font-bold text-pace-purple uppercase tracking-wider pl-1">PPPoE Username</label>
                             <input 
                                 type="text" required
                                 value={formData.username}
                                 onChange={(e) => setFormData({...formData, username: e.target.value})}
                                 placeholder="pppoe_user"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
+                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
                             />
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="space-y-1">
                             <label className="text-[10px] font-bold text-pace-purple uppercase tracking-wider pl-1">PPPoE Password</label>
                             <input 
                                 type="text" required
                                 value={formData.password}
                                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                                 placeholder="secret_password"
-                                className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
+                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
                             />
                         </div>
                     </div>
 
-                    <div className="pt-4 flex gap-3">
+                    {/* Action Buttons */}
+                    <div className="pt-4 grid grid-cols-2 gap-3">
                         <button 
                             type="button" 
                             onClick={() => setIsModalOpen(false)}
-                            className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all"
+                            className="w-full px-5 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all"
                         >
                             Cancel
                         </button>
                         <button 
                             type="submit"
-                            className="flex-[2] px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:opacity-90 shadow-sm transition-all active:scale-95"
+                            disabled={isSaving}
+                            className="w-full px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:opacity-90 shadow-sm transition-all active:scale-95 disabled:opacity-50"
                         >
-                            {currentCustomer ? 'Save Changes' : 'Add Subscriber'}
+                            {isSaving ? 'Saving...' : (currentCustomer ? 'Save Changes' : 'Provision Subscriber')}
                         </button>
                     </div>
                 </form>
-            </Modal>
-
-            {/* Wallet & Manual Reconnect Modal */}
-            <Modal
-                isOpen={isWalletModalOpen}
-                onClose={() => setIsWalletModalOpen(false)}
-                title="Wallet & Manual Reconnect"
-                description={walletCustomer ? `Manage billing state and connection status for ${walletCustomer.name}` : ''}
-                maxWidth="max-w-md"
-            >
-                {walletCustomer && (
-                    <form onSubmit={handleSaveWallet} className="space-y-5 font-figtree">
-                        {/* Summary Box */}
-                        <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-2xl space-y-2">
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-admin-dim font-medium">Customer:</span>
-                                <span className="font-semibold text-admin-value">{walletCustomer.name}</span>
-                            </div>
-                            {(() => {
-                                const pkg = mockPackages.find(p => p.limit === walletCustomer.plan || p.name === walletCustomer.plan)
-                                const packageName = pkg ? pkg.name : walletCustomer.plan
-                                return (
-                                    <div className="flex justify-between items-center text-xs">
-                                        <span className="text-admin-dim font-medium">Plan:</span>
-                                        <span className="font-semibold text-admin-value">{packageName} ({walletCustomer.plan})</span>
-                                    </div>
-                                )
-                            })()}
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-admin-dim font-medium">Monthly Cost:</span>
-                                <span className="font-semibold text-pace-purple font-mono">KES {Number(walletCustomer.price).toLocaleString()}</span>
-                            </div>
-                            {Number(walletCustomer.activationFee || 0) > 0 && (
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="text-admin-dim font-medium">Activation Fee:</span>
-                                    <span className="font-semibold text-admin-value font-mono">KES {Number(walletCustomer.activationFee).toLocaleString()}</span>
-                                </div>
-                            )}
-                            <div className="border-t border-pace-border my-2 pt-2 flex justify-between items-center text-xs">
-                                <span className="text-admin-dim font-medium">Total Paid So Far:</span>
-                                <span className="font-semibold text-green-600 font-mono">KES {Number(walletCustomer.amountPaid || 0).toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-admin-dim font-medium">Remaining Due:</span>
-                                <span className={cn(
-                                    "font-semibold font-mono",
-                                    Number((walletCustomer.price + (walletCustomer.activationFee || 0)) - (walletCustomer.amountPaid || 0)) > 0 ? "text-red-500" : "text-green-600"
-                                )}>
-                                    KES {Number(Math.max(0, (walletCustomer.price + (walletCustomer.activationFee || 0)) - (walletCustomer.amountPaid || 0))).toLocaleString()}
-                                </span>
-                            </div>
-                            <div className="flex justify-between items-center text-[10px] mt-1 pt-1">
-                                <span className="text-admin-dim font-medium uppercase tracking-wider">Wallet Status:</span>
-                                <Badge className={cn(
-                                    "border-none px-2 py-0.5 text-[8px] font-black tracking-widest uppercase",
-                                    walletCustomer.walletStatus === 'complete' 
-                                        ? "bg-green-500/10 text-green-600" 
-                                        : walletCustomer.walletStatus === 'pending'
-                                            ? "bg-amber-500/10 text-amber-600"
-                                            : "bg-red-500/10 text-red-600"
-                                )}>
-                                    {walletCustomer.walletStatus || 'not-paid'}
-                                </Badge>
-                            </div>
-                        </div>
-
-                        {/* Payment Recording */}
-                        <div className="space-y-3">
-                            <h4 className="text-[10px] font-bold text-admin-dim uppercase tracking-wider">Record New Payment</h4>
-                            <div className="grid grid-cols-1 gap-2">
-                                <div className="relative">
-                                    <input 
-                                        type="number"
-                                        value={walletPaymentAmount}
-                                        onChange={(e) => setWalletPaymentAmount(e.target.value)}
-                                        placeholder="Enter KES amount paid"
-                                        className="w-full px-4 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
-                                    />
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-admin-dim">KES</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleQuickFullPay}
-                                    className="py-2.5 px-3 bg-green-500/10 text-green-600 border border-green-500/20 hover:bg-green-500/20 rounded-xl text-xs font-bold transition-all text-center animate-in duration-200"
-                                >
-                                    Mark as Fully Paid (Complete)
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Manual Reconnect / Expiry Adjustment */}
-                        <div className="space-y-3 border-t border-pace-border pt-4">
-                            <h4 className="text-[10px] font-bold text-admin-dim uppercase tracking-wider">Manual Reconnect & Expiry</h4>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-admin-dim pl-1">Account Access Status</label>
-                                    <select 
-                                        value={walletStatusChange}
-                                        onChange={(e) => setWalletStatusChange(e.target.value)}
-                                        className="w-full px-4 py-2 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
-                                    >
-                                        <option value="enabled">Enabled (Active)</option>
-                                        <option value="disabled">Disabled (Suspended)</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-admin-dim pl-1">Next Payment Due Date</label>
-                                    <input 
-                                        type="date"
-                                        value={walletNextPayment}
-                                        onChange={(e) => setWalletNextPayment(e.target.value)}
-                                        className="w-full px-4 py-2 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Transaction History Log */}
-                        <div className="space-y-2 border-t border-pace-border pt-4">
-                            <h4 className="text-[10px] font-bold text-admin-dim uppercase tracking-wider">Wallet Transaction Log</h4>
-                            <div className="max-h-24 overflow-y-auto space-y-1 bg-pace-bg-subtle/50 p-2 rounded-xl border border-pace-border custom-scrollbar">
-                                {(walletCustomer.walletHistory && walletCustomer.walletHistory.length > 0) ? (
-                                    walletCustomer.walletHistory.map((h, index) => (
-                                        <div key={index} className="flex justify-between items-center text-[10px] font-medium border-b border-pace-border/5 pb-1">
-                                            <span className="text-admin-dim font-mono">{h.date}</span>
-                                            <span className="text-admin-value font-semibold">{h.description || h.type}</span>
-                                            <span className={cn(
-                                                "font-bold font-mono",
-                                                h.type === 'Payment' ? "text-green-600" : "text-red-500"
-                                            )}>
-                                                {h.type === 'Payment' ? '+' : '-'}KES {Number(h.amount).toLocaleString()}
-                                            </span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-[10px] text-admin-dim italic text-center py-2">No transaction logs available</p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="pt-4 flex gap-3">
-                            <button 
-                                type="button" 
-                                onClick={() => setIsWalletModalOpen(false)}
-                                className="flex-1 px-5 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                type="submit"
-                                className="flex-[2] px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:opacity-90 shadow-sm transition-all active:scale-95"
-                            >
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
-                )}
             </Modal>
         </div>
     )
@@ -986,7 +711,7 @@ function CustomersContent() {
 
 export default function CustomersPage() {
     return (
-        <Suspense fallback={<div className="p-8 text-center text-admin-dim animate-pulse text-sm font-medium">Mapping subscriber matrix...</div>}>
+        <Suspense fallback={<TablePageSkeleton />}>
             <CustomersContent />
         </Suspense>
     )
