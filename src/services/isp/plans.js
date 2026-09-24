@@ -60,5 +60,21 @@ export const planService = {
             console.error("deletePlan failed", e);
             throw e;
         }
+    },
+
+    getPlanAnalytics: async () => {
+        try {
+            const res = await apiFetch('/isp/plans.php?analytics=1');
+            if (res && res.status === 'success') {
+                return {
+                    status: 'success',
+                    data: res.data
+                };
+            }
+            return { status: 'error', message: res?.message || 'Failed to load plan analytics', data: null };
+        } catch (e) {
+            console.error("getPlanAnalytics failed", e);
+            throw e;
+        }
     }
 };
