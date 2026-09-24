@@ -101,7 +101,7 @@ function ReportsContent() {
             bg: "bg-emerald-500/5", 
             iconBorder: "border-emerald-500/10 group-hover:border-emerald-500/30",
             accent: "bg-gradient-to-b from-emerald-400 to-teal-500",
-            trend: 14.5
+            trend: stats.revenueGrowthPct !== undefined ? stats.revenueGrowthPct : 0
         },
         { 
             label: "Total Expenses", 
@@ -112,7 +112,7 @@ function ReportsContent() {
             bg: "bg-rose-500/5", 
             iconBorder: "border-rose-500/10 group-hover:border-rose-500/30",
             accent: "bg-gradient-to-b from-rose-400 to-red-500",
-            trend: -5.2
+            trend: stats.expenseGrowthPct !== undefined ? stats.expenseGrowthPct : 0
         },
         { 
             label: "Net Profit", 
@@ -123,7 +123,7 @@ function ReportsContent() {
             bg: "bg-pace-purple/5", 
             iconBorder: "border-pace-purple/10 group-hover:border-pace-purple/30",
             accent: "bg-gradient-to-b from-pace-purple to-indigo-500",
-            trend: 18.2
+            trend: stats.profitGrowthPct !== undefined ? stats.profitGrowthPct : 0
         },
         { 
             label: "Collection Rate", 
