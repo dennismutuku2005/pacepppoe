@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, Power, Settings, RefreshCw, Cpu, HardDrive, Users, Edit, Trash2, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Plus, Search, Power, Settings, RefreshCw, Cpu, HardDrive, Users, Edit, Trash2, ShieldCheck, AlertCircle, Eye, EyeOff, Download, ExternalLink, FileText, Sparkles, Lock, Key, Shield, CheckCircle2, ChevronDown } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
 import { IspAutocomplete } from '@/components/IspAutocomplete'
@@ -23,17 +23,20 @@ export default function AdminRoutersPage() {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoadingNextResources, setIsLoadingNextResources] = useState(false)
+  const [isResourcesConfirmed, setIsResourcesConfirmed] = useState(false)
 
   // Form states
   const [showPassword, setShowPassword] = useState(false)
   const [createForm, setCreateForm] = useState({
     name: '',
     ip_address: '',
+    public_ip: '178.62.36.148',
     api_port: '',
     winbox_port: '',
-    username: '',
+    username: 'admin',
     password: '',
-    model: '',
+    model: 'MikroTik',
     ownerSearch: '',
     isp_id: ''
   })
@@ -41,6 +44,7 @@ export default function AdminRoutersPage() {
     id: null,
     name: '',
     ip_address: '',
+    public_ip: '178.62.36.148',
     api_port: 8728,
     winbox_port: 8291,
     username: '',
@@ -98,25 +102,30 @@ export default function AdminRoutersPage() {
     (router.owner_name && router.owner_name.toLowerCase().includes(search.toLowerCase()))
   )
 
-  // Autocomplete change handlers
-  const handleCreateOwnerChange = (e) => {
-    const val = e.target.value
-    const matched = ispsList.find(isp => isp.name === val)
-    setCreateForm(prev => ({
-      ...prev,
-      ownerSearch: val,
-      isp_id: matched ? matched.id : ''
-    }))
-  }
-
-  const handleEditOwnerChange = (e) => {
-    const val = e.target.value
-    const matched = ispsList.find(isp => isp.name === val)
-    setEditForm(prev => ({
-      ...prev,
-      ownerSearch: val,
-      isp_id: matched ? matched.id : ''
-    }))
+  // Fetch next resource allocation strictly from server
+  const fetchAndConfirmResources = async () => {
+    setIsLoadingNextResources(true)
+    setIsResourcesConfirmed(false)
+    try {
+      const res = await routerService.getNextResources()
+      if (res && res.status === 'success' && res.data) {
+        setCreateForm(prev => ({
+          ...prev,
+          ip_address: res.data.next_ip || '10.8.0.2',
+          api_port: res.data.next_api_port || 8729,
+          winbox_port: res.data.next_winbox_port || 8292,
+          public_ip: res.data.public_ip || '178.62.36.148'
+        }))
+        setIsResourcesConfirmed(true)
+      } else {
+        toast.error('Failed to confirm next IP & Port allocation from server pool')
+      }
+    } catch (e) {
+      console.error("Could not fetch resources pool", e)
+      toast.error('Network error confirming resource allocation')
+    } finally {
+      setIsLoadingNextResources(false)
+    }
   }
 
   // Modal trigger actions
@@ -129,16 +138,18 @@ export default function AdminRoutersPage() {
     setCreateForm({
       name: '',
       ip_address: '',
+      public_ip: '178.62.36.148',
       api_port: '',
       winbox_port: '',
-      username: '',
+      username: 'admin',
       password: '',
-      model: '',
+      model: 'MikroTik',
       ownerSearch: '',
       isp_id: ''
     })
     setShowPassword(false)
     setIsCreateOpen(true)
+    fetchAndConfirmResources()
   }
 
   const openEditModal = (router) => {
@@ -146,12 +157,13 @@ export default function AdminRoutersPage() {
       id: router.id,
       name: router.name,
       ip_address: router.ip,
+      public_ip: router.public_ip || '178.62.36.148',
       api_port: router.port,
       winbox_port: router.winbox_port || 8291,
       username: router.username || '',
-      password: '', // blank by default (update optional)
+      password: '',
       model: router.model || 'MikroTik',
-      status: router.status === 'Online' ? 'online' : 'offline',
+      status: router.status === 'Online' ? 'online' : (router.status === 'Inactive' ? 'inactive' : 'offline'),
       ownerSearch: router.owner_name === 'Admin / Shared' ? '' : router.owner_name,
       isp_id: router.isp_id || ''
     })
@@ -166,8 +178,13 @@ export default function AdminRoutersPage() {
 
   // CRUD API Calls
   const handleCreateSubmit = async () => {
-    if (!createForm.name || !createForm.ip_address || !createForm.username || !createForm.password) {
-      toast.error('Name, IP Address, Username, and Password are required fields.')
+    if (!createForm.name) {
+      toast.error('MikroTik Name is required.')
+      return
+    }
+
+    if (!isResourcesConfirmed) {
+      toast.error('Resource allocation must be confirmed by the server before creating.')
       return
     }
 
@@ -175,18 +192,15 @@ export default function AdminRoutersPage() {
     try {
       const payload = {
         name: createForm.name,
-        ip_address: createForm.ip_address,
-        api_port: parseInt(createForm.api_port, 10) || 8728,
-        winbox_port: parseInt(createForm.winbox_port, 10) || 8291,
-        username: createForm.username,
-        password: createForm.password,
+        username: createForm.username || 'admin',
+        password: createForm.password || '',
         model: createForm.model || 'MikroTik',
         isp_id: createForm.isp_id || null
       }
 
       const res = await routerService.authorizeRouter(payload)
       if (res && res.status === 'success') {
-        toast.success(`Router ${createForm.name} authorized successfully.`)
+        toast.success(`Router ${createForm.name} provisioned & pool incremented successfully!`)
         setIsCreateOpen(false)
         loadRouters()
       } else {
@@ -201,8 +215,8 @@ export default function AdminRoutersPage() {
   }
 
   const handleEditSubmit = async () => {
-    if (!editForm.name || !editForm.ip_address || !editForm.username) {
-      toast.error('Name, IP Address, and Username are required.')
+    if (!editForm.name) {
+      toast.error('Name is required.')
       return
     }
 
@@ -210,9 +224,6 @@ export default function AdminRoutersPage() {
     try {
       const payload = {
         name: editForm.name,
-        ip_address: editForm.ip_address,
-        api_port: parseInt(editForm.api_port, 10) || 8728,
-        winbox_port: parseInt(editForm.winbox_port, 10) || 8291,
         username: editForm.username,
         model: editForm.model || 'MikroTik',
         status: editForm.status,
@@ -259,17 +270,6 @@ export default function AdminRoutersPage() {
     }
   }
 
-  const handleReboot = (name) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1500)),
-      {
-        loading: `Sending reboot command to ${name}...`,
-        success: `Reboot command queued for ${name}.`,
-        error: `Failed to queue reboot for ${name}.`
-      }
-    )
-  }
-
   return (
     <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10">
       
@@ -277,14 +277,14 @@ export default function AdminRoutersPage() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-pace-border pb-6">
         <div>
           <h1 className="text-xl font-medium text-admin-value tracking-tight">Router Infrastructure</h1>
-          <p className="text-xs font-medium text-gray-400 mt-1">Provision and monitor edge routers for ISP traffic.</p>
+          <p className="text-xs font-medium text-gray-400 mt-1">Provision edge routers with automated (+1) IP/port pools and OpenVPN tunnel keys.</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
           <div className="flex items-center gap-3 w-full sm:flex-1">
             <button
               onClick={handleReload}
               disabled={isLoading}
-              className="p-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 shrink-0"
+              className="p-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 shrink-0 cursor-pointer"
               title="Refresh List"
             >
               <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
@@ -303,7 +303,7 @@ export default function AdminRoutersPage() {
 
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all cursor-pointer active:scale-[0.98] w-full sm:w-auto shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all cursor-pointer active:scale-[0.98] w-full sm:w-auto shrink-0 shadow-sm"
           >
             <Plus size={16} /> Add Router
           </button>
@@ -313,19 +313,16 @@ export default function AdminRoutersPage() {
       {/* Main Database Table Card */}
       <div className="bg-card-bg border border-pace-border rounded-2xl overflow-hidden shadow-sm w-full max-w-full">
         <div className="overflow-x-auto w-full max-w-full">
-          <table className="w-full text-left whitespace-nowrap min-w-[1000px]">
+          <table className="w-full text-left whitespace-nowrap min-w-[1050px]">
             <thead>
               <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-semibold text-admin-dim text-xs">
                 <th className="px-6 py-4">MikroTik / Router Info</th>
-                <th className="px-6 py-4">IP Address</th>
+                <th className="px-6 py-4">Assigned VPN IP</th>
                 <th className="px-6 py-4">Owner / ISP</th>
-                <th className="px-6 py-4">Ports (API/Winbox)</th>
-                <th className="px-6 py-4">Model</th>
+                <th className="px-6 py-4">Ports (API / Winbox)</th>
                 <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">CPU</th>
-                <th className="px-6 py-4">RAM</th>
-                <th className="px-6 py-4">Users</th>
-                <th className="px-6 py-4">Uptime</th>
+                <th className="px-6 py-4">OVPN Download Files</th>
+                <th className="px-6 py-4">Subscribers</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -333,22 +330,19 @@ export default function AdminRoutersPage() {
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-32" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-28" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-12" /></td>
-                    <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
-                    <td className="px-6 py-4 text-right"><Skeleton className="h-4 w-16 ml-auto" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-32 bg-pace-border/50 rounded animate-pulse" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-24 bg-pace-border/50 rounded animate-pulse" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-28 bg-pace-border/50 rounded animate-pulse" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-24 bg-pace-border/50 rounded animate-pulse" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-16 bg-pace-border/50 rounded animate-pulse" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-36 bg-pace-border/50 rounded animate-pulse" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-12 bg-pace-border/50 rounded animate-pulse" /></td>
+                    <td className="px-6 py-4 text-right"><div className="h-4 w-16 bg-pace-border/50 rounded ml-auto animate-pulse" /></td>
                   </tr>
                 ))
               ) : filteredRouters.length === 0 ? (
                 <tr>
-                  <td colSpan="11" className="py-12 text-center text-admin-dim text-xs font-semibold">
+                  <td colSpan="8" className="py-12 text-center text-admin-dim text-xs font-semibold">
                     No MikroTik routers found
                   </td>
                 </tr>
@@ -362,11 +356,16 @@ export default function AdminRoutersPage() {
                         </div>
                         <div>
                           <p className="text-xs font-bold text-admin-value group-hover:text-pace-purple transition-colors">{routerItem.name}</p>
-                          <p className="text-[10px] text-admin-dim font-medium">{routerItem.model}</p>
+                          <p className="text-[10px] text-admin-dim font-medium">{routerItem.model || 'MikroTik'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-xs font-semibold text-admin-dim font-mono">{routerItem.ip}</td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs font-semibold text-admin-value font-mono block">{routerItem.ip}</span>
+                      {routerItem.public_ip && (
+                        <span className="text-[10px] text-admin-dim font-mono block">WAN: {routerItem.public_ip}</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       {routerItem.owner_name === 'Admin / Shared' ? (
                         <span className="text-[10px] bg-pace-bg-subtle text-admin-dim font-bold border border-pace-border/60 px-2 py-0.5 rounded-md uppercase tracking-tight">Shared</span>
@@ -377,36 +376,88 @@ export default function AdminRoutersPage() {
                     <td className="px-6 py-4 text-xs font-medium text-admin-dim">
                       API: <span className="font-semibold text-admin-value">{routerItem.port}</span> • Winbox: <span className="font-semibold text-admin-value">{routerItem.winbox_port || 8291}</span>
                     </td>
-                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">{routerItem.model}</td>
                     <td className="px-6 py-4">
                       <Badge variant={routerItem.status === 'Online' ? 'success' : 'error'} className="text-[9px] font-bold border-none px-2 py-0.5 uppercase tracking-wider">
                         {routerItem.status}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">{routerItem.cpu}%</td>
-                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">{routerItem.ram}%</td>
+                    <td className="px-6 py-4">
+                      {routerItem.ovpn_links ? (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {/* 1. CA Cert */}
+                          {routerItem.ovpn_links.ca && (
+                            <a
+                              href={routerItem.ovpn_links.ca}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Download CA Certificate (ca.crt)"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/10 text-amber-600 border border-amber-500/20 rounded-lg text-[10px] font-bold hover:bg-amber-500/20 transition-all"
+                            >
+                              <Shield size={10} /> CA
+                            </a>
+                          )}
+                          {/* 2. Client Cert */}
+                          {routerItem.ovpn_links.cert && (
+                            <a
+                              href={routerItem.ovpn_links.cert}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Download Client Certificate (client.crt)"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-lg text-[10px] font-bold hover:bg-blue-500/20 transition-all"
+                            >
+                              <FileText size={10} /> Cert
+                            </a>
+                          )}
+                          {/* 3. Client Key */}
+                          {routerItem.ovpn_links.key && (
+                            <a
+                              href={routerItem.ovpn_links.key}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Download Client Private Key (client.key)"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-lg text-[10px] font-bold hover:bg-rose-500/20 transition-all"
+                            >
+                              <Key size={10} /> Key
+                            </a>
+                          )}
+                          {/* 4. Complete .OVPN */}
+                          {routerItem.ovpn_links.ovpn && (
+                            <a
+                              href={routerItem.ovpn_links.ovpn}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Download Full .OVPN Profile"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-[10px] font-bold hover:bg-emerald-500/20 transition-all"
+                            >
+                              <Download size={10} /> .OVPN
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-admin-dim font-medium italic">Standard (No OVPN)</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-xs font-semibold text-admin-value">{routerItem.subscribers}</td>
-                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">{routerItem.uptime}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5 opacity-90 group-hover:opacity-100">
                         <button
                           onClick={() => openInfoModal(routerItem)}
-                          title="View Router Telemetry"
-                          className="p-1.5 hover:bg-pace-purple/10 rounded-lg text-admin-dim hover:text-pace-purple transition-all"
+                          title="View Router Telemetry & OVPN"
+                          className="p-1.5 hover:bg-pace-purple/10 rounded-lg text-admin-dim hover:text-pace-purple transition-all cursor-pointer"
                         >
                           <Eye size={15} />
                         </button>
                         <button
                           onClick={() => openEditModal(routerItem)}
                           title="Edit Router Configuration"
-                          className="p-1.5 hover:bg-pace-purple/10 rounded-lg text-admin-dim hover:text-pace-purple transition-all"
+                          className="p-1.5 hover:bg-pace-purple/10 rounded-lg text-admin-dim hover:text-pace-purple transition-all cursor-pointer"
                         >
                           <Edit size={15} />
                         </button>
                         <button
                           onClick={() => openDeleteModal(routerItem)}
                           title="De-authorize Router"
-                          className="p-1.5 hover:bg-rose-500/10 rounded-lg text-admin-dim hover:text-rose-600 transition-all"
+                          className="p-1.5 hover:bg-rose-500/10 rounded-lg text-admin-dim hover:text-rose-600 transition-all cursor-pointer"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -421,12 +472,12 @@ export default function AdminRoutersPage() {
       </div>
 
 
-      {/* VIEW MODAL */}
+      {/* VIEW / TELEMETRY MODAL */}
       <Modal
         isOpen={isInfoOpen}
         onClose={() => setIsInfoOpen(false)}
         title={selectedRouter?.name || 'Router Detail'}
-        description="Comprehensive configuration and hardware resource details."
+        description="Comprehensive configuration, VPN addresses, and downloadable OpenVPN credentials."
         maxWidth="max-w-xl"
       >
         {selectedRouter && (
@@ -439,7 +490,7 @@ export default function AdminRoutersPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-admin-value">{selectedRouter.name}</h3>
-                  <p className="text-xs font-mono text-admin-dim">{selectedRouter.ip}</p>
+                  <p className="text-xs font-mono text-admin-dim">VPN IP: {selectedRouter.ip}</p>
                 </div>
               </div>
               <Badge variant={selectedRouter.status === 'Online' ? 'success' : 'error'}>
@@ -474,6 +525,14 @@ export default function AdminRoutersPage() {
                 <span className="font-bold text-admin-value">{selectedRouter.owner_name}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
+                <span className="text-admin-dim font-medium">Assigned VPN IP</span>
+                <span className="font-mono font-bold text-admin-value">{selectedRouter.ip}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
+                <span className="text-admin-dim font-medium">Public Gateway IP</span>
+                <span className="font-mono font-bold text-admin-value">{selectedRouter.public_ip || '178.62.36.148'}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
                 <span className="text-admin-dim font-medium">API Connection Port</span>
                 <span className="font-mono font-bold text-admin-value">{selectedRouter.port}</span>
               </div>
@@ -481,21 +540,116 @@ export default function AdminRoutersPage() {
                 <span className="text-admin-dim font-medium">Winbox Remote Port</span>
                 <span className="font-mono font-bold text-admin-value">{selectedRouter.winbox_port || 8291}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
-                <span className="text-admin-dim font-medium">System Uptime</span>
-                <span className="font-mono font-bold text-admin-value">{selectedRouter.uptime}</span>
-              </div>
               <div className="flex justify-between py-1.5 text-xs">
                 <span className="text-admin-dim font-medium">API Username</span>
                 <span className="font-mono font-bold text-admin-value">{selectedRouter.username || 'admin'}</span>
               </div>
             </div>
 
+            {/* OpenVPN Certificate / Config Downloads (3 Keys + Profile) */}
+            {selectedRouter.ovpn_links && (
+              <div className="border border-pace-border rounded-xl p-4 bg-pace-bg-subtle/50 space-y-3">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={16} className="text-emerald-500" />
+                  <h4 className="text-xs font-bold text-admin-value">Download OpenVPN Certificate & Key Files</h4>
+                </div>
+                <p className="text-[11px] text-admin-dim">
+                  Download the individual CA, client cert, private key, or unified configuration to configure the MikroTik OpenVPN client.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  {/* CA Certificate */}
+                  {selectedRouter.ovpn_links.ca && (
+                    <a
+                      href={selectedRouter.ovpn_links.ca}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 transition-all group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600">
+                          <Shield size={14} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-admin-value">CA Certificate</p>
+                          <p className="text-[10px] text-admin-dim font-mono">ca.crt</p>
+                        </div>
+                      </div>
+                      <Download size={14} className="text-amber-600 group-hover:scale-110 transition-transform" />
+                    </a>
+                  )}
+
+                  {/* Client Certificate */}
+                  {selectedRouter.ovpn_links.cert && (
+                    <a
+                      href={selectedRouter.ovpn_links.cert}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 transition-all group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600">
+                          <FileText size={14} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-admin-value">Client Certificate</p>
+                          <p className="text-[10px] text-admin-dim font-mono">client.crt</p>
+                        </div>
+                      </div>
+                      <Download size={14} className="text-blue-600 group-hover:scale-110 transition-transform" />
+                    </a>
+                  )}
+
+                  {/* Client Private Key */}
+                  {selectedRouter.ovpn_links.key && (
+                    <a
+                      href={selectedRouter.ovpn_links.key}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3 rounded-xl border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 transition-all group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600">
+                          <Key size={14} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-admin-value">Client Key</p>
+                          <p className="text-[10px] text-admin-dim font-mono">client.key</p>
+                        </div>
+                      </div>
+                      <Download size={14} className="text-rose-600 group-hover:scale-110 transition-transform" />
+                    </a>
+                  )}
+
+                  {/* Unified .OVPN Profile */}
+                  {selectedRouter.ovpn_links.ovpn && (
+                    <a
+                      href={selectedRouter.ovpn_links.ovpn}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                          <Download size={14} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-admin-value">Full OVPN Profile</p>
+                          <p className="text-[10px] text-admin-dim font-mono">client.ovpn</p>
+                        </div>
+                      </div>
+                      <Download size={14} className="text-emerald-600 group-hover:scale-110 transition-transform" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Operational Actions */}
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setIsInfoOpen(false)}
-                className="px-4 py-2 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all"
+                className="px-4 py-2 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all cursor-pointer"
               >
                 Close
               </button>
@@ -508,52 +662,129 @@ export default function AdminRoutersPage() {
       <Modal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        title="Add Router"
-        description="Register a new MikroTik access router into the billing directory."
+        title="Add MikroTik Router"
+        description="Network IP and Ports are strictly allocated from the server (+1 increment pool) and cannot be manually modified."
         maxWidth="max-w-md"
       >
         <div className="space-y-4 font-figtree">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-admin-dim">MikroTik Name</label>
-              <input
-                value={createForm.name}
-                onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g. East Edge MikroTik 1"
-                className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
-              />
+          {/* Server Confirmation State Banner */}
+          {isLoadingNextResources ? (
+            <div className="flex items-center gap-2 p-3 bg-pace-purple/5 border border-pace-purple/20 rounded-xl text-xs text-pace-purple font-medium animate-pulse">
+              <Sparkles size={15} /> Confirming next available IP & Ports from database pool...
             </div>
-            <div>
-              <label className="text-xs font-semibold text-admin-dim">IP Address</label>
-              <input
-                value={createForm.ip_address}
-                onChange={(e) => setCreateForm(prev => ({ ...prev, ip_address: e.target.value }))}
-                placeholder="192.168.88.1"
-                className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
-              />
+          ) : isResourcesConfirmed ? (
+            <div className="flex items-center justify-between p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-700 font-medium">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={15} className="text-emerald-600" />
+                <span>Pool Confirmed: Next available network resources locked</span>
+              </div>
+              <button
+                type="button"
+                onClick={fetchAndConfirmResources}
+                className="text-[10px] underline font-bold hover:text-emerald-800"
+                title="Re-query server pool"
+              >
+                Re-check
+              </button>
             </div>
+          ) : (
+            <div className="flex items-center justify-between p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-700 font-medium">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={15} />
+                <span>Failed to verify server pool</span>
+              </div>
+              <button
+                type="button"
+                onClick={fetchAndConfirmResources}
+                className="text-[10px] underline font-bold"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs font-semibold text-admin-dim">MikroTik Router Name *</label>
+            <input
+              value={createForm.name}
+              onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="e.g. Node-Router-01"
+              className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-admin-dim">API Port</label>
-              <input
-                type="number"
-                value={createForm.api_port}
-                onChange={(e) => setCreateForm(prev => ({ ...prev, api_port: e.target.value }))}
-                placeholder="8728"
-                className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
-              />
+          {/* LOCKED / SERVER ALLOCATED VALUES */}
+          <div className="p-3 bg-pace-bg-subtle/70 border border-pace-border rounded-xl space-y-3">
+            <div className="flex items-center justify-between border-b border-pace-border/60 pb-2">
+              <div className="flex items-center gap-1.5 text-admin-dim text-xs font-bold">
+                <Lock size={13} className="text-pace-purple" />
+                <span>Auto-Allocated by Server (+1 Pool)</span>
+              </div>
+              <span className="text-[10px] bg-pace-purple/10 text-pace-purple font-bold px-2 py-0.5 rounded-md">
+                Locked & Confirmed
+              </span>
             </div>
-            <div>
-              <label className="text-xs font-semibold text-admin-dim">Winbox Port</label>
-              <input
-                type="number"
-                value={createForm.winbox_port}
-                onChange={(e) => setCreateForm(prev => ({ ...prev, winbox_port: e.target.value }))}
-                placeholder="8291"
-                className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
-              />
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-semibold text-admin-dim block mb-1">
+                  VPN Tunnel IP
+                </label>
+                <div className="relative">
+                  <input
+                    readOnly
+                    disabled
+                    value={createForm.ip_address || 'Fetching...'}
+                    className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed select-all"
+                  />
+                  <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-admin-dim block mb-1">
+                  Server Public IP
+                </label>
+                <div className="relative">
+                  <input
+                    readOnly
+                    disabled
+                    value={createForm.public_ip || '178.62.36.148'}
+                    className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed"
+                  />
+                  <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-admin-dim block mb-1">
+                  API Port
+                </label>
+                <div className="relative">
+                  <input
+                    readOnly
+                    disabled
+                    value={createForm.api_port || 'Fetching...'}
+                    className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed"
+                  />
+                  <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-semibold text-admin-dim block mb-1">
+                  Winbox Port
+                </label>
+                <div className="relative">
+                  <input
+                    readOnly
+                    disabled
+                    value={createForm.winbox_port || 'Fetching...'}
+                    className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed"
+                  />
+                  <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -594,7 +825,7 @@ export default function AdminRoutersPage() {
               <input
                 value={createForm.model}
                 onChange={(e) => setCreateForm(prev => ({ ...prev, model: e.target.value }))}
-                placeholder="e.g. CCR2004"
+                placeholder="e.g. CCR2004 / hEX"
                 className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
               />
             </div>
@@ -604,18 +835,28 @@ export default function AdminRoutersPage() {
                 value={createForm.isp_id}
                 onChange={(selected) => setCreateForm(prev => ({ ...prev, isp_id: selected?.id || '' }))}
                 isps={ispsList}
-                placeholder="Search ISP by name or username..."
+                placeholder="Search ISP..."
               />
             </div>
           </div>
 
-          <button
-            onClick={handleCreateSubmit}
-            disabled={isSaving}
-            className="w-full bg-pace-purple text-white py-2.5 rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all disabled:opacity-50 mt-2"
-          >
-            {isSaving ? "Adding..." : "Add Router"}
-          </button>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-pace-border">
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen(false)}
+              className="px-4 py-2 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value hover:bg-pace-border/30 transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateSubmit}
+              disabled={isSaving || isLoadingNextResources || !isResourcesConfirmed}
+              className="px-5 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all disabled:opacity-50 shadow-sm cursor-pointer disabled:cursor-not-allowed flex items-center gap-1.5"
+            >
+              {isSaving && <RefreshCw size={12} className="animate-spin" />}
+              Add & Provision Router
+            </button>
+          </div>
         </div>
       </Modal>
 
@@ -624,50 +865,18 @@ export default function AdminRoutersPage() {
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
         title={`Modify Router: ${editForm.name}`}
-        description="Update network credentials, connection ports, or system owner mapping."
+        description="Update network credentials, hardware model, or system owner mapping."
         maxWidth="max-w-md"
       >
         <div className="space-y-4 font-figtree">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-admin-dim">MikroTik Name</label>
-              <input
-                value={editForm.name}
-                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g. East Edge MikroTik 1"
-                className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-admin-dim">IP Address</label>
-              <input
-                value={editForm.ip_address}
-                onChange={(e) => setEditForm(prev => ({ ...prev, ip_address: e.target.value }))}
-                placeholder="IP Address"
-                className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-admin-dim">API Port</label>
-              <input
-                type="number"
-                value={editForm.api_port}
-                onChange={(e) => setEditForm(prev => ({ ...prev, api_port: e.target.value }))}
-                className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-admin-dim">Winbox Port</label>
-              <input
-                type="number"
-                value={editForm.winbox_port}
-                onChange={(e) => setEditForm(prev => ({ ...prev, winbox_port: e.target.value }))}
-                className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
-              />
-            </div>
+          <div>
+            <label className="text-xs font-semibold text-admin-dim">MikroTik Name</label>
+            <input
+              value={editForm.name}
+              onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="e.g. East Edge MikroTik 1"
+              className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -717,7 +926,7 @@ export default function AdminRoutersPage() {
                 value={editForm.isp_id}
                 onChange={(selected) => setEditForm(prev => ({ ...prev, isp_id: selected?.id || '' }))}
                 isps={ispsList}
-                placeholder="Search ISP by name or username..."
+                placeholder="Search ISP..."
               />
             </div>
           </div>
@@ -731,16 +940,27 @@ export default function AdminRoutersPage() {
             >
               <option value="online">Online</option>
               <option value="offline">Offline</option>
+              <option value="inactive">Inactive</option>
             </select>
           </div>
 
-          <button
-            onClick={handleEditSubmit}
-            disabled={isSaving}
-            className="w-full bg-pace-purple text-white py-2.5 rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all disabled:opacity-50 mt-2"
-          >
-            {isSaving ? "Saving changes..." : "Save Configuration"}
-          </button>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-pace-border">
+            <button
+              type="button"
+              onClick={() => setIsEditOpen(false)}
+              className="px-4 py-2 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value hover:bg-pace-border/30 transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleEditSubmit}
+              disabled={isSaving}
+              className="px-5 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all disabled:opacity-50 shadow-sm cursor-pointer flex items-center gap-1.5"
+            >
+              {isSaving && <RefreshCw size={12} className="animate-spin" />}
+              Save Configuration
+            </button>
+          </div>
         </div>
       </Modal>
 

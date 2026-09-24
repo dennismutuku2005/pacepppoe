@@ -13,12 +13,14 @@ export const routerService = {
                         owner_name: r.owner_name || 'Admin / Shared',
                         name: r.name,
                         ip: r.ip_address,
+                        public_ip: r.public_ip || '178.62.36.148',
                         port: r.api_port,
                         winbox_port: r.winbox_port,
                         username: r.username,
                         password: r.password,
                         model: r.model || 'MikroTik',
                         status: r.status === 'online' ? 'Online' : 'Offline',
+                        ovpn_links: r.ovpn_links || null,
                         subscribers: r.users_count || 0,
                         cpu: r.cpu_usage || 0,
                         ram: r.ram_usage || 0,
@@ -29,6 +31,22 @@ export const routerService = {
             return { status: 'error', message: res?.message || 'Failed to retrieve routers' };
         } catch (e) {
             console.error("getRouters failed", e);
+            throw e;
+        }
+    },
+
+    async getNextResources() {
+        try {
+            const res = await apiFetch('/admin/routers.php?action=next_resources');
+            if (res && res.status === 'success') {
+                return {
+                    status: 'success',
+                    data: res.data
+                };
+            }
+            return { status: 'error', message: res?.message || 'Failed to get next IP/Ports' };
+        } catch (e) {
+            console.error("getNextResources failed", e);
             throw e;
         }
     },
@@ -46,12 +64,14 @@ export const routerService = {
                         owner_name: r.owner_name || 'Admin / Shared',
                         name: r.name,
                         ip: r.ip_address,
+                        public_ip: r.public_ip || '178.62.36.148',
                         port: r.api_port,
                         winbox_port: r.winbox_port,
                         username: r.username,
                         password: r.password,
                         model: r.model || 'MikroTik',
                         status: r.status === 'online' ? 'Online' : 'Offline',
+                        ovpn_links: r.ovpn_links || null,
                         subscribers: r.users_count || 0,
                         activeSubscribers: r.users_count || 0,
                         cpu: r.cpu_usage || 0,
