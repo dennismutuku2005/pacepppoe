@@ -5,7 +5,7 @@ import {
     Wallet, ArrowUpRight, ArrowDownLeft, Building, 
     CreditCard, Send, Edit2, ShieldCheck, History, 
     Landmark, Smartphone, Search, RefreshCw, CheckCircle2,
-    Clock, DollarSign
+    Clock, DollarSign, AlertCircle, PlusCircle
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
@@ -19,11 +19,11 @@ export default function IspWalletDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [wallet, setWallet] = useState({
     balance: 0.00,
-    bankName: 'Equity Bank Kenya',
-    bankAccount: '1280281294821',
-    bankAccountName: 'ISP Settlements',
-    bankBranch: 'Main Branch',
-    mpesaNumber: '0700000000',
+    bankName: '',
+    bankAccount: '',
+    bankAccountName: '',
+    bankBranch: '',
+    mpesaNumber: '',
     history: []
   })
 
@@ -36,7 +36,7 @@ export default function IspWalletDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Withdraw Form Fields
-  const [withdrawChannel, setWithdrawChannel] = useState('bank')
+  const [withdrawChannel, setWithdrawChannel] = useState('mpesa')
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [withdrawNotes, setWithdrawNotes] = useState('')
 
@@ -55,20 +55,34 @@ export default function IspWalletDashboard() {
       const res = await financeService.getWallet()
       if (res && res.status === 'success' && res.data) {
         const data = res.data
+        const bName = data.bankName || ''
+        const bAcc = data.bankAccount || ''
+        const bAccName = data.bankAccountName || ''
+        const bBranch = data.bankBranch || ''
+        const mpesa = data.mpesaNumber || ''
+
         setWallet({
           balance: Number(data.balance || 0),
-          bankName: data.bankName || 'Equity Bank Kenya',
-          bankAccount: data.bankAccount || '1280281294821',
-          bankAccountName: data.bankAccountName || 'ISP Account',
-          bankBranch: data.bankBranch || 'Main Branch',
-          mpesaNumber: data.mpesaNumber || '0700000000',
-          history: data.history || []
+          bankName: bName,
+          bankAccount: bAcc,
+          bankAccountName: bAccName,
+          bankBranch: bBranch,
+          mpesaNumber: mpesa,
+          history: Array.isArray(data.history) ? data.history : []
         })
-        setBankName(data.bankName || 'Equity Bank Kenya')
-        setBankAccount(data.bankAccount || '1280281294821')
-        setBankAccountName(data.bankAccountName || 'ISP Account')
-        setBankBranch(data.bankBranch || 'Main Branch')
-        setMpesaNumber(data.mpesaNumber || '0700000000')
+
+        setBankName(bName)
+        setBankAccount(bAcc)
+        setBankAccountName(bAccName)
+        setBankBranch(bBranch)
+        setMpesaNumber(mpesa)
+
+        // Default withdrawal channel to available method
+        if (mpesa) {
+          setWithdrawChannel('mpesa')
+        } else if (bAcc) {
+          setWithdrawChannel('bank')
+        }
       }
     } catch (err) {
       console.error("Error loading wallet:", err)
@@ -119,19 +133,39 @@ export default function IspWalletDashboard() {
 
     if (amount > wallet.balance) {
       toast.error('Insufficient wallet balance.', {
-        description: `You can withdraw up to KES ${wallet.balance.toLocaleString()}.`
+        description: `You can withdraw up to KES ${wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}.`
       })
       return
     }
 
-    const channelLabel = withdrawChannel === 'bank' ? 'Bank Account' : 'M-Pesa Number'
+    if (withdrawChannel === 'bank' && (!wallet.bankAccount || !wallet.bankName)) {
+      toast.error('Bank account not configured', {
+        description: 'Please add and save your Bank Name and Account Number first.'
+      })
+      setIsWithdrawOpen(false)
+      setIsEditSettlementOpen(true)
+      return
+    }
+
+    if (withdrawChannel === 'mpesa' && !wallet.mpesaNumber) {
+      toast.error('M-Pesa number not configured', {
+        description: 'Please add and save your M-Pesa mobile number first.'
+      })
+      setIsWithdrawOpen(false)
+      setIsEditSettlementOpen(true)
+      return
+    }
+
+    const channelLabel = withdrawChannel === 'bank' 
+      ? `Bank: ${wallet.bankName} (${wallet.bankAccount})` 
+      : `M-Pesa: ${wallet.mpesaNumber}`
 
     try {
       setIsSubmitting(true)
       const res = await financeService.withdrawWallet({
         amount,
-        channel: channelLabel,
-        notes: withdrawNotes || `Settlement request to ${channelLabel}`
+        channel: withdrawChannel === 'bank' ? 'Bank Transfer' : 'M-Pesa Payout',
+        notes: withdrawNotes || `Disbursement payout to ${channelLabel}`
       })
 
       if (res && res.status === 'success') {
@@ -159,23 +193,23 @@ export default function IspWalletDashboard() {
     try {
       setIsSubmitting(true)
       const res = await financeService.updateSettlement({
-        bankName,
-        bankAccount,
-        bankAccountName,
-        bankBranch,
-        mpesaNumber
+        bankName: bankName.trim(),
+        bankAccount: bankAccount.trim(),
+        bankAccountName: bankAccountName.trim(),
+        bankBranch: bankBranch.trim(),
+        mpesaNumber: mpesaNumber.trim()
       })
 
       if (res && res.status === 'success') {
         setWallet(prev => ({
           ...prev,
-          bankName,
-          bankAccount,
-          bankAccountName,
-          bankBranch,
-          mpesaNumber
+          bankName: bankName.trim(),
+          bankAccount: bankAccount.trim(),
+          bankAccountName: bankAccountName.trim(),
+          bankBranch: bankBranch.trim(),
+          mpesaNumber: mpesaNumber.trim()
         }))
-        toast.success('Settlement parameters updated successfully.')
+        toast.success('Disbursement credentials updated successfully.')
         setIsEditSettlementOpen(false)
       } else {
         toast.error('Failed to update settlement details', { description: res?.message })
@@ -199,6 +233,9 @@ export default function IspWalletDashboard() {
     )
   }
 
+  const hasBank = Boolean(wallet.bankName && wallet.bankAccount)
+  const hasMpesa = Boolean(wallet.mpesaNumber)
+
   return (
     <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10">
       
@@ -219,7 +256,7 @@ export default function IspWalletDashboard() {
           <button
             onClick={() => fetchWalletData(true)}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold disabled:opacity-50 cursor-pointer"
             title="Refresh balance"
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
@@ -298,13 +335,15 @@ export default function IspWalletDashboard() {
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 to-cyan-500" />
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Settlement Account">
-                Settlement Account
+              <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Settlement Channel">
+                Settlement Channel
               </p>
               <p className="text-sm font-bold text-admin-value mt-1.5 truncate">
-                {wallet.bankName?.split(' ')[0] || 'Bank'} / {wallet.mpesaNumber}
+                {hasBank ? wallet.bankName : (hasMpesa ? `M-Pesa (${wallet.mpesaNumber})` : 'Not Configured')}
               </p>
-              <p className="text-[10px] text-admin-dim mt-0.5 truncate font-mono">{wallet.bankAccount}</p>
+              <p className="text-[10px] text-admin-dim mt-0.5 truncate font-mono">
+                {hasBank ? `A/C: ${wallet.bankAccount}` : (hasMpesa ? 'Mobile STK Payout' : 'Click Edit to setup')}
+              </p>
             </div>
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-blue-500/10 group-hover:border-blue-500/30 bg-blue-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
               <Landmark className="text-blue-500 w-4 h-4" />
@@ -340,9 +379,25 @@ export default function IspWalletDashboard() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">Bank Account</p>
-                    <p className="text-xs font-semibold text-admin-value mt-0.5 truncate">{wallet.bankName}</p>
-                    <p className="text-[11px] font-mono text-pace-purple font-medium mt-0.5">{wallet.bankAccount}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5 truncate">{wallet.bankAccountName} · {wallet.bankBranch}</p>
+                    {hasBank ? (
+                      <>
+                        <p className="text-xs font-semibold text-admin-value mt-0.5 truncate">{wallet.bankName}</p>
+                        <p className="text-[11px] font-mono text-pace-purple font-medium mt-0.5">A/C: {wallet.bankAccount}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5 truncate">
+                          {wallet.bankAccountName ? wallet.bankAccountName : 'Account Holder'}{wallet.bankBranch ? ` · ${wallet.bankBranch}` : ''}
+                        </p>
+                      </>
+                    ) : (
+                      <div className="mt-1">
+                        <p className="text-xs text-amber-600 font-medium">No bank account linked</p>
+                        <button
+                          onClick={() => setIsEditSettlementOpen(true)}
+                          className="text-[10px] text-pace-purple font-semibold hover:underline mt-0.5 cursor-pointer flex items-center gap-1"
+                        >
+                          <PlusCircle size={10} /> Add Bank Credentials
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -356,8 +411,22 @@ export default function IspWalletDashboard() {
                   <div className="min-w-0 flex-1">
                     <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">Mobile Payout</p>
                     <p className="text-xs font-semibold text-admin-value mt-0.5">M-Pesa STK Disbursement</p>
-                    <p className="text-[11px] font-mono text-emerald-600 font-medium mt-0.5">{wallet.mpesaNumber}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">Instant settlement channel</p>
+                    {hasMpesa ? (
+                      <>
+                        <p className="text-[11px] font-mono text-emerald-600 font-medium mt-0.5">{wallet.mpesaNumber}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Instant settlement channel</p>
+                      </>
+                    ) : (
+                      <div className="mt-1">
+                        <p className="text-xs text-amber-600 font-medium">No M-Pesa number linked</p>
+                        <button
+                          onClick={() => setIsEditSettlementOpen(true)}
+                          className="text-[10px] text-pace-purple font-semibold hover:underline mt-0.5 cursor-pointer flex items-center gap-1"
+                        >
+                          <PlusCircle size={10} /> Link M-Pesa Number
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -366,7 +435,7 @@ export default function IspWalletDashboard() {
             <div className="pt-2">
               <button
                 onClick={() => setIsWithdrawOpen(true)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-semibold text-admin-value hover:border-pace-purple hover:text-pace-purple transition-all"
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-semibold text-admin-value hover:border-pace-purple hover:text-pace-purple transition-all cursor-pointer"
               >
                 <Send size={13} />
                 <span>Initiate Settlement</span>
@@ -380,7 +449,7 @@ export default function IspWalletDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Wallet Audit Ledger</h3>
-              <p className="text-[10px] text-admin-dim mt-0.5">Real-time ledger of subscriber payments and bank payouts</p>
+              <p className="text-[10px] text-admin-dim mt-0.5">Real-time ledger of subscriber payments and disbursements</p>
             </div>
 
             {/* Filter Tabs */}
@@ -388,7 +457,7 @@ export default function IspWalletDashboard() {
               <button
                 onClick={() => setActiveTab('all')}
                 className={cn(
-                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all",
+                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                   activeTab === 'all' ? "bg-card-bg text-admin-value shadow-xs" : "text-admin-dim hover:text-admin-value"
                 )}
               >
@@ -397,7 +466,7 @@ export default function IspWalletDashboard() {
               <button
                 onClick={() => setActiveTab('deposit')}
                 className={cn(
-                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all",
+                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                   activeTab === 'deposit' ? "bg-card-bg text-emerald-600 shadow-xs" : "text-admin-dim hover:text-admin-value"
                 )}
               >
@@ -406,7 +475,7 @@ export default function IspWalletDashboard() {
               <button
                 onClick={() => setActiveTab('withdrawal')}
                 className={cn(
-                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all",
+                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                   activeTab === 'withdrawal' ? "bg-card-bg text-rose-600 shadow-xs" : "text-admin-dim hover:text-admin-value"
                 )}
               >
@@ -443,7 +512,7 @@ export default function IspWalletDashboard() {
                 {filteredHistory.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="py-16 text-center text-admin-dim text-xs font-medium">
-                      No wallet transactions matching your criteria.
+                      No wallet transactions recorded yet.
                     </td>
                   </tr>
                 ) : (
@@ -517,18 +586,6 @@ export default function IspWalletDashboard() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setWithdrawChannel('bank')}
-                className={cn(
-                  "py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer",
-                  withdrawChannel === 'bank' 
-                    ? "bg-pace-purple text-white border-pace-purple shadow-sm" 
-                    : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:text-admin-value"
-                )}
-              >
-                <Building size={14} /> Bank Account
-              </button>
-              <button
-                type="button"
                 onClick={() => setWithdrawChannel('mpesa')}
                 className={cn(
                   "py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer",
@@ -539,14 +596,26 @@ export default function IspWalletDashboard() {
               >
                 <Smartphone size={14} /> M-Pesa Wallet
               </button>
+              <button
+                type="button"
+                onClick={() => setWithdrawChannel('bank')}
+                className={cn(
+                  "py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer",
+                  withdrawChannel === 'bank' 
+                    ? "bg-pace-purple text-white border-pace-purple shadow-sm" 
+                    : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:text-admin-value"
+                )}
+              >
+                <Building size={14} /> Bank Account
+              </button>
             </div>
             {withdrawChannel === 'bank' ? (
               <p className="text-[10px] text-gray-400 mt-1.5">
-                Target: <strong>{wallet.bankName} (A/C: {wallet.bankAccount})</strong>
+                Target: {hasBank ? <strong>{wallet.bankName} (A/C: {wallet.bankAccount})</strong> : <span className="text-amber-500 font-medium">Bank not set up yet</span>}
               </p>
             ) : (
               <p className="text-[10px] text-gray-400 mt-1.5">
-                Target: <strong>M-Pesa ({wallet.mpesaNumber})</strong>
+                Target: {hasMpesa ? <strong>M-Pesa ({wallet.mpesaNumber})</strong> : <span className="text-amber-500 font-medium">M-Pesa number not set up yet</span>}
               </p>
             )}
           </div>
@@ -597,63 +666,59 @@ export default function IspWalletDashboard() {
       <Modal
         isOpen={isEditSettlementOpen}
         onClose={() => setIsEditSettlementOpen(false)}
-        title="Configure Settlement Details"
-        description="Update your default banking coordinates and mobile clearing numbers."
+        title="Configure Disbursement Credentials"
+        description="Save your actual bank account details and M-Pesa mobile number for receiving payouts."
         maxWidth="max-w-md"
       >
         <form onSubmit={handleSettlementSubmit} className="space-y-4 pt-2 font-figtree">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-admin-dim mb-1">Bank Name *</label>
+              <label className="block text-xs font-medium text-admin-dim mb-1">Bank Name</label>
               <input
-                required
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
-                placeholder="e.g. Equity Bank"
+                placeholder="e.g. KCB Bank / Equity"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-admin-dim mb-1">Branch Name *</label>
+              <label className="block text-xs font-medium text-admin-dim mb-1">Branch Name</label>
               <input
-                required
                 value={bankBranch}
                 onChange={(e) => setBankBranch(e.target.value)}
-                placeholder="e.g. Westlands Branch"
+                placeholder="e.g. Nairobi CBD"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-admin-dim mb-1">Account Holder Name *</label>
+            <label className="block text-xs font-medium text-admin-dim mb-1">Account Holder Name</label>
             <input
-              required
               value={bankAccountName}
               onChange={(e) => setBankAccountName(e.target.value)}
-              placeholder="e.g. Pace Networks Ltd"
+              placeholder="e.g. DENNIS MUUO"
               className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-admin-dim mb-1">Account Number *</label>
+              <label className="block text-xs font-medium text-admin-dim mb-1">Account Number</label>
               <input
-                required
                 value={bankAccount}
                 onChange={(e) => setBankAccount(e.target.value)}
-                placeholder="e.g. 12809281294821"
+                placeholder="e.g. 11002345678"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-admin-dim mb-1">M-Pesa Payout Mobile *</label>
+              <label className="block text-xs font-medium text-admin-dim mb-1">M-Pesa Mobile Number *</label>
               <input
                 required
                 value={mpesaNumber}
                 onChange={(e) => setMpesaNumber(e.target.value)}
-                placeholder="e.g. 0701020304"
+                placeholder="e.g. 0793527494"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs font-mono"
               />
             </div>
@@ -672,7 +737,7 @@ export default function IspWalletDashboard() {
               disabled={isSubmitting}
               className="flex-1 px-4 py-2 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
-              {isSubmitting ? 'Saving...' : 'Save Configuration'}
+              {isSubmitting ? 'Saving...' : 'Save Credentials'}
             </button>
           </div>
         </form>
