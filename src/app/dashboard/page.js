@@ -15,7 +15,6 @@ import { Badge } from '@/components/Badge'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { GlobalFilters } from '@/components/GlobalFilters'
 import { dashboardService } from '@/services/isp/dashboard'
-import { mockDashboardData } from '@/services/mockData'
 import authService from '@/lib/auth'
 
 const DashboardSkeleton = () => (
@@ -46,6 +45,8 @@ function DashboardContent() {
     const [charts, setCharts] = useState([])
     const [transactions, setTransactions] = useState([])
     const [routers, setRouters] = useState([])
+    const [tickets, setTickets] = useState([])
+    const [smsLogs, setSmsLogs] = useState([])
 
     const [isRevenueBlurred, setIsRevenueBlurred] = useState(true)
     const [filters, setFilters] = useState({ router: 'All Routers', dateRange: 'Today' })
@@ -63,6 +64,8 @@ function DashboardContent() {
                 setCharts(res.data.charts.revenue_over_time)
                 setTransactions(res.data.recent_transactions)
                 setRouters(res.data.router_status)
+                setTickets(res.data.recent_tickets || [])
+                setSmsLogs(res.data.recent_sms || [])
             }
         } catch (e) {
             console.error("Dashboard fetch error:", e)
@@ -308,31 +311,62 @@ function DashboardContent() {
                 </div>
 
                 <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* Support Queue */}
                     <div className="bg-card-bg border border-pace-border rounded-xl p-6">
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h4 className="text-sm font-medium text-admin-value">Support Queue</h4>
                                 <p className="text-[10px] text-gray-400 font-medium uppercase mt-0.5 tracking-wider">Active Tickets</p>
                             </div>
-                            <Badge variant="info" className="px-2 py-0.5 text-[8px] font-bold">
-                                {mockDashboardData.tickets.filter(t => t.status !== 'Resolved').length} Active
-                            </Badge>
+                            <Link href="/dashboard/tickets">
+                                <Badge variant="info" className="px-2 py-0.5 text-[8px] font-bold cursor-pointer hover:bg-pace-purple/20 transition-all">
+                                    {widgets?.open_tickets?.value ?? tickets.filter(t => t.status !== 'Resolved' && t.status !== 'Closed').length} Active
+                                </Badge>
+                            </Link>
                         </div>
                         <div className="space-y-3">
-                            {mockDashboardData.tickets.filter(t => t.status !== 'Resolved').map((ticket) => (
-                                <div key={ticket.id} className="p-3 border border-pace-border rounded-xl hover:bg-pace-bg-subtle transition-colors">
-                                    <p className="text-xs font-semibold text-admin-value">{ticket.subject}</p>
-                                    <div className="flex justify-between items-center mt-2">
-                                        <span className="text-[9px] text-admin-dim font-medium uppercase">{ticket.customer}</span>
-                                        <Badge variant={ticket.priority === 'High' ? 'error' : 'info'} className="px-1.5 py-0 rounded-sm text-[7px] font-bold">
-                                            {ticket.priority}
-                                        </Badge>
+                            {isTxLoading && tickets.length === 0 ? (
+                                [...Array(3)].map((_, i) => (
+                                    <div key={i} className="p-3 border border-pace-border rounded-xl space-y-2">
+                                        <Skeleton className="h-3 w-3/4" />
+                                        <div className="flex justify-between items-center">
+                                            <Skeleton className="h-2 w-20" />
+                                            <Skeleton className="h-3 w-12 rounded-full" />
+                                        </div>
                                     </div>
+                                ))
+                            ) : tickets.length === 0 ? (
+                                <div className="p-6 border border-dashed border-pace-border rounded-xl text-center flex flex-col items-center justify-center gap-1.5">
+                                    <LifeBuoy size={20} className="text-gray-300 mb-1" />
+                                    <p className="text-xs font-semibold text-admin-value">No Support Tickets</p>
+                                    <p className="text-[10px] text-gray-400">All customer inquiries are resolved</p>
                                 </div>
-                            ))}
+                            ) : (
+                                tickets.map((ticket) => {
+                                    const priorityVariant = 
+                                        ticket.priority?.toLowerCase() === 'high' ? 'error' : 
+                                        ticket.priority?.toLowerCase() === 'medium' ? 'warning' : 'info';
+                                    return (
+                                        <Link 
+                                            key={ticket.id} 
+                                            href="/dashboard/tickets"
+                                            className="block p-3 border border-pace-border rounded-xl hover:bg-pace-bg-subtle hover:border-pace-purple/30 transition-all"
+                                        >
+                                            <p className="text-xs font-semibold text-admin-value truncate">{ticket.subject}</p>
+                                            <div className="flex justify-between items-center mt-2">
+                                                <span className="text-[9px] text-admin-dim font-medium uppercase truncate max-w-[120px]">{ticket.customer || 'Customer'}</span>
+                                                <Badge variant={priorityVariant} className="px-1.5 py-0 rounded-sm text-[7px] font-bold">
+                                                    {ticket.priority || 'Medium'}
+                                                </Badge>
+                                            </div>
+                                        </Link>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
 
+                    {/* SMS Dispatch */}
                     <div className="bg-card-bg border border-pace-border rounded-xl p-6">
                         <div className="flex justify-between items-center mb-6">
                             <div>
@@ -344,20 +378,44 @@ function DashboardContent() {
                             </Link>
                         </div>
                         <div className="space-y-3">
-                            {mockDashboardData.smsLogs.slice(0, 3).map((log) => (
-                                <div key={log.id} className="p-3 border border-pace-border rounded-xl bg-pace-bg-subtle/30">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-[10px] font-bold text-admin-value">{log.recipient}</span>
-                                        <span className={cn(
-                                            "text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full",
-                                            log.status === 'Sent' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                        )}>
-                                            {log.status}
-                                        </span>
+                            {isTxLoading && smsLogs.length === 0 ? (
+                                [...Array(3)].map((_, i) => (
+                                    <div key={i} className="p-3 border border-pace-border rounded-xl space-y-2 bg-pace-bg-subtle/30">
+                                        <div className="flex justify-between items-center">
+                                            <Skeleton className="h-3 w-24" />
+                                            <Skeleton className="h-3 w-12 rounded-full" />
+                                        </div>
+                                        <Skeleton className="h-2 w-full" />
                                     </div>
-                                    <p className="text-[10px] text-gray-600 line-clamp-2">"{log.message}"</p>
+                                ))
+                            ) : smsLogs.length === 0 ? (
+                                <div className="p-6 border border-dashed border-pace-border rounded-xl text-center flex flex-col items-center justify-center gap-1.5">
+                                    <MessageSquare size={20} className="text-gray-300 mb-1" />
+                                    <p className="text-xs font-semibold text-admin-value">No SMS Logs</p>
+                                    <p className="text-[10px] text-gray-400">Automated dispatch logs will appear here</p>
                                 </div>
-                            ))}
+                            ) : (
+                                smsLogs.slice(0, 3).map((log) => {
+                                    const isSuccess = log.status?.toLowerCase() === 'sent' || log.status?.toLowerCase() === 'delivered';
+                                    const isFailed = log.status?.toLowerCase() === 'failed';
+                                    return (
+                                        <div key={log.id} className="p-3 border border-pace-border rounded-xl bg-pace-bg-subtle/30">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-[10px] font-bold text-admin-value">{log.recipient}</span>
+                                                <span className={cn(
+                                                    "text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full",
+                                                    isSuccess ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400" :
+                                                    isFailed ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400" :
+                                                    "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                                                )}>
+                                                    {log.status || 'Sent'}
+                                                </span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-2">"{log.message}"</p>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
                 </div>

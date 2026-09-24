@@ -71,12 +71,15 @@ export const dashboardService = {
                             monthly_users: { value: widgetsData.total_subscribers || 0 },
                             todays_earnings: { value: widgetsData.today_revenue || 0 },
                             sms_balance: { value: widgetsData.net_profit || 0 },
+                            open_tickets: { value: widgetsData.open_tickets || 0 },
                             system_health: { value: '98%' }
                         },
                         charts: {
                             revenue_over_time: charts
                         },
                         recent_transactions: transactions,
+                        recent_tickets: res.data.recent_tickets || [],
+                        recent_sms: res.data.recent_sms || [],
                         router_status: routers
                     }
                 };
