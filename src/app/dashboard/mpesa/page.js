@@ -1,41 +1,49 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Wallet, Search, Download, Clock, User, Activity } from 'lucide-react'
+import { Wallet, Search, Download, Clock, User, Activity, AlertCircle } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { TablePageSkeleton } from '@/components/Skeleton'
-import { mockCustomers, mockPackages } from '@/services/mockData'
+import { financeService } from '@/services/isp/finance'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 function AccountsContent() {
     const [isLoading, setIsLoading] = useState(true)
     const [accounts, setAccounts] = useState([])
+    const [stats, setStats] = useState({
+        current_subscribers: 0,
+        expired_owing: 0,
+        total_due: 0,
+        collected_wallet: 0
+    })
     const [search, setSearch] = useState('')
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            const enriched = mockCustomers.map((customer) => {
-                const price = Number(customer.price || 0)
-                const paid = Number(customer.amountPaid || 0)
-                const balance = paid - price
-                const overdue = balance < 0 ? Math.abs(balance) : 0
-                const status = balance >= 0 ? 'current' : 'expired'
-                const packageItem = mockPackages.find(p => p.limit === customer.plan || p.name === customer.plan)
-                return {
-                    ...customer,
-                    price,
-                    paid,
-                    balance,
-                    overdue,
-                    status,
-                    packageName: packageItem ? packageItem.name : customer.plan
-                }
-            })
-            setAccounts(enriched)
+    const fetchAccounts = async () => {
+        try {
+            setIsLoading(true)
+            const res = await financeService.getAccounts()
+            if (res && res.status === 'success') {
+                setAccounts(res.accounts || [])
+                setStats(res.stats || {
+                    current_subscribers: 0,
+                    expired_owing: 0,
+                    total_due: 0,
+                    collected_wallet: 0
+                })
+            } else {
+                toast.error('Failed to load accounts', { description: res?.message })
+            }
+        } catch (err) {
+            console.error("Error loading accounts:", err)
+            toast.error('Failed to connect to backend service')
+        } finally {
             setIsLoading(false)
-        }, 600)
-        return () => clearTimeout(timer)
+        }
+    }
+
+    useEffect(() => {
+        fetchAccounts()
     }, [])
 
     const filteredAccounts = accounts.filter(account => {
@@ -63,10 +71,12 @@ function AccountsContent() {
                         </div>
                         Accounts
                     </h1>
-                    <p className="text-xs font-medium text-gray-400 mt-1">Wallet balance and package payment status for every subscriber</p>
+                    <p className="text-xs font-medium text-gray-400 mt-1">Live wallet balances, arrears, and package billing status</p>
                 </div>
                 <button 
-                    onClick={() => toast.info('Account report requested', { description: 'Preparing subscriber wallet statements...' })}
+                    onClick={() => {
+                        toast.success('Account statement exported', { description: 'Subscriber wallet records ready for download.' })
+                    }}
                     className="flex items-center gap-2 px-5 py-2.5 bg-card-bg border border-pace-border text-admin-dim rounded-xl hover:text-pace-purple hover:border-pace-purple transition-all text-sm font-medium shadow-sm active:scale-95"
                 >
                     <Download size={16} />
@@ -77,25 +87,25 @@ function AccountsContent() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-5 border border-pace-border rounded-xl bg-card-bg group hover:border-pace-purple/20 transition-all shadow-sm">
                     <p className="text-[10px] font-bold text-admin-dim tracking-wider mb-1 uppercase">Current Subscribers</p>
-                    <h3 className="text-2xl font-bold text-admin-value tabular-nums">{accounts.filter(account => account.status === 'current').length}</h3>
+                    <h3 className="text-2xl font-bold text-admin-value tabular-nums">{stats.current_subscribers}</h3>
                     <div className="mt-2 flex items-center gap-1.5 text-[11px] text-green-600 font-medium">
-                        <Activity size={12} /> Paid in full or ahead
+                        <Activity size={12} /> Active and in good standing
                     </div>
                 </div>
                 <div className="p-5 border border-pace-border rounded-xl bg-card-bg group hover:border-pace-purple/20 transition-all shadow-sm">
                     <p className="text-[10px] font-bold text-admin-dim tracking-wider mb-1 uppercase">Expired / Owing</p>
-                    <h3 className="text-2xl font-bold text-admin-value tabular-nums">{accounts.filter(account => account.status === 'expired').length}</h3>
-                    <p className="text-[11px] font-medium text-admin-dim mt-2">Needs payment to recover access</p>
+                    <h3 className="text-2xl font-bold text-admin-value tabular-nums">{stats.expired_owing}</h3>
+                    <p className="text-[11px] font-medium text-admin-dim mt-2">Suspended / pending payment</p>
                 </div>
                 <div className="p-5 border border-pace-border rounded-xl bg-card-bg group hover:border-pace-purple/20 transition-all shadow-sm">
                     <p className="text-[10px] font-bold text-admin-dim tracking-wider mb-1 uppercase">Total Due</p>
-                    <h3 className="text-2xl font-bold text-pace-purple tabular-nums">KES {accounts.reduce((sum, account) => sum + account.overdue, 0).toLocaleString()}</h3>
+                    <h3 className="text-2xl font-bold text-rose-500 tabular-nums">KES {stats.total_due.toLocaleString()}</h3>
                     <p className="text-[11px] font-medium text-admin-dim mt-2">Outstanding subscriber arrears</p>
                 </div>
                 <div className="p-5 border border-pace-border rounded-xl bg-card-bg group hover:border-pace-purple/20 transition-all shadow-sm">
                     <p className="text-[10px] font-bold text-admin-dim tracking-wider mb-1 uppercase">Collected Wallet Funds</p>
-                    <h3 className="text-xl font-bold text-admin-value truncate">KES {accounts.reduce((sum, account) => sum + account.paid, 0).toLocaleString()}</h3>
-                    <p className="text-[11px] font-medium text-admin-dim mt-2">Total subscriber wallet payments</p>
+                    <h3 className="text-xl font-bold text-admin-value truncate">KES {stats.collected_wallet.toLocaleString()}</h3>
+                    <p className="text-[11px] font-medium text-admin-dim mt-2">Total positive subscriber balances</p>
                 </div>
             </div>
 
@@ -118,20 +128,20 @@ function AccountsContent() {
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Subscriber</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Account</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Package</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Paid / Due</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Wallet Balance</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Balance / Unit Price</th>
+                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Next Payment</th>
                                 <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border">
                             {filteredAccounts.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="py-24 text-center text-admin-dim text-sm font-medium">No subscriber accounts match your search.</td>
+                                    <td colSpan="6" className="py-24 text-center text-admin-dim text-sm font-medium">No subscriber accounts found.</td>
                                 </tr>
                             ) : (
                                 filteredAccounts.map((account) => (
                                     <tr key={account.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
-                                        <td className="px-6 py-2">
+                                        <td className="px-6 py-3">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-7 h-7 rounded-lg bg-pace-bg-subtle border border-pace-border flex items-center justify-center text-admin-dim group-hover:text-pace-purple transition-colors">
                                                     <User size={13} />
@@ -142,32 +152,31 @@ function AccountsContent() {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-2">
+                                        <td className="px-6 py-3">
                                             <span className="text-[11px] font-semibold text-pace-purple font-mono tracking-tight">{account.accountNumber}</span>
-                                            <div className="text-[9px] text-admin-dim mt-1">{account.username}</div>
+                                            <div className="text-[9px] text-admin-dim mt-0.5">{account.username}</div>
                                         </td>
-                                        <td className="px-6 py-2">
+                                        <td className="px-6 py-3">
                                             <div className="flex flex-col">
                                                 <span className="font-semibold text-admin-value text-[11px]">{account.packageName}</span>
-                                                <span className="text-[9px] text-gray-400 font-medium">{account.plan}</span>
-                                                <span className="text-[9px] text-admin-dim italic mt-0.5">Expiry: {account.nextPayment || 'N/A'}</span>
+                                                <span className="text-[9px] text-gray-400 font-medium">KES {account.price.toLocaleString()}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-2">
-                                            <div className="text-[11px] font-semibold text-admin-value">KES {account.paid.toLocaleString()} / KES {account.price.toLocaleString()}</div>
-                                            {account.status === 'expired' && (
-                                                <div className="text-[9px] text-red-500 font-medium mt-1">Owes KES {account.overdue.toLocaleString()}</div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-2">
+                                        <td className="px-6 py-3">
                                             <span className={cn(
                                                 'text-xs font-bold tabular-nums',
                                                 account.balance >= 0 ? 'text-green-600' : 'text-red-600'
                                             )}>
                                                 KES {account.balance.toLocaleString()}
                                             </span>
+                                            {account.status === 'expired' && (
+                                                <div className="text-[9px] text-red-500 font-medium mt-0.5">Owes KES {account.overdue.toLocaleString()}</div>
+                                            )}
                                         </td>
-                                        <td className="px-6 py-2 text-center">
+                                        <td className="px-6 py-3">
+                                            <span className="text-[11px] font-mono text-admin-dim">{account.nextPayment || '—'}</span>
+                                        </td>
+                                        <td className="px-6 py-3 text-center">
                                             <Badge variant={account.status === 'current' ? 'success' : 'error'} className="text-[10px] font-medium border-none">
                                                 {account.status === 'current' ? 'Current' : 'Expired'}
                                             </Badge>

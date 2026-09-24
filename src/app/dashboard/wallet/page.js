@@ -1,37 +1,30 @@
 "use client"
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Wallet, ArrowUpRight, ArrowDownLeft, Building, CreditCard, Send, Edit, ShieldCheck, History, Landmark, Smartphone } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import authService from '@/lib/auth'
-
-// Mock Wallet Data for the currently logged-in ISP
-const INITIAL_ISP_WALLET = {
-  balance: 128500.00,
-  bankName: 'Equity Bank Kenya',
-  bankAccount: '1280281294821',
-  bankAccountName: 'Pace Networks Limited',
-  bankBranch: 'Westlands Branch',
-  mpesaNumber: '0701020304',
-  history: [
-    { id: 1, type: 'deposit', amount: 50000.00, channel: 'Bank Transfer', status: 'completed', description: 'Monthly credit top-up', date: '2026-08-09' },
-    { id: 2, type: 'withdrawal', amount: 20000.00, channel: 'Bank Account', status: 'completed', description: 'Revenue settlement payout', date: '2026-08-05' },
-    { id: 3, type: 'charge', amount: 15000.00, channel: 'System billing', status: 'completed', description: 'MikroTik lease fee - West Node', date: '2026-08-01' },
-    { id: 4, type: 'deposit', amount: 93500.00, channel: 'M-Pesa STK', status: 'completed', description: 'Automated subscriber billing collections sync', date: '2026-07-28' },
-    { id: 5, type: 'withdrawal', amount: 10000.00, channel: 'M-Pesa Number', status: 'completed', description: 'Emergency petty cash payout', date: '2026-07-15' }
-  ]
-}
+import { financeService } from '@/services/isp/finance'
+import { CardSkeleton } from '@/components/Skeleton'
 
 export default function IspWalletDashboard() {
-  const [wallet, setWallet] = useState(INITIAL_ISP_WALLET)
-  const [user, setUser] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [wallet, setWallet] = useState({
+    balance: 0.00,
+    bankName: 'Equity Bank Kenya',
+    bankAccount: '1280281294821',
+    bankAccountName: 'ISP Settlements',
+    bankBranch: 'Main Branch',
+    mpesaNumber: '0700000000',
+    history: []
+  })
 
   // Modals Control
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
   const [isEditSettlementOpen, setIsEditSettlementOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Withdraw Form Fields
   const [withdrawChannel, setWithdrawChannel] = useState('bank')
@@ -39,18 +32,47 @@ export default function IspWalletDashboard() {
   const [withdrawNotes, setWithdrawNotes] = useState('')
 
   // Edit Settlement Form Fields
-  const [bankName, setBankName] = useState(wallet.bankName)
-  const [bankAccount, setBankAccount] = useState(wallet.bankAccount)
-  const [bankAccountName, setBankAccountName] = useState(wallet.bankAccountName)
-  const [bankBranch, setBankBranch] = useState(wallet.bankBranch)
-  const [mpesaNumber, setMpesaNumber] = useState(wallet.mpesaNumber)
+  const [bankName, setBankName] = useState('')
+  const [bankAccount, setBankAccount] = useState('')
+  const [bankAccountName, setBankAccountName] = useState('')
+  const [bankBranch, setBankBranch] = useState('')
+  const [mpesaNumber, setMpesaNumber] = useState('')
+
+  const fetchWalletData = async () => {
+    try {
+      setIsLoading(true)
+      const res = await financeService.getWallet()
+      if (res && res.status === 'success' && res.data) {
+        const data = res.data
+        setWallet({
+          balance: Number(data.balance || 0),
+          bankName: data.bankName || 'Equity Bank Kenya',
+          bankAccount: data.bankAccount || '1280281294821',
+          bankAccountName: data.bankAccountName || 'ISP Account',
+          bankBranch: data.bankBranch || 'Main Branch',
+          mpesaNumber: data.mpesaNumber || '0700000000',
+          history: data.history || []
+        })
+        setBankName(data.bankName || 'Equity Bank Kenya')
+        setBankAccount(data.bankAccount || '1280281294821')
+        setBankAccountName(data.bankAccountName || 'ISP Account')
+        setBankBranch(data.bankBranch || 'Main Branch')
+        setMpesaNumber(data.mpesaNumber || '0700000000')
+      }
+    } catch (err) {
+      console.error("Error loading wallet:", err)
+      toast.error('Failed to load wallet records')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    setUser(authService.getUser())
+    fetchWalletData()
   }, [])
 
   // Handle Withdraw
-  const handleWithdrawSubmit = (e) => {
+  const handleWithdrawSubmit = async (e) => {
     e.preventDefault()
     const amount = Number(withdrawAmount)
     if (!amount || amount <= 0) {
@@ -60,50 +82,85 @@ export default function IspWalletDashboard() {
 
     if (amount > wallet.balance) {
       toast.error('Insufficient wallet balance.', {
-        description: `You can withdraw up to KSH ${wallet.balance.toLocaleString()}.`
+        description: `You can withdraw up to KES ${wallet.balance.toLocaleString()}.`
       })
       return
     }
 
     const channelLabel = withdrawChannel === 'bank' ? 'Bank Account' : 'M-Pesa Number'
-    const nextBalance = wallet.balance - amount
-    const newTx = {
-      id: Date.now(),
-      type: 'withdrawal',
-      amount,
-      channel: channelLabel,
-      status: 'completed',
-      description: withdrawNotes || `Settlement request to ${channelLabel}`,
-      date: new Date().toISOString().split('T')[0]
+
+    try {
+      setIsSubmitting(true)
+      const res = await financeService.withdrawWallet({
+        amount,
+        channel: channelLabel,
+        notes: withdrawNotes || `Settlement request to ${channelLabel}`
+      })
+
+      if (res && res.status === 'success') {
+        toast.success(`Withdrawal queued successfully.`, {
+          description: `KES ${amount.toLocaleString()} sent to ${channelLabel}.`
+        })
+        setIsWithdrawOpen(false)
+        setWithdrawAmount('')
+        setWithdrawNotes('')
+        fetchWalletData()
+      } else {
+        toast.error('Withdrawal failed', { description: res?.message })
+      }
+    } catch (err) {
+      console.error("Error with payout:", err)
+      toast.error('Failed to process withdrawal')
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setWallet({
-      ...wallet,
-      balance: nextBalance,
-      history: [newTx, ...wallet.history]
-    })
-
-    toast.success(`Withdrawal queued successfully.`, {
-      description: `KSH ${amount.toLocaleString()} sent to ${channelLabel}.`
-    })
-    setIsWithdrawOpen(false)
-    setWithdrawAmount('')
-    setWithdrawNotes('')
   }
 
   // Handle Settlement Edit
-  const handleSettlementSubmit = (e) => {
+  const handleSettlementSubmit = async (e) => {
     e.preventDefault()
-    setWallet({
-      ...wallet,
-      bankName,
-      bankAccount,
-      bankAccountName,
-      bankBranch,
-      mpesaNumber
-    })
-    toast.success('Settlement parameters updated successfully.')
-    setIsEditSettlementOpen(false)
+    try {
+      setIsSubmitting(true)
+      const res = await financeService.updateSettlement({
+        bankName,
+        bankAccount,
+        bankAccountName,
+        bankBranch,
+        mpesaNumber
+      })
+
+      if (res && res.status === 'success') {
+        setWallet(prev => ({
+          ...prev,
+          bankName,
+          bankAccount,
+          bankAccountName,
+          bankBranch,
+          mpesaNumber
+        }))
+        toast.success('Settlement parameters updated successfully.')
+        setIsEditSettlementOpen(false)
+      } else {
+        toast.error('Failed to update settlement details', { description: res?.message })
+      }
+    } catch (err) {
+      console.error("Error updating settlement:", err)
+      toast.error('Failed to save settlement settings')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 font-figtree max-w-[1600px] mx-auto pb-10">
+        <div className="h-8 w-64 bg-pace-bg-subtle rounded-xl animate-pulse" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="h-64 bg-pace-bg-subtle rounded-3xl animate-pulse" />
+          <div className="lg:col-span-2 h-64 bg-pace-bg-subtle rounded-2xl animate-pulse" />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -114,7 +171,7 @@ export default function IspWalletDashboard() {
         <div>
           <h1 className="text-xl font-medium text-admin-value tracking-tight">Wallet & Payouts</h1>
           <p className="text-xs font-medium text-gray-400 mt-1">
-            Manage your ISP pre-paid balance, request bank or mobile wallet settlements, and view accounting ledgers.
+            Live pre-paid balance, bank/mobile payout settlements, and ledger audit history.
           </p>
         </div>
         <button
@@ -138,8 +195,8 @@ export default function IspWalletDashboard() {
               <Wallet size={20} className="text-white/80" />
             </div>
             <div className="text-[10px] font-medium text-white/60">AVAILABLE BALANCE</div>
-            <div className="text-3xl font-bold mt-1">
-              KSH {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            <div className="text-3xl font-bold mt-1 tabular-nums">
+              KES {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
             <div className="mt-8 flex items-center justify-between pt-4 border-t border-white/10 text-[11px] text-white/80 font-medium">
               <span>Account Status:</span>
@@ -152,7 +209,7 @@ export default function IspWalletDashboard() {
           {/* Bank Settlement Info Card */}
           <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Settle To Bank</h3>
+              <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Settlement Target</h3>
               <button
                 onClick={() => setIsEditSettlementOpen(true)}
                 className="text-xs text-pace-purple hover:underline font-bold flex items-center gap-1 cursor-pointer"
@@ -190,7 +247,7 @@ export default function IspWalletDashboard() {
               <div className="flex items-start gap-2.5 border-t border-pace-border/60 pt-3">
                 <Smartphone className="text-admin-dim shrink-0 mt-0.5" size={16} />
                 <div>
-                  <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">Backup M-Pesa Number</p>
+                  <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">M-Pesa Payout Number</p>
                   <p className="text-xs font-semibold text-admin-value mt-0.5 font-mono">{wallet.mpesaNumber}</p>
                 </div>
               </div>
@@ -204,49 +261,55 @@ export default function IspWalletDashboard() {
           <div className="flex items-center justify-between mb-2">
             <div>
               <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Wallet Transaction History</h3>
-              <p className="text-[10px] text-admin-dim mt-0.5">Comprehensive audit ledger of credits, charges, and payouts.</p>
+              <p className="text-[10px] text-admin-dim mt-0.5">Live audit ledger of subscriber collections and outflows.</p>
             </div>
             <History size={16} className="text-admin-dim" />
           </div>
 
           <div className="max-h-[500px] overflow-y-auto pr-1 space-y-2.5 custom-scrollbar">
-            {wallet.history.map((tx) => {
-              const isDeposit = tx.type === 'deposit'
-              const isWithdrawal = tx.type === 'withdrawal'
-              return (
-                <div key={tx.id} className="p-3.5 border border-pace-border rounded-xl flex justify-between items-center bg-pace-bg-subtle/50 hover:bg-pace-bg-subtle transition-all duration-200">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-8 h-8 rounded-xl flex items-center justify-center border",
-                      isDeposit 
-                        ? "bg-green-500/10 text-green-600 border-green-500/10" 
-                        : isWithdrawal
-                        ? "bg-blue-500/10 text-blue-600 border-blue-500/10"
-                        : "bg-rose-500/10 text-rose-600 border-rose-500/10"
-                    )}>
-                      {isDeposit ? <ArrowUpRight size={16} /> : isWithdrawal ? <ArrowDownLeft size={16} /> : <CreditCard size={14} />}
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-admin-value">{tx.description}</p>
-                      <div className="flex items-center gap-2 text-[9px] text-admin-dim mt-1">
-                        <span className="font-medium bg-pace-border/40 px-1.5 py-0.25 rounded-md uppercase">{tx.channel}</span>
-                        <span>·</span>
-                        <span>{tx.date}</span>
+            {wallet.history.length === 0 ? (
+              <div className="py-20 text-center text-admin-dim text-xs font-medium">
+                No wallet transactions recorded yet.
+              </div>
+            ) : (
+              wallet.history.map((tx, idx) => {
+                const isDeposit = tx.type === 'deposit'
+                const isWithdrawal = tx.type === 'withdrawal'
+                return (
+                  <div key={tx.id || idx} className="p-3.5 border border-pace-border rounded-xl flex justify-between items-center bg-pace-bg-subtle/50 hover:bg-pace-bg-subtle transition-all duration-200">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-8 h-8 rounded-xl flex items-center justify-center border",
+                        isDeposit 
+                          ? "bg-green-500/10 text-green-600 border-green-500/10" 
+                          : isWithdrawal
+                          ? "bg-blue-500/10 text-blue-600 border-blue-500/10"
+                          : "bg-rose-500/10 text-rose-600 border-rose-500/10"
+                      )}>
+                        {isDeposit ? <ArrowUpRight size={16} /> : isWithdrawal ? <ArrowDownLeft size={16} /> : <CreditCard size={14} />}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-admin-value">{tx.description}</p>
+                        <div className="flex items-center gap-2 text-[9px] text-admin-dim mt-1">
+                          <span className="font-medium bg-pace-border/40 px-1.5 py-0.25 rounded-md uppercase">{tx.channel}</span>
+                          <span>·</span>
+                          <span>{tx.date}</span>
+                        </div>
                       </div>
                     </div>
+                    <div className="text-right">
+                      <p className={cn(
+                        "text-xs font-bold font-mono",
+                        isDeposit ? "text-green-600" : isWithdrawal ? "text-blue-600" : "text-rose-600"
+                      )}>
+                        {isDeposit ? `+` : `-`} KES {Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </p>
+                      <Badge variant="success" className="text-[8px] font-black uppercase border-none tracking-widest px-1 py-0 px-1.5 mt-1">{tx.status || 'Completed'}</Badge>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className={cn(
-                      "text-xs font-bold font-mono",
-                      isDeposit ? "text-green-600" : isWithdrawal ? "text-blue-600" : "text-rose-600"
-                    )}>
-                      {isDeposit ? `+` : `-`} KSH {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </p>
-                    <Badge variant="success" className="text-[8px] font-black uppercase border-none tracking-widest px-1 py-0 px-1.5 mt-1">{tx.status}</Badge>
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })
+            )}
           </div>
         </div>
 
@@ -264,7 +327,7 @@ export default function IspWalletDashboard() {
           <div className="p-3.5 bg-pace-purple-light/50 border border-pace-purple/10 rounded-xl flex justify-between items-center text-xs">
             <span className="text-admin-dim font-medium">Available Payout balance:</span>
             <span className="font-extrabold text-pace-purple font-mono">
-              KSH {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              KES {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </span>
           </div>
 
@@ -308,7 +371,7 @@ export default function IspWalletDashboard() {
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-[0.25em] text-admin-dim font-bold">Amount to Withdraw (KSH) *</label>
+            <label className="text-[10px] uppercase tracking-[0.25em] text-admin-dim font-bold">Amount to Withdraw (KES) *</label>
             <input
               type="number"
               required
@@ -339,9 +402,10 @@ export default function IspWalletDashboard() {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2.5 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-2.5 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
-              <Send size={12} /> Confirm Withdrawal
+              <Send size={12} /> {isSubmitting ? 'Processing...' : 'Confirm Withdrawal'}
             </button>
           </div>
         </form>
@@ -423,9 +487,10 @@ export default function IspWalletDashboard() {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2.5 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-2.5 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
-              Save Configuration
+              {isSubmitting ? 'Saving...' : 'Save Configuration'}
             </button>
           </div>
         </form>

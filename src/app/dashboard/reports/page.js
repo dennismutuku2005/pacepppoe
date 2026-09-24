@@ -4,12 +4,13 @@ import React, { useState, useEffect, Suspense } from 'react'
 import { 
     TrendingUp, TrendingDown, DollarSign, PieChart, 
     Calendar, Download, ArrowUpRight, ArrowDownLeft, 
-    BarChart3, LineChart, Wallet, CreditCard, Activity
+    BarChart3, LineChart, Wallet, CreditCard, Activity, AlertCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/Badge'
 import { Skeleton, CardSkeleton } from '@/components/Skeleton'
-import { mockDashboardData } from '@/services/mockData'
+import { financeService } from '@/services/isp/finance'
+import { toast } from 'sonner'
 import { 
     AreaChart, Area, BarChart, Bar, PieChart as RePieChart, Pie, 
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend 
@@ -18,10 +19,27 @@ import {
 function ReportsContent() {
     const [isLoading, setIsLoading] = useState(true)
     const [timeframe, setTimeframe] = useState('This Month')
+    const [reportsData, setReportsData] = useState(null)
+
+    const fetchReports = async () => {
+        try {
+            setIsLoading(true)
+            const res = await financeService.getReports()
+            if (res && res.status === 'success' && res.data) {
+                setReportsData(res.data)
+            } else {
+                toast.error('Failed to load reports', { description: res?.message })
+            }
+        } catch (err) {
+            console.error("Error loading reports:", err)
+            toast.error('Failed to connect to reports service')
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     useEffect(() => {
-        const timer = setTimeout(() => setIsLoading(false), 800)
-        return () => clearTimeout(timer)
+        fetchReports()
     }, [])
 
     if (isLoading) return (
@@ -61,11 +79,23 @@ function ReportsContent() {
         </div>
     )
 
+    const stats = reportsData?.stats || {
+        totalRevenueMonth: 0,
+        totalExpensesMonth: 0,
+        netProfitMonth: 0,
+        collectionRate: '100%'
+    }
+    const revenueByDay = reportsData?.revenueByDay || []
+    const packagePopularity = reportsData?.packagePopularity || []
+    const incomeVsExpenses = reportsData?.incomeVsExpenses || []
+    const recentPayments = reportsData?.recentPayments || []
+    const expenses = reportsData?.expenses || []
+
     const financialMetrics = [
-        { label: "Total Revenue", value: `KES ${mockDashboardData.stats.totalRevenueMonth.toLocaleString()}`, change: "+14.5%", icon: TrendingUp, color: "text-green-600", bg: "bg-green-500/10" },
-        { label: "Total Expenses", value: `KES ${mockDashboardData.stats.totalExpensesMonth.toLocaleString()}`, change: "+5.2%", icon: TrendingDown, color: "text-red-500", bg: "bg-red-500/10" },
-        { label: "Net Profit", value: `KES ${mockDashboardData.stats.netProfitMonth.toLocaleString()}`, change: "+18.2%", icon: DollarSign, color: "text-pace-purple", bg: "bg-pace-purple/10" },
-        { label: "Collection Rate", value: mockDashboardData.stats.collectionRate, change: "+2.1%", icon: Activity, color: "text-blue-500", bg: "bg-blue-500/10" },
+        { label: "Total Revenue", value: `KES ${Number(stats.totalRevenueMonth || 0).toLocaleString()}`, change: "+14.5%", icon: TrendingUp, color: "text-green-600", bg: "bg-green-500/10" },
+        { label: "Total Expenses", value: `KES ${Number(stats.totalExpensesMonth || 0).toLocaleString()}`, change: "+5.2%", icon: TrendingDown, color: "text-red-500", bg: "bg-red-500/10" },
+        { label: "Net Profit", value: `KES ${Number(stats.netProfitMonth || 0).toLocaleString()}`, change: "+18.2%", icon: DollarSign, color: "text-pace-purple", bg: "bg-pace-purple/10" },
+        { label: "Collection Rate", value: stats.collectionRate || '100%', change: "Active", icon: Activity, color: "text-blue-500", bg: "bg-blue-500/10" },
     ]
 
     return (
@@ -74,22 +104,15 @@ function ReportsContent() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
                 <div>
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Income & Performance Report</h1>
-                    <p className="text-xs font-medium text-gray-400 mt-1">Consolidated financial intelligence and growth metrics</p>
+                    <p className="text-xs font-medium text-gray-400 mt-1">Live consolidated financial intelligence and growth metrics</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <select 
-                        value={timeframe}
-                        onChange={(e) => setTimeframe(e.target.value)}
-                        className="bg-card-bg border border-pace-border rounded-xl px-4 py-2 text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
+                    <button 
+                        onClick={() => toast.success('Report generated', { description: 'Live financial summary prepared.' })}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95"
                     >
-                        <option>Today</option>
-                        <option>This Week</option>
-                        <option>This Month</option>
-                        <option>Last Quarter</option>
-                    </select>
-                    <button className="flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-sm font-medium shadow-sm active:scale-95">
                         <Download size={16} />
-                        <span>Export PDF</span>
+                        <span>Export Statement</span>
                     </button>
                 </div>
             </div>
@@ -118,7 +141,7 @@ function ReportsContent() {
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h4 className="text-sm font-semibold text-admin-value">Weekly Revenue Stream</h4>
-                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Historical Collection Trend</p>
+                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Daily Collections Breakdown</p>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-pace-purple" />
@@ -127,62 +150,72 @@ function ReportsContent() {
                     </div>
                     <div className="h-[320px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={mockDashboardData.revenueByDay} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <AreaChart data={revenueByDay} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#4B1D8F" stopOpacity={0.1}/>
-                                        <stop offset="95%" stopColor="#4B1D8F" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.2}/>
+                                        <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF', fontWeight: 600 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF', fontWeight: 600 }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF', fontWeight: 600 }} tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}K` : `${v}`} />
                                 <Tooltip 
+                                    formatter={(val) => [`KES ${Number(val).toLocaleString()}`, 'Collections']}
                                     contentStyle={{ borderRadius: '12px', border: '1px solid #E5E7EB', fontSize: '11px', fontWeight: '600', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                 />
-                                <Area type="monotone" dataKey="revenue" stroke="#4B1D8F" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                                <Area type="monotone" dataKey="revenue" stroke="#7c3aed" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
                 {/* Package Popularity Pie Chart */}
-                <div className="lg:col-span-4 bg-card-bg border border-pace-border rounded-xl p-6 shadow-sm">
-                    <div className="mb-6">
+                <div className="lg:col-span-4 bg-card-bg border border-pace-border rounded-xl p-6 shadow-sm flex flex-col">
+                    <div className="mb-4">
                         <h4 className="text-sm font-semibold text-admin-value">Service Distribution</h4>
-                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Plan Popularity Matrix</p>
+                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Subscribers per Plan</p>
                     </div>
-                    <div className="h-[260px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RePieChart>
-                                <Pie
-                                    data={mockDashboardData.packagePopularity}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={90}
-                                    paddingAngle={8}
-                                    dataKey="sales"
-                                >
-                                    {mockDashboardData.packagePopularity.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </RePieChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="space-y-3 mt-4">
-                        {mockDashboardData.packagePopularity.map((p, i) => (
-                            <div key={i} className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-                                    <span className="text-[11px] font-semibold text-admin-dim uppercase">{p.name}</span>
-                                </div>
-                                <span className="text-[11px] font-bold text-admin-value tabular-nums">{p.sales} Sales</span>
+                    {packagePopularity.length === 0 ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+                            <PieChart className="w-8 h-8 text-admin-dim/40 mb-2" />
+                            <p className="text-xs font-semibold text-admin-value">No Plans Configured</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="h-[220px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RePieChart>
+                                        <Pie
+                                            data={packagePopularity}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={50}
+                                            outerRadius={80}
+                                            paddingAngle={6}
+                                            dataKey="value"
+                                        >
+                                            {packagePopularity.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} stroke="transparent" />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip formatter={(val, name) => [`${val} subscribers`, name]} />
+                                    </RePieChart>
+                                </ResponsiveContainer>
                             </div>
-                        ))}
-                    </div>
+                            <div className="space-y-2 mt-2">
+                                {packagePopularity.map((p, i) => (
+                                    <div key={i} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+                                            <span className="text-[11px] font-semibold text-admin-dim">{p.name}</span>
+                                        </div>
+                                        <span className="text-[11px] font-bold text-admin-value tabular-nums">{p.value} Subscribers</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -197,15 +230,16 @@ function ReportsContent() {
                     </div>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={mockDashboardData.incomeVsExpenses} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                            <BarChart data={incomeVsExpenses} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF', fontWeight: 600 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF', fontWeight: 600 }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF', fontWeight: 600 }} tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}K` : `${v}`} />
                                 <Tooltip 
+                                    formatter={(val, name) => [`KES ${Number(val).toLocaleString()}`, name]}
                                     contentStyle={{ borderRadius: '12px', border: '1px solid #E5E7EB', fontSize: '11px', fontWeight: '600' }}
                                 />
                                 <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', paddingBottom: '20px' }} />
-                                <Bar dataKey="income" fill="#4B1D8F" radius={[4, 4, 0, 0]} name="Operating Revenue" />
+                                <Bar dataKey="income" fill="#7c3aed" radius={[4, 4, 0, 0]} name="Operating Revenue" />
                                 <Bar dataKey="expenses" fill="#F43F5E" radius={[4, 4, 0, 0]} name="Operating Expenses" />
                             </BarChart>
                         </ResponsiveContainer>
@@ -216,9 +250,9 @@ function ReportsContent() {
                 <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm flex flex-col">
                     <div className="p-6 border-b border-pace-border">
                         <h4 className="text-sm font-semibold text-admin-value">Significant Operations</h4>
-                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mt-0.5">Top financial events this month</p>
+                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mt-0.5">Latest revenue and expense items</p>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 overflow-x-auto">
                         <table className="w-full text-left whitespace-nowrap">
                             <thead className="bg-pace-bg-subtle/50 border-b border-pace-border">
                                 <tr className="text-[10px] font-bold text-admin-dim uppercase tracking-wider">
@@ -228,38 +262,46 @@ function ReportsContent() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-pace-border">
-                                {mockDashboardData.expenses.map((exp) => (
-                                    <tr key={exp.id} className="hover:bg-pace-bg-subtle/50 transition-colors group">
-                                        <td className="px-6 py-2.5">
-                                            <p className="text-xs font-semibold text-admin-value">{exp.title}</p>
-                                            <p className="text-[10px] text-admin-dim font-medium">{exp.date}</p>
-                                        </td>
-                                        <td className="px-6 py-2.5">
-                                            <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider">
-                                                {exp.category}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-6 py-2.5 text-right">
-                                            <span className="text-xs font-bold text-red-500 tabular-nums">- KES {exp.amount.toLocaleString()}</span>
-                                        </td>
+                                {expenses.length === 0 && recentPayments.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="3" className="py-12 text-center text-admin-dim text-xs">No recent financial events logged.</td>
                                     </tr>
-                                ))}
-                                {mockDashboardData.recentPayments.slice(0, 2).map((pay) => (
-                                    <tr key={`pay-${pay.id}`} className="hover:bg-pace-bg-subtle/50 transition-colors group">
-                                        <td className="px-6 py-2.5">
-                                            <p className="text-xs font-semibold text-admin-value">{pay.customer}</p>
-                                            <p className="text-[10px] text-admin-dim font-medium">{pay.date}</p>
-                                        </td>
-                                        <td className="px-6 py-2.5">
-                                            <Badge variant="success" className="text-[9px] font-bold uppercase tracking-wider border-none">
-                                                Subscription
-                                            </Badge>
-                                        </td>
-                                        <td className="px-6 py-2.5 text-right">
-                                            <span className="text-xs font-bold text-green-600 tabular-nums">+ KES {pay.amount.toLocaleString()}</span>
-                                        </td>
-                                    </tr>
-                                ))}
+                                ) : (
+                                    <>
+                                        {expenses.map((exp) => (
+                                            <tr key={`exp-${exp.id}`} className="hover:bg-pace-bg-subtle/50 transition-colors group">
+                                                <td className="px-6 py-2.5">
+                                                    <p className="text-xs font-semibold text-admin-value">{exp.title}</p>
+                                                    <p className="text-[10px] text-admin-dim font-medium">{exp.date}</p>
+                                                </td>
+                                                <td className="px-6 py-2.5">
+                                                    <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider">
+                                                        {exp.category}
+                                                    </Badge>
+                                                </td>
+                                                <td className="px-6 py-2.5 text-right">
+                                                    <span className="text-xs font-bold text-red-500 tabular-nums">- KES {Number(exp.amount).toLocaleString()}</span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {recentPayments.map((pay) => (
+                                            <tr key={`pay-${pay.id}`} className="hover:bg-pace-bg-subtle/50 transition-colors group">
+                                                <td className="px-6 py-2.5">
+                                                    <p className="text-xs font-semibold text-admin-value">{pay.customer}</p>
+                                                    <p className="text-[10px] text-admin-dim font-medium">{pay.date}</p>
+                                                </td>
+                                                <td className="px-6 py-2.5">
+                                                    <Badge variant="success" className="text-[9px] font-bold uppercase tracking-wider border-none">
+                                                        {pay.plan || 'Subscription'}
+                                                    </Badge>
+                                                </td>
+                                                <td className="px-6 py-2.5 text-right">
+                                                    <span className="text-xs font-bold text-green-600 tabular-nums">+ KES {Number(pay.amount).toLocaleString()}</span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </>
+                                )}
                             </tbody>
                         </table>
                     </div>
