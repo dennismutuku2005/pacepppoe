@@ -1,16 +1,22 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
-import { Wallet, ArrowUpRight, ArrowDownLeft, Building, CreditCard, Send, Edit, ShieldCheck, History, Landmark, Smartphone } from 'lucide-react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { 
+    Wallet, ArrowUpRight, ArrowDownLeft, Building, 
+    CreditCard, Send, Edit2, ShieldCheck, History, 
+    Landmark, Smartphone, Search, RefreshCw, CheckCircle2,
+    Clock, DollarSign
+} from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { financeService } from '@/services/isp/finance'
-import { CardSkeleton } from '@/components/Skeleton'
+import { AdminCardSkeleton } from '@/components/Skeleton'
 
 export default function IspWalletDashboard() {
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [wallet, setWallet] = useState({
     balance: 0.00,
     bankName: 'Equity Bank Kenya',
@@ -20,6 +26,9 @@ export default function IspWalletDashboard() {
     mpesaNumber: '0700000000',
     history: []
   })
+
+  const [activeTab, setActiveTab] = useState('all') // 'all' | 'deposit' | 'withdrawal'
+  const [search, setSearch] = useState('')
 
   // Modals Control
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
@@ -38,9 +47,11 @@ export default function IspWalletDashboard() {
   const [bankBranch, setBankBranch] = useState('')
   const [mpesaNumber, setMpesaNumber] = useState('')
 
-  const fetchWalletData = async () => {
+  const fetchWalletData = async (isManual = false) => {
     try {
-      setIsLoading(true)
+      if (isManual) setIsRefreshing(true)
+      else setIsLoading(true)
+
       const res = await financeService.getWallet()
       if (res && res.status === 'success' && res.data) {
         const data = res.data
@@ -64,12 +75,38 @@ export default function IspWalletDashboard() {
       toast.error('Failed to load wallet records')
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
     }
   }
 
   useEffect(() => {
     fetchWalletData()
   }, [])
+
+  // Aggregate stats from history
+  const totalInflows = useMemo(() => {
+    return (wallet.history || [])
+      .filter(h => h.type === 'deposit')
+      .reduce((acc, h) => acc + Number(h.amount || 0), 0)
+  }, [wallet.history])
+
+  const totalWithdrawals = useMemo(() => {
+    return (wallet.history || [])
+      .filter(h => h.type === 'withdrawal')
+      .reduce((acc, h) => acc + Number(h.amount || 0), 0)
+  }, [wallet.history])
+
+  // Filtered History
+  const filteredHistory = useMemo(() => {
+    return (wallet.history || []).filter(tx => {
+      const matchesTab = activeTab === 'all' || tx.type === activeTab
+      const matchesSearch = 
+        tx.description?.toLowerCase().includes(search.toLowerCase()) ||
+        tx.channel?.toLowerCase().includes(search.toLowerCase()) ||
+        tx.date?.includes(search)
+      return matchesTab && matchesSearch
+    })
+  }, [wallet.history, activeTab, search])
 
   // Handle Withdraw
   const handleWithdrawSubmit = async (e) => {
@@ -104,7 +141,7 @@ export default function IspWalletDashboard() {
         setIsWithdrawOpen(false)
         setWithdrawAmount('')
         setWithdrawNotes('')
-        fetchWalletData()
+        fetchWalletData(true)
       } else {
         toast.error('Withdrawal failed', { description: res?.message })
       }
@@ -155,9 +192,8 @@ export default function IspWalletDashboard() {
     return (
       <div className="space-y-6 font-figtree max-w-[1600px] mx-auto pb-10">
         <div className="h-8 w-64 bg-pace-bg-subtle rounded-xl animate-pulse" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="h-64 bg-pace-bg-subtle rounded-3xl animate-pulse" />
-          <div className="lg:col-span-2 h-64 bg-pace-bg-subtle rounded-2xl animate-pulse" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <AdminCardSkeleton key={i} />)}
         </div>
       </div>
     )
@@ -167,149 +203,294 @@ export default function IspWalletDashboard() {
     <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10">
       
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-pace-border pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
         <div>
-          <h1 className="text-xl font-medium text-admin-value tracking-tight">Wallet & Payouts</h1>
+          <h1 className="text-xl font-medium text-admin-value tracking-tight flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-pace-purple/10 flex items-center justify-center">
+              <Wallet size={18} className="text-pace-purple" />
+            </div>
+            Wallet &amp; Payouts
+          </h1>
           <p className="text-xs font-medium text-gray-400 mt-1">
-            Live pre-paid balance, bank/mobile payout settlements, and ledger audit history.
+            Prepaid balance, automated subscriber collections, and settlement disbursements.
           </p>
         </div>
-        <button
-          onClick={() => setIsWithdrawOpen(true)}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all cursor-pointer active:scale-95"
-        >
-          <Send size={14} /> Request Payout
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => fetchWalletData(true)}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold disabled:opacity-50"
+            title="Refresh balance"
+          >
+            <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+            <span>Refresh</span>
+          </button>
+          <button
+            onClick={() => setIsWithdrawOpen(true)}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all cursor-pointer active:scale-95 shadow-sm"
+          >
+            <Send size={14} /> Request Payout
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Balance and bank details */}
-        <div className="lg:col-span-1 space-y-6">
-          
-          {/* Elegant Wallet Card */}
-          <div className="bg-gradient-to-br from-pace-purple to-indigo-900 border border-pace-purple/30 rounded-3xl p-6 text-white shadow-md relative overflow-hidden">
-            <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full -mr-8 -mt-8 pointer-events-none" />
-            <div className="flex items-center justify-between mb-8">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">Virtual ISP Wallet</span>
-              <Wallet size={20} className="text-white/80" />
+      {/* Top 4 Standardized Metrics Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Available Balance */}
+        <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-pace-purple to-indigo-500" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Available Balance">
+                Available Balance
+              </p>
+              <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                KES {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-[10px] text-admin-dim mt-0.5 truncate">Ready for settlement</p>
             </div>
-            <div className="text-[10px] font-medium text-white/60">AVAILABLE BALANCE</div>
-            <div className="text-3xl font-bold mt-1 tabular-nums">
-              KES {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </div>
-            <div className="mt-8 flex items-center justify-between pt-4 border-t border-white/10 text-[11px] text-white/80 font-medium">
-              <span>Account Status:</span>
-              <span className="inline-flex items-center gap-1 bg-white/15 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">
-                ● Connected / Active
-              </span>
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-pace-purple/10 group-hover:border-pace-purple/30 bg-pace-purple/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+              <Wallet className="text-pace-purple w-4 h-4" />
             </div>
           </div>
+        </div>
 
-          {/* Bank Settlement Info Card */}
+        {/* Total Inflows */}
+        <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-500" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Subscriber Inflows">
+                Total Collections
+              </p>
+              <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                KES {totalInflows.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-[10px] text-admin-dim mt-0.5 truncate">M-Pesa deposits</p>
+            </div>
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-emerald-500/10 group-hover:border-emerald-500/30 bg-emerald-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+              <ArrowUpRight className="text-emerald-500 w-4 h-4" />
+            </div>
+          </div>
+        </div>
+
+        {/* Total Payouts */}
+        <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-rose-400 to-red-500" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Total Payouts">
+                Total Disbursed
+              </p>
+              <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                KES {totalWithdrawals.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-[10px] text-admin-dim mt-0.5 truncate">Settled to bank/mobile</p>
+            </div>
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-rose-500/10 group-hover:border-rose-500/30 bg-rose-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+              <ArrowDownLeft className="text-rose-500 w-4 h-4" />
+            </div>
+          </div>
+        </div>
+
+        {/* Primary Destination */}
+        <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 to-cyan-500" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title="Settlement Account">
+                Settlement Account
+              </p>
+              <p className="text-sm font-bold text-admin-value mt-1.5 truncate">
+                {wallet.bankName?.split(' ')[0] || 'Bank'} / {wallet.mpesaNumber}
+              </p>
+              <p className="text-[10px] text-admin-dim mt-0.5 truncate font-mono">{wallet.bankAccount}</p>
+            </div>
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-blue-500/10 group-hover:border-blue-500/30 bg-blue-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
+              <Landmark className="text-blue-500 w-4 h-4" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Left Column: Settlement Targets */}
+        <div className="lg:col-span-4 space-y-6">
           <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Settlement Target</h3>
+              <div>
+                <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Settlement Routing</h3>
+                <p className="text-[10px] text-admin-dim mt-0.5">Primary disbursement credentials</p>
+              </div>
               <button
                 onClick={() => setIsEditSettlementOpen(true)}
                 className="text-xs text-pace-purple hover:underline font-bold flex items-center gap-1 cursor-pointer"
               >
-                <Edit size={12} /> Edit Details
+                <Edit2 size={12} /> Edit
               </button>
             </div>
 
-            <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-3">
-              <div className="flex items-start gap-2.5">
-                <Landmark className="text-admin-dim shrink-0 mt-0.5" size={16} />
-                <div>
-                  <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">Settlement Bank</p>
-                  <p className="text-xs font-semibold text-admin-value mt-0.5">{wallet.bankName}</p>
-                  <p className="text-[10px] text-gray-400 font-medium">{wallet.bankBranch}</p>
+            <div className="space-y-3">
+              {/* Bank Account Details */}
+              <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-card-bg border border-pace-border flex items-center justify-center text-admin-dim shrink-0 mt-0.5">
+                    <Landmark size={14} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">Bank Account</p>
+                    <p className="text-xs font-semibold text-admin-value mt-0.5 truncate">{wallet.bankName}</p>
+                    <p className="text-[11px] font-mono text-pace-purple font-medium mt-0.5">{wallet.bankAccount}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5 truncate">{wallet.bankAccountName} · {wallet.bankBranch}</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5 border-t border-pace-border/60 pt-3">
-                <CreditCard className="text-admin-dim shrink-0 mt-0.5" size={16} />
-                <div>
-                  <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">Account Number</p>
-                  <p className="text-xs font-semibold text-admin-value mt-0.5 font-mono">{wallet.bankAccount}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5 border-t border-pace-border/60 pt-3">
-                <ShieldCheck className="text-admin-dim shrink-0 mt-0.5" size={16} />
-                <div>
-                  <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">Account Name</p>
-                  <p className="text-xs font-semibold text-admin-value mt-0.5">{wallet.bankAccountName}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5 border-t border-pace-border/60 pt-3">
-                <Smartphone className="text-admin-dim shrink-0 mt-0.5" size={16} />
-                <div>
-                  <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">M-Pesa Payout Number</p>
-                  <p className="text-xs font-semibold text-admin-value mt-0.5 font-mono">{wallet.mpesaNumber}</p>
+              {/* M-Pesa Details */}
+              <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-card-bg border border-pace-border flex items-center justify-center text-admin-dim shrink-0 mt-0.5">
+                    <Smartphone size={14} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">Mobile Payout</p>
+                    <p className="text-xs font-semibold text-admin-value mt-0.5">M-Pesa STK Disbursement</p>
+                    <p className="text-[11px] font-mono text-emerald-600 font-medium mt-0.5">{wallet.mpesaNumber}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Instant settlement channel</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
+            <div className="pt-2">
+              <button
+                onClick={() => setIsWithdrawOpen(true)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-semibold text-admin-value hover:border-pace-purple hover:text-pace-purple transition-all"
+              >
+                <Send size={13} />
+                <span>Initiate Settlement</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Right Column: Ledger Log Transactions */}
-        <div className="lg:col-span-2 space-y-4 bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
+        {/* Right Column: Transaction History Table */}
+        <div className="lg:col-span-8 bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Wallet Transaction History</h3>
-              <p className="text-[10px] text-admin-dim mt-0.5">Live audit ledger of subscriber collections and outflows.</p>
+              <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Wallet Audit Ledger</h3>
+              <p className="text-[10px] text-admin-dim mt-0.5">Real-time ledger of subscriber payments and bank payouts</p>
             </div>
-            <History size={16} className="text-admin-dim" />
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1 bg-pace-bg-subtle border border-pace-border rounded-xl p-1 text-xs">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={cn(
+                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all",
+                  activeTab === 'all' ? "bg-card-bg text-admin-value shadow-xs" : "text-admin-dim hover:text-admin-value"
+                )}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setActiveTab('deposit')}
+                className={cn(
+                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all",
+                  activeTab === 'deposit' ? "bg-card-bg text-emerald-600 shadow-xs" : "text-admin-dim hover:text-admin-value"
+                )}
+              >
+                Inflows
+              </button>
+              <button
+                onClick={() => setActiveTab('withdrawal')}
+                className={cn(
+                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all",
+                  activeTab === 'withdrawal' ? "bg-card-bg text-rose-600 shadow-xs" : "text-admin-dim hover:text-admin-value"
+                )}
+              >
+                Payouts
+              </button>
+            </div>
           </div>
 
-          <div className="max-h-[500px] overflow-y-auto pr-1 space-y-2.5 custom-scrollbar">
-            {wallet.history.length === 0 ? (
-              <div className="py-20 text-center text-admin-dim text-xs font-medium">
-                No wallet transactions recorded yet.
-              </div>
-            ) : (
-              wallet.history.map((tx, idx) => {
-                const isDeposit = tx.type === 'deposit'
-                const isWithdrawal = tx.type === 'withdrawal'
-                return (
-                  <div key={tx.id || idx} className="p-3.5 border border-pace-border rounded-xl flex justify-between items-center bg-pace-bg-subtle/50 hover:bg-pace-bg-subtle transition-all duration-200">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-8 h-8 rounded-xl flex items-center justify-center border",
-                        isDeposit 
-                          ? "bg-green-500/10 text-green-600 border-green-500/10" 
-                          : isWithdrawal
-                          ? "bg-blue-500/10 text-blue-600 border-blue-500/10"
-                          : "bg-rose-500/10 text-rose-600 border-rose-500/10"
-                      )}>
-                        {isDeposit ? <ArrowUpRight size={16} /> : isWithdrawal ? <ArrowDownLeft size={16} /> : <CreditCard size={14} />}
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-admin-value">{tx.description}</p>
-                        <div className="flex items-center gap-2 text-[9px] text-admin-dim mt-1">
-                          <span className="font-medium bg-pace-border/40 px-1.5 py-0.25 rounded-md uppercase">{tx.channel}</span>
-                          <span>·</span>
-                          <span>{tx.date}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className={cn(
-                        "text-xs font-bold font-mono",
-                        isDeposit ? "text-green-600" : isWithdrawal ? "text-blue-600" : "text-rose-600"
-                      )}>
-                        {isDeposit ? `+` : `-`} KES {Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </p>
-                      <Badge variant="success" className="text-[8px] font-black uppercase border-none tracking-widest px-1 py-0 px-1.5 mt-1">{tx.status || 'Completed'}</Badge>
-                    </div>
-                  </div>
-                )
-              })
-            )}
+          {/* Search bar */}
+          <div className="relative group max-w-sm">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
+            <input
+              type="text"
+              placeholder="Search by description, channel or date..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+            />
+          </div>
+
+          {/* Ledger List */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left whitespace-nowrap text-xs">
+              <thead>
+                <tr className="bg-pace-bg-subtle/50 border-b border-pace-border text-[10px] font-bold text-admin-dim uppercase tracking-wider">
+                  <th className="px-4 py-3">Event Identity</th>
+                  <th className="px-4 py-3">Channel</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3 text-right">Amount</th>
+                  <th className="px-4 py-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-pace-border">
+                {filteredHistory.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="py-16 text-center text-admin-dim text-xs font-medium">
+                      No wallet transactions matching your criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredHistory.map((tx, idx) => {
+                    const isDeposit = tx.type === 'deposit'
+                    return (
+                      <tr key={tx.id || idx} className="hover:bg-pace-bg-subtle/40 transition-colors group">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-7 h-7 rounded-lg flex items-center justify-center border shrink-0",
+                              isDeposit 
+                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/10" 
+                                : "bg-rose-500/10 text-rose-600 border-rose-500/10"
+                            )}>
+                              {isDeposit ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
+                            </div>
+                            <span className="font-semibold text-admin-value">{tx.description}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-[10px] font-semibold text-admin-dim uppercase tracking-wider bg-pace-bg-subtle border border-pace-border px-2 py-0.5 rounded-md">
+                            {tx.channel}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="font-mono text-[11px] text-admin-dim">{tx.date}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className={cn(
+                            "font-bold text-xs tabular-nums font-mono",
+                            isDeposit ? "text-emerald-600" : "text-rose-600"
+                          )}>
+                            {isDeposit ? '+' : '-'}KES {Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Badge variant="success" className="text-[9px] font-bold uppercase border-none px-2 py-0.5">
+                            {tx.status || 'Completed'}
+                          </Badge>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -320,28 +501,28 @@ export default function IspWalletDashboard() {
         isOpen={isWithdrawOpen}
         onClose={() => setIsWithdrawOpen(false)}
         title="Request Revenue Settlement"
-        description="Withdraw balance earnings directly to your mobile wallet or settlement bank account."
+        description="Transfer your available balance to your bank account or M-Pesa mobile number."
         maxWidth="max-w-md"
       >
-        <form onSubmit={handleWithdrawSubmit} className="space-y-4 text-left font-figtree">
-          <div className="p-3.5 bg-pace-purple-light/50 border border-pace-purple/10 rounded-xl flex justify-between items-center text-xs">
-            <span className="text-admin-dim font-medium">Available Payout balance:</span>
-            <span className="font-extrabold text-pace-purple font-mono">
+        <form onSubmit={handleWithdrawSubmit} className="space-y-4 pt-2 font-figtree">
+          <div className="p-3.5 bg-pace-purple/5 border border-pace-purple/15 rounded-xl flex justify-between items-center text-xs">
+            <span className="text-admin-dim font-medium">Available Balance:</span>
+            <span className="font-bold text-pace-purple text-sm tabular-nums">
               KES {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </span>
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-[0.25em] text-admin-dim font-bold">Settlement Channel *</label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <label className="block text-xs font-medium text-admin-dim mb-1.5">Settlement Channel *</label>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setWithdrawChannel('bank')}
                 className={cn(
                   "py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer",
                   withdrawChannel === 'bank' 
-                    ? "bg-pace-purple text-white border-pace-purple" 
-                    : "bg-pace-bg-subtle text-admin-dim border-pace-border"
+                    ? "bg-pace-purple text-white border-pace-purple shadow-sm" 
+                    : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:text-admin-value"
                 )}
               >
                 <Building size={14} /> Bank Account
@@ -352,60 +533,61 @@ export default function IspWalletDashboard() {
                 className={cn(
                   "py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer",
                   withdrawChannel === 'mpesa' 
-                    ? "bg-pace-purple text-white border-pace-purple" 
-                    : "bg-pace-bg-subtle text-admin-dim border-pace-border"
+                    ? "bg-pace-purple text-white border-pace-purple shadow-sm" 
+                    : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:text-admin-value"
                 )}
               >
                 <Smartphone size={14} /> M-Pesa Wallet
               </button>
             </div>
             {withdrawChannel === 'bank' ? (
-              <p className="text-[9px] text-gray-400 mt-2 pl-1 leading-normal">
-                Funds will be settled to: <strong>{wallet.bankName} (A/C: {wallet.bankAccount})</strong>. Settles within 24 business hours.
+              <p className="text-[10px] text-gray-400 mt-1.5">
+                Target: <strong>{wallet.bankName} (A/C: {wallet.bankAccount})</strong>
               </p>
             ) : (
-              <p className="text-[9px] text-gray-400 mt-2 pl-1 leading-normal">
-                Funds will be settled to M-Pesa Number: <strong>{wallet.mpesaNumber}</strong>. Settles instantly via STK payouts.
+              <p className="text-[10px] text-gray-400 mt-1.5">
+                Target: <strong>M-Pesa ({wallet.mpesaNumber})</strong>
               </p>
             )}
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-[0.25em] text-admin-dim font-bold">Amount to Withdraw (KES) *</label>
+            <label className="block text-xs font-medium text-admin-dim mb-1">Amount (KES) *</label>
             <input
               type="number"
+              step="any"
               required
               value={withdrawAmount}
               onChange={(e) => setWithdrawAmount(e.target.value)}
-              placeholder="e.g. 20000"
-              className="w-full mt-2 px-4 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs font-mono"
+              placeholder="e.g. 10000"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs font-mono"
             />
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-[0.25em] text-admin-dim font-bold">Withdrawal Reference Notes (Optional)</label>
+            <label className="block text-xs font-medium text-admin-dim mb-1">Memo / Reference Note (Optional)</label>
             <input
               value={withdrawNotes}
               onChange={(e) => setWithdrawNotes(e.target.value)}
-              placeholder="e.g. Q3 billing payouts"
-              className="w-full mt-2 px-4 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
+              placeholder="e.g., Weekly settlement payout"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
             />
           </div>
 
-          <div className="pt-4 flex items-center gap-3">
+          <div className="pt-4 flex items-center gap-3 border-t border-pace-border">
             <button
               type="button"
               onClick={() => setIsWithdrawOpen(false)}
-              className="flex-1 px-4 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all cursor-pointer"
+              className="flex-1 px-4 py-2 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
-              <Send size={12} /> {isSubmitting ? 'Processing...' : 'Confirm Withdrawal'}
+              <Send size={12} /> {isSubmitting ? 'Processing...' : 'Confirm Payout'}
             </button>
           </div>
         </form>
@@ -416,79 +598,79 @@ export default function IspWalletDashboard() {
         isOpen={isEditSettlementOpen}
         onClose={() => setIsEditSettlementOpen(false)}
         title="Configure Settlement Details"
-        description="Update your primary bank clearing and mobile payout accounts."
+        description="Update your default banking coordinates and mobile clearing numbers."
         maxWidth="max-w-md"
       >
-        <form onSubmit={handleSettlementSubmit} className="space-y-4 text-left font-figtree">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSettlementSubmit} className="space-y-4 pt-2 font-figtree">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] uppercase tracking-[0.25em] text-admin-dim font-bold">Bank Name *</label>
+              <label className="block text-xs font-medium text-admin-dim mb-1">Bank Name *</label>
               <input
                 required
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
                 placeholder="e.g. Equity Bank"
-                className="w-full mt-2 px-4 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-[0.25em] text-admin-dim font-bold">Branch Name *</label>
+              <label className="block text-xs font-medium text-admin-dim mb-1">Branch Name *</label>
               <input
                 required
                 value={bankBranch}
                 onChange={(e) => setBankBranch(e.target.value)}
                 placeholder="e.g. Westlands Branch"
-                className="w-full mt-2 px-4 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-[0.25em] text-admin-dim font-bold">Account Holder Name *</label>
+            <label className="block text-xs font-medium text-admin-dim mb-1">Account Holder Name *</label>
             <input
               required
               value={bankAccountName}
               onChange={(e) => setBankAccountName(e.target.value)}
               placeholder="e.g. Pace Networks Ltd"
-              className="w-full mt-2 px-4 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] uppercase tracking-[0.25em] text-admin-dim font-bold">Account Number *</label>
+              <label className="block text-xs font-medium text-admin-dim mb-1">Account Number *</label>
               <input
                 required
                 value={bankAccount}
                 onChange={(e) => setBankAccount(e.target.value)}
                 placeholder="e.g. 12809281294821"
-                className="w-full mt-2 px-4 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs font-mono"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs font-mono"
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-[0.25em] text-admin-dim font-bold">M-Pesa Payout Mobile *</label>
+              <label className="block text-xs font-medium text-admin-dim mb-1">M-Pesa Payout Mobile *</label>
               <input
                 required
                 value={mpesaNumber}
                 onChange={(e) => setMpesaNumber(e.target.value)}
                 placeholder="e.g. 0701020304"
-                className="w-full mt-2 px-4 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs font-mono"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs font-mono"
               />
             </div>
           </div>
 
-          <div className="pt-4 flex items-center gap-3">
+          <div className="pt-4 flex items-center gap-3 border-t border-pace-border">
             <button
               type="button"
               onClick={() => setIsEditSettlementOpen(false)}
-              className="flex-1 px-4 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all cursor-pointer"
+              className="flex-1 px-4 py-2 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="flex-1 px-4 py-2 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               {isSubmitting ? 'Saving...' : 'Save Configuration'}
             </button>
