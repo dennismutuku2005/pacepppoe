@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Network, Users, Wallet, Smartphone, ArrowUpRight, LifeBuoy, ServerCog, RefreshCw } from 'lucide-react'
+import { Network, Users, Wallet, Smartphone, ArrowUpRight, LifeBuoy, ServerCog, RefreshCw, Activity, Layers } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { dashboardService } from '@/services/admin/dashboard'
 import { Skeleton, AdminCardSkeleton } from '@/components/Skeleton'
@@ -10,37 +10,83 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 export default function AdminHomePage() {
-  const [isLoading, setIsLoading] = useState(true)
+  const [isWidgetsLoading, setIsWidgetsLoading] = useState(true)
+  const [isChartLoading, setIsChartLoading] = useState(true)
+  const [isTxLoading, setIsTxLoading] = useState(true)
+  const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false)
+
   const [charts, setCharts] = useState([])
   const [transactions, setTransactions] = useState([])
   const [widgets, setWidgets] = useState(null)
   const [isWalletBlurred, setIsWalletBlurred] = useState(true)
 
-  const fetchData = async () => {
-    setIsLoading(true)
+  // 1. Independent Parallel Fetch: Top KPI Widgets
+  const fetchWidgets = async () => {
+    setIsWidgetsLoading(true)
     try {
-      const res = await dashboardService.getDashboardData()
-      if (res?.status === 'success') {
-        setCharts(res.data.charts.revenue_over_time)
-        setTransactions(res.data.recent_transactions || [])
-        setWidgets(res.data.widgets || null)
+      const res = await dashboardService.getWidgets()
+      if (res?.status === 'success' && res.data) {
+        setWidgets(res.data)
       }
     } catch (e) {
-      console.error("Admin dashboard fetch failed", e)
-      toast.error("Failed to load dashboard data. Please try again.")
+      console.error("Admin widgets fetch error", e)
     } finally {
-      setIsLoading(false)
+      setIsWidgetsLoading(false)
     }
   }
 
+  // 2. Independent Parallel Fetch: 7-Day Revenue Trend
+  const fetchCharts = async () => {
+    setIsChartLoading(true)
+    try {
+      const res = await dashboardService.getRevenueChart()
+      if (res?.status === 'success' && Array.isArray(res.data)) {
+        setCharts(res.data)
+      }
+    } catch (e) {
+      console.error("Admin charts fetch error", e)
+    } finally {
+      setIsChartLoading(false)
+    }
+  }
+
+  // 3. Independent Parallel Fetch: Live Transactions Stream
+  const fetchTransactions = async () => {
+    setIsTxLoading(true)
+    try {
+      const res = await dashboardService.getRecentTransactions(5)
+      if (res?.status === 'success' && Array.isArray(res.data)) {
+        setTransactions(res.data)
+      }
+    } catch (e) {
+      console.error("Admin transactions fetch error", e)
+    } finally {
+      setIsTxLoading(false)
+    }
+  }
+
+  // Global Parallel Refresh Trigger
+  const handleRefreshAll = async () => {
+    setIsGlobalRefreshing(true)
+    await Promise.allSettled([
+      fetchWidgets(),
+      fetchCharts(),
+      fetchTransactions()
+    ])
+    setIsGlobalRefreshing(false)
+  }
+
+  // Parallel non-blocking initial mount
   useEffect(() => {
-    fetchData()
+    fetchWidgets()
+    fetchCharts()
+    fetchTransactions()
   }, [])
 
   const cards = widgets ? [
     { 
       label: 'Active Subscribers', 
-      value: widgets.active_users?.value ?? 0, 
+      value: (widgets.active_users?.value ?? 0).toLocaleString(), 
       icon: Users, 
       color: 'text-pace-purple', 
       bg: 'bg-pace-purple/5',
@@ -49,7 +95,7 @@ export default function AdminHomePage() {
     },
     { 
       label: 'Total Subscribers', 
-      value: widgets.monthly_users?.value ?? 0, 
+      value: (widgets.monthly_users?.value ?? 0).toLocaleString(), 
       icon: ServerCog, 
       color: 'text-blue-500', 
       bg: 'bg-blue-500/5',
@@ -67,8 +113,8 @@ export default function AdminHomePage() {
     },
     { 
       label: 'Total ISPs', 
-      value: widgets.isp_tenants?.value ?? 0, 
-      icon: Users, 
+      value: (widgets.isp_tenants?.value ?? 0).toLocaleString(), 
+      icon: Layers, 
       color: 'text-orange-500', 
       bg: 'bg-orange-500/5',
       accent: 'bg-gradient-to-b from-amber-400 to-orange-500',
@@ -95,26 +141,26 @@ export default function AdminHomePage() {
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
           <button
-            onClick={fetchData}
-            disabled={isLoading}
+            onClick={handleRefreshAll}
+            disabled={isGlobalRefreshing || (isWidgetsLoading && isChartLoading && isTxLoading)}
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold disabled:opacity-50 cursor-pointer"
             title="Refresh Admin Overview"
           >
-            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+            <RefreshCw size={14} className={isGlobalRefreshing ? "animate-spin" : ""} />
             <span>Refresh Overview</span>
           </button>
-          <Link href="/admin/routers" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all shadow-sm active:scale-95">
+          <Link href="/admin/routers" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all shadow-sm active:scale-95 cursor-pointer">
             <Network size={15} /> <span>Manage Routers</span>
           </Link>
-          <Link href="/admin/isps" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:border-pace-purple hover:text-pace-purple transition-all active:scale-95">
+          <Link href="/admin/isps" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:border-pace-purple hover:text-pace-purple transition-all active:scale-95 cursor-pointer">
             <Users size={15} /> <span>Manage ISPs</span>
           </Link>
         </div>
       </div>
 
-      {/* Stats Cards — Real data from API */}
+      {/* Stats Cards — Sectional Parallel Loading */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
-        {isLoading && !widgets ? (
+        {isWidgetsLoading && !widgets ? (
           [...Array(5)].map((_, i) => (
             <AdminCardSkeleton 
               key={i} 
@@ -161,12 +207,12 @@ export default function AdminHomePage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Activity Trend Chart - Spanning 2 Columns */}
+        {/* Activity Trend Chart - Sectional Parallel Loading */}
         <div className="xl:col-span-2 bg-card-bg border border-pace-border rounded-xl p-6">
           <div className="flex justify-between items-center mb-8">
             <div>
               <h4 className="text-sm font-medium text-admin-value">Activity & Growth</h4>
-              <p className="text-xs text-gray-400 font-normal mt-0.5">Utilization Trends</p>
+              <p className="text-xs text-gray-400 font-normal mt-0.5">7-Day Revenue Trend</p>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-pace-purple" />
@@ -175,7 +221,9 @@ export default function AdminHomePage() {
           </div>
           
           <div className="h-[300px] w-full">
-            {isLoading ? <Skeleton className="w-full h-full rounded-xl" /> : (
+            {isChartLoading && charts.length === 0 ? (
+              <Skeleton className="w-full h-full rounded-xl" />
+            ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={charts} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
@@ -197,19 +245,19 @@ export default function AdminHomePage() {
           </div>
         </div>
 
-        {/* Recent Transactions — Real data from database */}
+        {/* Recent Transactions — Sectional Parallel Loading */}
         <div className="bg-card-bg border border-pace-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-sm font-semibold text-admin-value">Recent Transactions</h2>
               <p className="text-xs text-admin-dim font-normal mt-0.5">Live M-Pesa collection stream</p>
             </div>
-            <Link href="/admin/mpesa" className="p-2 bg-pace-bg-subtle rounded-lg text-admin-dim hover:text-pace-purple transition-all">
+            <Link href="/admin/mpesa" className="p-2 bg-pace-bg-subtle rounded-lg text-admin-dim hover:text-pace-purple transition-all cursor-pointer">
               <ArrowUpRight size={16} />
             </Link>
           </div>
           <div className="space-y-4">
-            {isLoading ? (
+            {isTxLoading && transactions.length === 0 ? (
               [...Array(5)].map((_, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -250,3 +298,4 @@ export default function AdminHomePage() {
     </div>
   )
 }
+
