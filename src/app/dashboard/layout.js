@@ -73,7 +73,7 @@ export default function DashboardLayout({ children }) {
         router.push('/login')
     }
 
-    // Session timeout logic (10 minutes)
+    // Session timeout logic (10 minutes of inactivity)
     useEffect(() => {
         const SESSION_TIMEOUT = 10 * 60 * 1000; // 10 minutes
         const STORAGE_KEY = 'pace_session_last_active';
@@ -81,9 +81,17 @@ export default function DashboardLayout({ children }) {
         // Check availability on mount
         const checkSession = () => {
             const lastActive = localStorage.getItem(STORAGE_KEY);
+            const token = authService.getToken();
+            
+            if (!token) return true;
+
             if (lastActive) {
                 const diff = Date.now() - parseInt(lastActive, 10);
-                if (diff > SESSION_TIMEOUT) {
+                const decoded = authService.decodeToken(token);
+                // If token was issued less than 2 minutes ago, treat as fresh session
+                const isFreshLogin = decoded && decoded.iat && ((Date.now() / 1000) - decoded.iat < 120);
+
+                if (diff > SESSION_TIMEOUT && !isFreshLogin) {
                     handleLogout();
                     return false;
                 }
