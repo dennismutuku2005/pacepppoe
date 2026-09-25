@@ -21,7 +21,10 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (authService.isAuthenticated()) {
-            router.push('/dashboard')
+            const user = authService.getUser()
+            const role = (user?.type || user?.role || '').toLowerCase()
+            const isAdmin = role === 'admin' || role === 'superadmin'
+            router.replace(isAdmin ? '/admin' : '/dashboard')
         }
     }, [router])
 
@@ -46,8 +49,9 @@ export default function LoginPage() {
                 setIsRedirecting(true)
 
                 setTimeout(() => {
-                    const isAdmin = result.data?.user?.type === 'admin'
-                    router.push(isAdmin ? '/admin' : '/dashboard')
+                    const role = (result.data?.user?.type || result.data?.user?.role || '').toLowerCase()
+                    const isAdmin = role === 'admin' || role === 'superadmin'
+                    router.replace(isAdmin ? '/admin' : '/dashboard')
                 }, 400)
             } else {
                 setError(result.message || 'Verification failed.')

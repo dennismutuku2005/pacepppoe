@@ -22,11 +22,18 @@ export default function DashboardLayout({ children }) {
     const [user, setUser] = useState(null)
     const pathname = usePathname()
 
-    // Get user data on mount
+    // Get user data on mount & enforce ISP role
     useEffect(() => {
         const userData = authService.getUser()
         setUser(userData)
-    }, [])
+        const role = (userData?.type || userData?.role || '').toLowerCase()
+        const isAdmin = role === 'admin' || role === 'superadmin'
+
+        if (isAdmin) {
+            router.replace('/admin')
+            return
+        }
+    }, [router])
 
     // Handle screen resize
     useEffect(() => {
@@ -167,7 +174,7 @@ export default function DashboardLayout({ children }) {
     }
 
     return (
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['isp']}>
             <div className="min-h-screen bg-background flex font-figtree text-[13px] text-foreground transition-colors duration-300">
                 {/* Standardized Logout Modal */}
                 <Modal

@@ -38,9 +38,18 @@ export default function AdminLayout({ children }) {
   useEffect(() => {
     const userData = authService.getUser()
     setUser(userData)
-    const isAdmin = userData && (userData.type === 'admin' || userData.type === 'superadmin')
+    const role = (userData?.type || userData?.role || '').toLowerCase()
+    const isAdmin = role === 'admin' || role === 'superadmin'
+    const isIsp = role === 'isp'
+
+    if (isIsp) {
+      router.replace('/dashboard')
+      setHasCheckedAdmin(true)
+      return
+    }
+
     if (!isAdmin) {
-      router.push('/login')
+      router.replace('/login')
       setHasCheckedAdmin(true)
       return
     }
@@ -134,7 +143,7 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
       <div className="min-h-screen bg-background flex font-figtree text-[13px] text-foreground transition-colors duration-300">
         <Modal
           isOpen={showLogoutModal}
