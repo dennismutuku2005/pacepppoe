@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-    Menu, Search, Bell, ChevronRight, X, LogOut
+    Menu, Search, ChevronRight, X, LogOut
 } from 'lucide-react'
 import { Sidebar } from '@/components/Sidebar'
 import { Modal } from '@/components/Modal'
@@ -220,10 +220,6 @@ export default function DashboardLayout({ children }) {
                                 <GlobalSearch />
                             </div>
                             <div className="flex items-center gap-4 border-l border-pace-border pl-6 h-6">
-                                <Link href="/dashboard/notifications" className="relative p-1.5 text-admin-dim hover:text-foreground transition-colors rounded-lg hover:bg-pace-bg-subtle">
-                                    <Bell size={16} />
-                                    <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-400 rounded-full border border-background"></span>
-                                </Link>
                                 <div className="flex items-center gap-2.5 relative group">
                                     <div className="text-right hidden sm:block leading-none">
                                         <p className="text-[11px] font-bold text-admin-value uppercase tracking-tight">{user?.name || 'User'}</p>
