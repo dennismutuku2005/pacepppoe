@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Wallet, Search, Download, Clock, User, Activity, AlertCircle } from 'lucide-react'
+import { Wallet, Search, Download, Clock, User, Activity, AlertCircle, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { TablePageSkeleton } from '@/components/Skeleton'
 import { financeService } from '@/services/isp/finance'
@@ -63,7 +63,7 @@ function AccountsContent() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pace-border pb-6">
                 <div>
                     <h1 className="text-xl font-medium text-admin-value flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-pace-purple/10 flex items-center justify-center">
@@ -73,15 +73,26 @@ function AccountsContent() {
                     </h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Live wallet balances, arrears, and package billing status</p>
                 </div>
-                <button 
-                    onClick={() => {
-                        toast.success('Account statement exported', { description: 'Subscriber wallet records ready for download.' })
-                    }}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-card-bg border border-pace-border text-admin-dim rounded-xl hover:text-pace-purple hover:border-pace-purple transition-all text-sm font-medium shadow-sm active:scale-95"
-                >
-                    <Download size={16} />
-                    <span>Export Accounts</span>
-                </button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                        onClick={fetchAccounts}
+                        disabled={isLoading}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold disabled:opacity-50 cursor-pointer"
+                        title="Refresh accounts"
+                    >
+                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+                        <span>Refresh Accounts</span>
+                    </button>
+                    <button 
+                        onClick={() => {
+                            toast.success('Account statement exported', { description: 'Subscriber wallet records ready for download.' })
+                        }}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-semibold shadow-sm active:scale-95 cursor-pointer"
+                    >
+                        <Download size={15} />
+                        <span>Export Accounts</span>
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

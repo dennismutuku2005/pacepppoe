@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import {
     TrendingUp, Users, DollarSign, Zap, BarChart2,
-    Activity, ArrowLeft, ArrowUpRight, ArrowDownRight, Award, Plus, AlertCircle
+    Activity, ArrowLeft, ArrowUpRight, ArrowDownRight, Award, Plus, AlertCircle, RefreshCw
 } from 'lucide-react'
 import {
     PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
@@ -205,13 +205,13 @@ function AnalyticsContent() {
                     </div>
                     <p className="text-xs font-medium text-gray-400 pl-8">Live service plan performance — subscriber distribution &amp; revenue metrics</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                     <Link
                         href="/dashboard/packages"
-                        className="flex items-center gap-2 px-4 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all w-full sm:w-auto justify-center"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all shadow-sm active:scale-95 cursor-pointer"
                     >
                         <Zap size={14} />
-                        View Plan Directory
+                        <span>View Plan Directory</span>
                     </Link>
                 </div>
             </div>

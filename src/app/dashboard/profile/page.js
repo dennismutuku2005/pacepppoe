@@ -192,15 +192,17 @@ function ProfileContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Account & Profile</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Manage your administrator identity, contact channels, and authentication credentials.</p>
                 </div>
-                <button
-                    onClick={loadProfile}
-                    disabled={isLoading}
-                    className="inline-flex items-center gap-2 px-3.5 py-2 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold cursor-pointer shrink-0 self-start sm:self-auto"
-                    title="Reload Profile"
-                >
-                    <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
-                    Refresh
-                </button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                        onClick={loadProfile}
+                        disabled={isLoading}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+                        title="Reload Profile"
+                    >
+                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+                        <span>Refresh Profile</span>
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">

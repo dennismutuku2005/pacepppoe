@@ -90,10 +90,21 @@ export default function AdminProfilePage() {
     <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1200px] mx-auto pb-10">
       
       {/* Top Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-pace-border pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pace-border pb-6">
         <div>
           <h1 className="text-xl font-medium text-admin-value tracking-tight">Admin Profile Settings</h1>
           <p className="text-xs font-medium text-gray-400 mt-1">Manage your administrative credentials and security tokens.</p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+          <button
+            onClick={fetchProfile}
+            disabled={isLoading}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+            title="Reload Profile"
+          >
+            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+            <span>Refresh Profile</span>
+          </button>
         </div>
       </div>
 

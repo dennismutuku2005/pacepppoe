@@ -98,13 +98,14 @@ function RouterDetailsContent() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                            <button className="px-5 py-2.5 bg-white text-[#501DAA] rounded-xl text-sm font-bold shadow-lg hover:bg-opacity-90 transition-all active:scale-95 flex items-center gap-2">
-                                <RefreshCw size={16} />
-                                Synchronize
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                            <button className="w-full sm:w-auto px-5 py-2.5 bg-white text-[#501DAA] rounded-xl text-xs font-bold shadow-lg hover:bg-opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+                                <RefreshCw size={14} />
+                                <span>Synchronize Node</span>
                             </button>
-                            <button className="p-2.5 bg-red-500 text-white rounded-xl shadow-lg hover:bg-red-600 transition-all active:scale-95">
-                                <Power size={20} />
+                            <button className="w-full sm:w-auto px-4 py-2.5 bg-red-500/90 text-white rounded-xl shadow-lg hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs font-semibold cursor-pointer">
+                                <Power size={14} />
+                                <span>Emergency Reboot</span>
                             </button>
                         </div>
                     </div>
