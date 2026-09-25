@@ -68,8 +68,7 @@ export default function ProtectedRoute({ children, allowedRoles = null }) {
             <div className="min-h-screen w-screen flex items-center justify-center bg-card-bg font-figtree">
                 <div className="flex flex-col items-center gap-3">
                     <div className="w-10 h-10 border-3 border-pace-purple/20 border-t-pace-purple rounded-full animate-spin"></div>
-                    <span className="text-xs font-semibold text-admin-dim">Verifying access credentials...</span>
-                </div>
+                     </div>
             </div>
         );
     }
