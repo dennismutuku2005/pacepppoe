@@ -24,6 +24,8 @@ function ProfileContent() {
     const [phone, setPhone] = useState('')
 
     // Password form state
+    const [currentPassword, setCurrentPassword] = useState('')
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -115,6 +117,11 @@ function ProfileContent() {
 
     const handlePasswordSubmit = async (e) => {
         e.preventDefault()
+        if (!currentPassword) {
+            toast.error('Please enter your current password')
+            return
+        }
+
         if (!newPassword) {
             toast.error('Please enter a new password')
             return
@@ -136,15 +143,17 @@ function ProfileContent() {
                 name: name || profile?.name,
                 email: email || profile?.email,
                 phone: phone || profile?.phone,
+                current_password: currentPassword,
                 password: newPassword
             })
 
             if (res && res.status === 'success') {
                 toast.success('Security password updated successfully')
+                setCurrentPassword('')
                 setNewPassword('')
                 setConfirmPassword('')
             } else {
-                toast.error(res?.message || 'Failed to change password')
+                toast.error(res?.message || 'Failed to change password. Check your current password.')
             }
         } catch (err) {
             console.error("Error changing password:", err)
@@ -371,16 +380,39 @@ function ProfileContent() {
                         </div>
 
                         <form onSubmit={handlePasswordSubmit} className="space-y-5">
+                            <div className="space-y-1.5">
+                                <label className="text-[11px] font-bold text-admin-value uppercase tracking-wider">Current (Old) Password *</label>
+                                <div className="relative">
+                                    <Key size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim" />
+                                    <input
+                                        type={showCurrentPassword ? "text" : "password"}
+                                        required
+                                        value={currentPassword}
+                                        onChange={(e) => setCurrentPassword(e.target.value)}
+                                        placeholder="Enter your current password"
+                                        className="w-full pl-10 pr-10 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-admin-dim hover:text-admin-value transition-colors cursor-pointer"
+                                    >
+                                        {showCurrentPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div className="space-y-1.5">
-                                    <label className="text-[11px] font-bold text-admin-value uppercase tracking-wider">New Password</label>
+                                    <label className="text-[11px] font-bold text-admin-value uppercase tracking-wider">New Password *</label>
                                     <div className="relative">
                                         <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim" />
                                         <input
                                             type={showPassword ? "text" : "password"}
+                                            required
                                             value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
-                                            placeholder="Enter new password"
+                                            placeholder="Enter new password (min 6 chars)"
                                             className="w-full pl-10 pr-10 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
                                         />
                                         <button
@@ -394,11 +426,12 @@ function ProfileContent() {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[11px] font-bold text-admin-value uppercase tracking-wider">Confirm New Password</label>
+                                    <label className="text-[11px] font-bold text-admin-value uppercase tracking-wider">Confirm New Password *</label>
                                     <div className="relative">
                                         <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim" />
                                         <input
                                             type={showPassword ? "text" : "password"}
+                                            required
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                             placeholder="Re-enter new password"
