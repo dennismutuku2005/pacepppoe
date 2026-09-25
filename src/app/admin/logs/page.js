@@ -177,14 +177,8 @@ export default function AdminAuditLogsPage() {
       {/* Top Header */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-pace-border pb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-pace-purple/10 text-pace-purple">
-              <Activity size={12} /> Live Audit Stream
-            </span>
-            <span className="text-[11px] text-admin-dim font-medium">Infinite Real-time Feed</span>
-          </div>
-          <h1 className="text-xl font-medium text-admin-value tracking-tight mt-1">System Audit Logs</h1>
-          <p className="text-xs font-medium text-gray-400 mt-0.5">
+          <h1 className="text-xl font-medium text-admin-value tracking-tight">System Audit Logs</h1>
+          <p className="text-xs font-medium text-gray-400 mt-1">
             Real-time continuous audit trail for security operations, administrative actions, and configuration changes.
           </p>
         </div>
@@ -359,12 +353,7 @@ export default function AdminAuditLogsPage() {
                       #{logItem.id}
                     </td>
                     <td className="px-6 py-4 font-semibold text-admin-value text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-pace-purple/10 flex items-center justify-center text-[10px] font-bold text-pace-purple">
-                          {(logItem.actor_name || 'S').charAt(0).toUpperCase()}
-                        </div>
-                        <span>{logItem.actor_name || 'System / Automated'}</span>
-                      </div>
+                      {logItem.actor_name || 'System / Automated'}
                     </td>
                     <td className="px-6 py-4">
                       <span className={cn(
