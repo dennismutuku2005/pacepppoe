@@ -94,8 +94,16 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
         <>
             <aside className={sidebarClass}>
                 {/* Logo Section */}
-                <div className="h-16 relative flex items-center justify-center border-b border-pace-border px-4">
-                    <Link href={createHref("/dashboard")} className="flex items-center justify-center">
+                <div className="h-16 relative overflow-hidden flex items-center justify-center border-b border-pace-border px-4">
+                    {/* Background Pattern */}
+                    <div 
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 dark:opacity-15 pointer-events-none"
+                        style={{ backgroundImage: `url('/sidebar.png')` }}
+                    />
+                    {/* Soft White/Card Theme Overlay */}
+                    <div className="absolute inset-0 bg-card-bg/85 dark:bg-card-bg/90 pointer-events-none" />
+
+                    <Link href={createHref("/dashboard")} className="relative z-10 flex items-center justify-center">
                         <Image
                             src="/logoc.png"
                             alt="Pace"
@@ -108,7 +116,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
                     {isMobile && isSidebarOpen && (
                         <button
                             onClick={() => setIsSidebarOpen(false)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle rounded-lg transition-all cursor-pointer"
+                            className="relative z-10 absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle rounded-lg transition-all cursor-pointer"
                             title="Close Menu"
                         >
                             <X size={18} />
