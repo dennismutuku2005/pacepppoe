@@ -94,35 +94,21 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
         <>
             <aside className={sidebarClass}>
                 {/* Logo Section */}
-                <div className={cn(
-                    "h-16 flex items-center border-b border-pace-border",
-                    showText ? "justify-between px-4" : "justify-center"
-                )}>
-                    <Link href={createHref("/dashboard")} className="flex items-center gap-2">
-                        {showText ? (
-                            <Image
-                                src="/logoc.png"
-                                alt="Pace"
-                                width={120}
-                                height={40}
-                                className="h-8 w-auto object-contain"
-                                priority
-                            />
-                        ) : (
-                            <Image
-                                src="/logoc.png"
-                                alt="Pace"
-                                width={40}
-                                height={40}
-                                className="h-7 w-auto object-contain"
-                                priority
-                            />
-                        )}
+                <div className="h-16 relative flex items-center justify-center border-b border-pace-border px-4">
+                    <Link href={createHref("/dashboard")} className="flex items-center justify-center">
+                        <Image
+                            src="/logoc.png"
+                            alt="Pace"
+                            width={showText ? 120 : 40}
+                            height={40}
+                            className={cn(showText ? "h-8" : "h-7", "w-auto object-contain transition-all")}
+                            priority
+                        />
                     </Link>
                     {isMobile && isSidebarOpen && (
                         <button
                             onClick={() => setIsSidebarOpen(false)}
-                            className="p-1 text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle rounded-lg transition-all"
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle rounded-lg transition-all cursor-pointer"
                             title="Close Menu"
                         >
                             <X size={18} />
