@@ -93,15 +93,13 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
     return (
         <>
             <aside className={sidebarClass}>
-                {/* Logo Section */}
-                <div className="h-16 relative overflow-hidden flex items-center justify-center border-b border-pace-border px-4">
-                    {/* Background Pattern */}
-                    <div 
-                        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 dark:opacity-15 pointer-events-none"
-                        style={{ backgroundImage: `url('/sidebar.png')` }}
-                    />
-                    {/* Soft White/Card Theme Overlay */}
-                    <div className="absolute inset-0 bg-card-bg/85 dark:bg-card-bg/90 pointer-events-none" />
+                {/* Logo Section with sidebar.png pattern and white overlay */}
+                <div 
+                    className="h-16 relative overflow-hidden flex items-center justify-center border-b border-pace-border px-4 bg-cover bg-center bg-no-repeat"
+                    style={{ backgroundImage: `url('/sidebar.png')` }}
+                >
+                    {/* White Overlay */}
+                    <div className="absolute inset-0 bg-white/75 dark:bg-card-bg/85 backdrop-blur-[0.5px]" />
 
                     <Link href={createHref("/dashboard")} className="relative z-10 flex items-center justify-center">
                         <Image
@@ -109,14 +107,14 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
                             alt="Pace"
                             width={showText ? 120 : 40}
                             height={40}
-                            className={cn(showText ? "h-8" : "h-7", "w-auto object-contain transition-all")}
+                            className={cn(showText ? "h-8" : "h-7", "w-auto object-contain transition-all drop-shadow-sm")}
                             priority
                         />
                     </Link>
                     {isMobile && isSidebarOpen && (
                         <button
                             onClick={() => setIsSidebarOpen(false)}
-                            className="relative z-10 absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle rounded-lg transition-all cursor-pointer"
+                            className="relative z-10 absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-gray-700 hover:text-black hover:bg-black/5 rounded-lg transition-all cursor-pointer"
                             title="Close Menu"
                         >
                             <X size={18} />
