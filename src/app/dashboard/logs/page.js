@@ -1,9 +1,8 @@
 "use client"
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense } from 'react'
 import { 
-    FileText, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, 
-    Shield, Activity, Clock, Terminal, Globe, User, Filter, AlertCircle, CheckCircle2
+    Search, RefreshCw, Eye, Activity, Loader2
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
@@ -11,29 +10,34 @@ import { logService } from '@/services/isp/logs'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
+const BATCH_SIZE = 50
+
 function LogsContent() {
     const [logs, setLogs] = useState([])
     const [totalLogs, setTotalLogs] = useState(0)
-    const [isLoading, setIsLoading] = useState(true)
+    const [isLoadingInitial, setIsLoadingInitial] = useState(true)
+    const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const [hasMore, setHasMore] = useState(true)
     const [search, setSearch] = useState('')
-    const [selectedActionFilter, setSelectedActionFilter] = useState('ALL')
-
-    // Pagination
-    const [currentPage, setCurrentPage] = useState(1)
-    const [pageSize, setPageSize] = useState(25)
 
     // Log detail modal
     const [selectedLog, setSelectedLog] = useState(null)
     const [isViewOpen, setIsViewOpen] = useState(false)
 
-    const fetchLogs = async () => {
-        setIsLoading(true)
+    // Sentinel ref for infinite scroll
+    const sentinelRef = useRef(null)
+
+    // Load initial logs
+    const fetchInitialLogs = async () => {
+        setIsLoadingInitial(true)
         try {
-            const offset = (currentPage - 1) * pageSize
-            const res = await logService.getLogs(pageSize, offset)
+            const res = await logService.getLogs(BATCH_SIZE, 0)
             if (res && res.status === 'success') {
-                setLogs(res.data || [])
-                setTotalLogs(res.total || 0)
+                const fetchedLogs = res.data || []
+                const total = res.total || 0
+                setLogs(fetchedLogs)
+                setTotalLogs(total)
+                setHasMore(fetchedLogs.length < total)
             } else {
                 toast.error(res?.message || 'Failed to retrieve activity logs')
             }
@@ -41,27 +45,79 @@ function LogsContent() {
             console.error("Error fetching logs:", err)
             toast.error('Network error fetching activity logs')
         } finally {
-            setIsLoading(false)
+            setIsLoadingInitial(false)
         }
     }
 
+    // Load more logs on scroll
+    const fetchMoreLogs = useCallback(async () => {
+        if (isLoadingMore || !hasMore || isLoadingInitial) return
+
+        setIsLoadingMore(true)
+        try {
+            const offset = logs.length
+            const res = await logService.getLogs(BATCH_SIZE, offset)
+            if (res && res.status === 'success') {
+                const newLogs = res.data || []
+                const total = res.total || totalLogs
+                setTotalLogs(total)
+
+                if (newLogs.length === 0) {
+                    setHasMore(false)
+                } else {
+                    setLogs(prev => {
+                        // Prevent duplicate IDs if any
+                        const existingIds = new Set(prev.map(l => l.id))
+                        const uniqueNew = newLogs.filter(l => !existingIds.has(l.id))
+                        const updated = [...prev, ...uniqueNew]
+                        setHasMore(updated.length < total)
+                        return updated
+                    })
+                }
+            }
+        } catch (err) {
+            console.error("Error loading more logs:", err)
+        } finally {
+            setIsLoadingMore(false)
+        }
+    }, [isLoadingMore, hasMore, isLoadingInitial, logs.length, totalLogs])
+
     useEffect(() => {
-        fetchLogs()
-    }, [currentPage, pageSize])
+        fetchInitialLogs()
+    }, [])
+
+    // Setup IntersectionObserver on sentinel
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoadingInitial) {
+                    fetchMoreLogs()
+                }
+            },
+            { threshold: 0.1, rootMargin: '200px' }
+        )
+
+        const currentSentinel = sentinelRef.current
+        if (currentSentinel) {
+            observer.observe(currentSentinel)
+        }
+
+        return () => {
+            if (currentSentinel) {
+                observer.unobserve(currentSentinel)
+            }
+        }
+    }, [fetchMoreLogs, hasMore, isLoadingMore, isLoadingInitial])
 
     const handleReload = () => {
-        fetchLogs()
+        fetchInitialLogs()
     }
 
-    // Extract unique actions for quick filtering
-    const uniqueActions = useMemo(() => {
-        const set = new Set()
-        logs.forEach(l => { if (l.action) set.add(l.action) })
-        return ['ALL', ...Array.from(set)]
-    }, [logs])
-
-    // Filter logs by search query and action filter
+    // Filter logs by search query
     const filteredLogs = useMemo(() => {
+        if (!search.trim()) return logs
+        const query = search.toLowerCase()
+
         return logs.filter((log) => {
             const desc = log.description || ''
             const action = log.action || ''
@@ -70,34 +126,16 @@ function LogsContent() {
             const ip = log.ip_address || ''
             const id = log.id ? log.id.toString() : ''
 
-            const matchesSearch = 
-                desc.toLowerCase().includes(search.toLowerCase()) ||
-                action.toLowerCase().includes(search.toLowerCase()) ||
-                name.toLowerCase().includes(search.toLowerCase()) ||
-                role.toLowerCase().includes(search.toLowerCase()) ||
-                ip.includes(search) ||
-                id.includes(search)
-
-            const matchesAction = 
-                selectedActionFilter === 'ALL' || log.action === selectedActionFilter
-
-            return matchesSearch && matchesAction
+            return (
+                desc.toLowerCase().includes(query) ||
+                action.toLowerCase().includes(query) ||
+                name.toLowerCase().includes(query) ||
+                role.toLowerCase().includes(query) ||
+                ip.includes(query) ||
+                id.includes(query)
+            )
         })
-    }, [logs, search, selectedActionFilter])
-
-    const totalPages = Math.max(1, Math.ceil(totalLogs / pageSize))
-
-    const handlePrevPage = () => {
-        if (currentPage > 1) {
-            setCurrentPage(currentPage - 1)
-        }
-    }
-
-    const handleNextPage = () => {
-        if (currentPage < totalPages) {
-            setCurrentPage(currentPage + 1)
-        }
-    }
+    }, [logs, search])
 
     const openViewModal = (log) => {
         setSelectedLog(log)
@@ -115,7 +153,7 @@ function LogsContent() {
     }
 
     return (
-        <div className="space-y-6 font-figtree animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-10">
+        <div className="space-y-6 font-figtree animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-12">
             
             {/* Top Header */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-pace-border pb-6">
@@ -128,11 +166,11 @@ function LogsContent() {
                     <div className="flex items-center gap-3 w-full sm:flex-1">
                         <button
                             onClick={handleReload}
-                            disabled={isLoading}
+                            disabled={isLoadingInitial}
                             className="p-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 shrink-0 cursor-pointer"
                             title="Refresh Logs"
                         >
-                            <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+                            <RefreshCw size={16} className={isLoadingInitial ? "animate-spin" : ""} />
                         </button>
                         
                         <div className="relative flex-1 sm:w-80 group">
@@ -141,42 +179,19 @@ function LogsContent() {
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Search action, description, IP, actor..."
-                                className="w-full pl-10 pr-4 py-2 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                                className="w-full pl-10 pr-4 py-2 bg-card-bg border border-pace-border rounded-xl text-xs font-normal text-admin-value focus:outline-none focus:border-pace-purple transition-all"
                             />
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Quick Filter Action Pills */}
-            {uniqueActions.length > 2 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                    <span className="text-[10px] font-bold text-admin-dim uppercase tracking-wider mr-1 flex items-center gap-1">
-                        <Filter size={11} /> Filter:
-                    </span>
-                    {uniqueActions.map(action => (
-                        <button
-                            key={action}
-                            onClick={() => setSelectedActionFilter(action)}
-                            className={cn(
-                                "px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider transition-all uppercase whitespace-nowrap cursor-pointer",
-                                selectedActionFilter === action
-                                    ? "bg-pace-purple text-white shadow-sm"
-                                    : "bg-pace-bg-subtle text-admin-dim hover:bg-pace-purple/10 hover:text-pace-purple border border-pace-border"
-                            )}
-                        >
-                            {action}
-                        </button>
-                    ))}
-                </div>
-            )}
-
-            {/* Main Logs Table Card */}
+            {/* Main Logs Table with Infinite Scroll */}
             <div className="bg-card-bg border border-pace-border rounded-2xl overflow-hidden shadow-sm w-full">
                 <div className="overflow-x-auto w-full">
                     <table className="w-full text-left whitespace-nowrap min-w-[950px]">
                         <thead>
-                            <tr className="bg-pace-bg-subtle/60 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
+                            <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-semibold text-admin-dim uppercase tracking-wider text-[10px]">
                                 <th className="px-6 py-3.5">Log ID</th>
                                 <th className="px-6 py-3.5">Action Event</th>
                                 <th className="px-6 py-3.5">Details & Description</th>
@@ -186,12 +201,12 @@ function LogsContent() {
                                 <th className="px-6 py-3.5 text-center">Inspect</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-pace-border/80">
-                            {isLoading ? (
-                                Array.from({ length: 6 }).map((_, i) => (
+                        <tbody className="divide-y divide-pace-border/70">
+                            {isLoadingInitial ? (
+                                Array.from({ length: 8 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
                                         <td className="px-6 py-3.5"><div className="h-4 w-12 bg-pace-bg-subtle rounded" /></td>
-                                        <td className="px-6 py-3.5"><div className="h-4 w-28 bg-pace-bg-subtle rounded-full" /></td>
+                                        <td className="px-6 py-3.5"><div className="h-4 w-24 bg-pace-bg-subtle rounded" /></td>
                                         <td className="px-6 py-3.5"><div className="h-4 w-64 bg-pace-bg-subtle rounded" /></td>
                                         <td className="px-6 py-3.5"><div className="h-4 w-24 bg-pace-bg-subtle rounded" /></td>
                                         <td className="px-6 py-3.5"><div className="h-4 w-20 bg-pace-bg-subtle rounded" /></td>
@@ -206,8 +221,8 @@ function LogsContent() {
                                             <div className="w-12 h-12 rounded-2xl bg-pace-bg-subtle flex items-center justify-center text-admin-dim">
                                                 <Activity size={24} />
                                             </div>
-                                            <p className="text-sm font-bold text-admin-value">No activity records found</p>
-                                            <p className="text-xs text-admin-dim">Events and operations will be recorded here in real-time.</p>
+                                            <p className="text-sm font-medium text-admin-value">No activity records found</p>
+                                            <p className="text-xs text-admin-dim font-normal">Events and operations will be recorded here in real-time.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -215,48 +230,41 @@ function LogsContent() {
                                 filteredLogs.map((log) => (
                                     <tr 
                                         key={log.id} 
-                                        className="hover:bg-pace-bg-subtle/50 transition-colors group cursor-pointer"
+                                        className="hover:bg-pace-bg-subtle/40 transition-colors group cursor-pointer"
                                         onClick={() => openViewModal(log)}
                                     >
                                         {/* ID */}
-                                        <td className="px-6 py-3.5 text-xs font-mono font-bold text-admin-dim">
+                                        <td className="px-6 py-3.5 text-xs font-mono font-medium text-admin-dim">
                                             #{log.id}
                                         </td>
 
                                         {/* Action Badge */}
                                         <td className="px-6 py-3.5">
-                                            <Badge variant={getActionBadgeVariant(log.action)} className="font-mono text-[10px] tracking-wide">
+                                            <Badge variant={getActionBadgeVariant(log.action)} className="font-mono text-[10px] tracking-normal font-medium">
                                                 {log.action || 'SYSTEM'}
                                             </Badge>
                                         </td>
 
                                         {/* Description */}
-                                        <td className="px-6 py-3.5 text-xs font-medium text-admin-value max-w-[380px] truncate" title={log.description}>
+                                        <td className="px-6 py-3.5 text-xs font-normal text-admin-value max-w-[420px] truncate" title={log.description}>
                                             {log.description}
                                         </td>
 
                                         {/* Actor */}
-                                        <td className="px-6 py-3.5">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-lg bg-pace-purple/10 flex items-center justify-center text-[10px] font-bold text-pace-purple">
-                                                    {(log.actor_name || 'U').charAt(0).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-admin-value leading-none">{log.actor_name || 'System Auto'}</p>
-                                                    {log.actor_role && (
-                                                        <span className="text-[9px] font-medium text-admin-dim uppercase tracking-wider">{log.actor_role}</span>
-                                                    )}
-                                                </div>
-                                            </div>
+                                        <td className="px-6 py-3.5 text-xs font-medium text-admin-value">
+                                            <span>{log.actor_name || 'System'}</span>
+                                            {log.actor_role && (
+                                                <span className="text-[10px] text-admin-dim font-normal ml-2 uppercase">({log.actor_role})</span>
+                                            )}
                                         </td>
 
                                         {/* IP Address */}
-                                        <td className="px-6 py-3.5 text-xs font-mono text-admin-dim">
+                                        <td className="px-6 py-3.5 text-xs font-mono font-normal text-admin-dim">
                                             {log.ip_address || '127.0.0.1'}
                                         </td>
 
                                         {/* Timestamp */}
-                                        <td className="px-6 py-3.5 text-xs font-medium text-admin-value tabular-nums">
+                                        <td className="px-6 py-3.5 text-xs font-normal text-admin-dim tabular-nums">
                                             {log.created_at ? new Date(log.created_at).toLocaleString('en-US', {
                                                 month: 'short',
                                                 day: 'numeric',
@@ -284,50 +292,22 @@ function LogsContent() {
                     </table>
                 </div>
 
-                {/* Pagination Controls */}
-                <div className="px-6 py-4 border-t border-pace-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-pace-bg-subtle/20 text-xs">
-                    <div className="text-admin-dim font-medium">
-                        Showing <span className="font-bold text-admin-value">{filteredLogs.length}</span> of <span className="font-bold text-admin-value">{totalLogs}</span> entries
+                {/* Infinite Scroll Sentinel & Status Bar */}
+                <div ref={sentinelRef} className="px-6 py-4 border-t border-pace-border flex items-center justify-between bg-pace-bg-subtle/20 text-xs">
+                    <div className="text-admin-dim font-normal">
+                        Loaded <span className="font-semibold text-admin-value">{filteredLogs.length}</span> of <span className="font-semibold text-admin-value">{totalLogs}</span> entries
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <span className="text-admin-dim font-medium">Rows:</span>
-                            <select
-                                value={pageSize}
-                                onChange={(e) => {
-                                    setPageSize(Number(e.target.value))
-                                    setCurrentPage(1)
-                                }}
-                                className="bg-card-bg border border-pace-border rounded-lg px-2 py-1 text-xs font-bold text-admin-value focus:outline-none focus:border-pace-purple"
-                            >
-                                <option value={25}>25</option>
-                                <option value={50}>50</option>
-                                <option value={100}>100</option>
-                            </select>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <span className="text-admin-dim font-medium">Page {currentPage} of {totalPages}</span>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={handlePrevPage}
-                                    disabled={currentPage === 1 || isLoading}
-                                    className="p-1.5 bg-card-bg border border-pace-border rounded-lg text-admin-dim hover:text-admin-value disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                                    title="Previous Page"
-                                >
-                                    <ChevronLeft size={14} />
-                                </button>
-                                <button
-                                    onClick={handleNextPage}
-                                    disabled={currentPage >= totalPages || isLoading}
-                                    className="p-1.5 bg-card-bg border border-pace-border rounded-lg text-admin-dim hover:text-admin-value disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                                    title="Next Page"
-                                >
-                                    <ChevronRight size={14} />
-                                </button>
+                    <div className="flex items-center gap-2">
+                        {isLoadingMore && (
+                            <div className="flex items-center gap-2 text-pace-purple font-medium text-xs">
+                                <Loader2 size={14} className="animate-spin" />
+                                <span>Loading more logs...</span>
                             </div>
-                        </div>
+                        )}
+                        {!hasMore && logs.length > 0 && (
+                            <span className="text-[11px] text-admin-dim font-normal">All activity records loaded</span>
+                        )}
                     </div>
                 </div>
             </div>
@@ -347,30 +327,30 @@ function LogsContent() {
                                 <Badge variant={getActionBadgeVariant(selectedLog.action)} className="font-mono text-xs">
                                     {selectedLog.action}
                                 </Badge>
-                                <span className="text-xs font-mono font-medium text-admin-dim">
+                                <span className="text-xs font-mono font-normal text-admin-dim">
                                     IP: {selectedLog.ip_address || '127.0.0.1'}
                                 </span>
                             </div>
 
                             <div>
-                                <p className="text-[10px] font-bold text-admin-dim uppercase tracking-wider mb-1">Event Description</p>
-                                <p className="text-xs font-semibold text-admin-value leading-relaxed bg-card-bg p-3 rounded-lg border border-pace-border">
+                                <p className="text-[10px] font-semibold text-admin-dim uppercase tracking-wider mb-1">Event Description</p>
+                                <p className="text-xs font-normal text-admin-value leading-relaxed bg-card-bg p-3 rounded-lg border border-pace-border">
                                     {selectedLog.description}
                                 </p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
                                 <div className="p-2.5 bg-card-bg rounded-lg border border-pace-border">
-                                    <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider mb-0.5">Actor</p>
-                                    <p className="font-bold text-admin-value">{selectedLog.actor_name || 'System'}</p>
+                                    <p className="text-[10px] text-admin-dim font-semibold uppercase tracking-wider mb-0.5">Actor</p>
+                                    <p className="font-medium text-admin-value">{selectedLog.actor_name || 'System'}</p>
                                     {selectedLog.actor_role && (
                                         <p className="text-[10px] font-mono text-pace-purple uppercase mt-0.5">{selectedLog.actor_role}</p>
                                     )}
                                 </div>
 
                                 <div className="p-2.5 bg-card-bg rounded-lg border border-pace-border">
-                                    <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider mb-0.5">Recorded At</p>
-                                    <p className="font-bold text-admin-value">
+                                    <p className="text-[10px] text-admin-dim font-semibold uppercase tracking-wider mb-0.5">Recorded At</p>
+                                    <p className="font-medium text-admin-value">
                                         {selectedLog.created_at ? new Date(selectedLog.created_at).toLocaleDateString('en-US', {
                                             year: 'numeric',
                                             month: 'short',
@@ -387,7 +367,7 @@ function LogsContent() {
                         <div className="flex justify-end pt-2">
                             <button
                                 onClick={() => setIsViewOpen(false)}
-                                className="px-4 py-2 bg-pace-purple text-white rounded-xl text-xs font-bold hover:bg-pace-purple/90 transition-all cursor-pointer shadow-sm"
+                                className="px-4 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all cursor-pointer shadow-sm"
                             >
                                 Close Inspection
                             </button>
