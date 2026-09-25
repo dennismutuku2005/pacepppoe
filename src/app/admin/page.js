@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Network, Users, Wallet, Smartphone, ArrowUpRight, LifeBuoy, ServerCog } from 'lucide-react'
+import { Network, Users, Wallet, Smartphone, ArrowUpRight, LifeBuoy, ServerCog, RefreshCw } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { dashboardService } from '@/services/admin/dashboard'
 import { Skeleton, AdminCardSkeleton } from '@/components/Skeleton'
@@ -16,23 +16,24 @@ export default function AdminHomePage() {
   const [widgets, setWidgets] = useState(null)
   const [isWalletBlurred, setIsWalletBlurred] = useState(true)
 
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true)
-      try {
-        const res = await dashboardService.getDashboardData()
-        if (res?.status === 'success') {
-          setCharts(res.data.charts.revenue_over_time)
-          setTransactions(res.data.recent_transactions || [])
-          setWidgets(res.data.widgets || null)
-        }
-      } catch (e) {
-        console.error("Admin dashboard fetch failed", e)
-        toast.error("Failed to load dashboard data. Please try again.")
-      } finally {
-        setIsLoading(false)
+  const fetchData = async () => {
+    setIsLoading(true)
+    try {
+      const res = await dashboardService.getDashboardData()
+      if (res?.status === 'success') {
+        setCharts(res.data.charts.revenue_over_time)
+        setTransactions(res.data.recent_transactions || [])
+        setWidgets(res.data.widgets || null)
       }
+    } catch (e) {
+      console.error("Admin dashboard fetch failed", e)
+      toast.error("Failed to load dashboard data. Please try again.")
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchData()
   }, [])
 
@@ -92,12 +93,21 @@ export default function AdminHomePage() {
           <h1 className="text-xl font-medium text-admin-value tracking-tight">Admin Portal</h1>
           <p className="text-xs font-medium text-gray-400 mt-1">Router and ISP management for the admin console.</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <Link href="/admin/routers" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all">
-            <Network size={16} /> Manage Routers
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+          <button
+            onClick={fetchData}
+            disabled={isLoading}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold disabled:opacity-50 cursor-pointer"
+            title="Refresh Admin Overview"
+          >
+            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+            <span>Refresh Overview</span>
+          </button>
+          <Link href="/admin/routers" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all shadow-sm active:scale-95">
+            <Network size={15} /> <span>Manage Routers</span>
           </Link>
-          <Link href="/admin/isps" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-sm font-medium hover:border-pace-purple hover:text-pace-purple transition-all">
-            <Users size={16} /> Manage ISPs
+          <Link href="/admin/isps" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:border-pace-purple hover:text-pace-purple transition-all active:scale-95">
+            <Users size={15} /> <span>Manage ISPs</span>
           </Link>
         </div>
       </div>

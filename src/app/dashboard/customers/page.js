@@ -325,18 +325,19 @@ function CustomersContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Subscriber Management</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">PPPoE subscriber provisioning, authentication secrets, and QoS profiles.</p>
                 </div>
-                <div className="flex items-center gap-3 self-start sm:self-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                     <button
                         onClick={fetchInitialData}
                         disabled={isLoading}
-                        className="p-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 shrink-0 cursor-pointer"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 text-xs font-semibold cursor-pointer"
                         title="Refresh list"
                     >
-                        <RefreshCw size={15} className={isLoading ? "animate-spin" : ""} />
+                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+                        <span>Refresh List</span>
                     </button>
                     <button 
                         onClick={() => handleOpenModal()}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 shadow-sm transition-all cursor-pointer"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 shadow-sm transition-all active:scale-95 cursor-pointer"
                     >
                         <UserPlus size={15} />
                         <span>Add Subscriber</span>

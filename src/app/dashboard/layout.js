@@ -16,7 +16,7 @@ import { GlobalSearch } from '@/components/GlobalSearch'
 
 export default function DashboardLayout({ children }) {
     const router = useRouter()
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
     const [showLogoutModal, setShowLogoutModal] = useState(false)
     const [user, setUser] = useState(null)

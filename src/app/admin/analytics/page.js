@@ -120,38 +120,37 @@ export default function AdminFinancialAnalyticsPage() {
           <p className="text-xs font-medium text-gray-400 mt-1">Audit paybill revenue charts, cash distributions, and monthly income curves.</p>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-3 w-full sm:flex-1">
-            <button
-              onClick={handleReload}
-              disabled={isLoading}
-              className="p-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 shrink-0"
-              title="Refresh Analytics"
-            >
-              <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
-            </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+          <button
+            onClick={handleReload}
+            disabled={isLoading}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 text-xs font-semibold cursor-pointer"
+            title="Refresh Analytics"
+          >
+            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+            <span>Refresh Analytics</span>
+          </button>
 
-            {/* Toggle Privacy Mask Button */}
-            <button
-              onClick={() => setIsMasked(!isMasked)}
-              className={cn(
-                "inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer active:scale-[0.98] shrink-0",
-                isMasked 
-                  ? "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/25" 
-                  : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:border-pace-purple hover:text-pace-purple"
-              )}
-            >
-              {isMasked ? (
-                <>
-                  <EyeOff size={16} /> Reveal Financials
-                </>
-              ) : (
-                <>
-                  <Eye size={16} /> Mask Financials
-                </>
-              )}
-            </button>
-          </div>
+          {/* Toggle Privacy Mask Button */}
+          <button
+            onClick={() => setIsMasked(!isMasked)}
+            className={cn(
+              "w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer active:scale-95 shadow-sm",
+              isMasked 
+                ? "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/25" 
+                : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:border-pace-purple hover:text-pace-purple"
+            )}
+          >
+            {isMasked ? (
+              <>
+                <EyeOff size={15} /> <span>Reveal Financials</span>
+              </>
+            ) : (
+              <>
+                <Eye size={15} /> <span>Mask Financials</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 

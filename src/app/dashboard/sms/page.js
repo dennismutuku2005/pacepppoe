@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Smartphone, Search, Send, Settings, CheckCircle2, XCircle, Clock, Database, MessageSquare, Info, ChevronRight } from 'lucide-react'
+import { Smartphone, Search, Send, Settings, CheckCircle2, XCircle, Clock, Database, MessageSquare, Info, ChevronRight, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { TablePageSkeleton } from '@/components/Skeleton'
 import { mockDashboardData } from '@/services/mockData'
@@ -83,13 +83,17 @@ function SMSContent() {
     const [newMessage, setNewMessage] = useState({ recipient: '', content: '' })
     const [isSending, setIsSending] = useState(false)
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
+    const loadSmsData = () => {
+        setIsLoading(true)
+        setTimeout(() => {
             setSmsLogs(mockDashboardData?.smsLogs?.length ? mockDashboardData.smsLogs : MOCK_LOGS)
             setProviders(mockDashboardData?.smsProviders?.length ? mockDashboardData.smsProviders : MOCK_PROVIDERS)
             setIsLoading(false)
-        }, 800)
-        return () => clearTimeout(timer)
+        }, 500)
+    }
+
+    useEffect(() => {
+        loadSmsData()
     }, [])
 
     const handleConfigProvider = (p) => {
@@ -147,12 +151,23 @@ function SMSContent() {
                     <h1 className="text-xl font-bold text-admin-value">SMS Center</h1>
                     <p className="text-xs text-admin-dim mt-0.5">Manage automated notifications and carrier gateways</p>
                 </div>
-                <button
-                    onClick={() => setIsSendModalOpen(true)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-pace-purple text-white text-xs font-semibold rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-sm"
-                >
-                    <Send size={14} /> Dispatch Message
-                </button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                        onClick={loadSmsData}
+                        disabled={isLoading}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 text-xs font-semibold cursor-pointer"
+                        title="Refresh SMS Center"
+                    >
+                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+                        <span>Refresh SMS</span>
+                    </button>
+                    <button
+                        onClick={() => setIsSendModalOpen(true)}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white text-xs font-semibold rounded-xl hover:bg-pace-purple/90 transition-all active:scale-95 shadow-sm cursor-pointer"
+                    >
+                        <Send size={14} /> <span>Dispatch Message</span>
+                    </button>
+                </div>
             </div>
 
             {/* ── Stats Row ── */}

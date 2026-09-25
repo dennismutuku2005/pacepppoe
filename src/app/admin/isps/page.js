@@ -260,34 +260,35 @@ export default function AdminISPsPage() {
           <h1 className="text-xl font-medium text-admin-value tracking-tight">ISPs</h1>
           <p className="text-xs font-medium text-gray-400 mt-1">Manage partner ISP tenant accounts and administrative access.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-3 w-full sm:flex-1">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+          <div className="relative w-full sm:w-64 group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim" size={15} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, username..."
+              className="w-full pl-10 pr-4 py-2 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all placeholder:text-admin-dim/60 shadow-xs"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
             <button
               onClick={handleReload}
               disabled={isLoading}
-              className="p-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 shrink-0 cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 text-xs font-semibold cursor-pointer"
               title="Refresh List"
             >
-              <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+              <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+              <span>Refresh List</span>
             </button>
-            
-            <div className="relative flex-1 sm:w-64 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim" size={16} />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name, username..."
-                className="w-full pl-11 pr-4 py-2.5 bg-card-bg border border-pace-border rounded-xl text-sm font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
-              />
-            </div>
-          </div>
 
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all cursor-pointer active:scale-[0.98] w-full sm:w-auto shrink-0 shadow-sm"
-          >
-            <Plus size={16} /> Create ISP
-          </button>
+            <button
+              onClick={openCreateModal}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all cursor-pointer active:scale-95 shadow-sm"
+            >
+              <Plus size={15} /> <span>Create ISP</span>
+            </button>
+          </div>
         </div>
       </div>
 

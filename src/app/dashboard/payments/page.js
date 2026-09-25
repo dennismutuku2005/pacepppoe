@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Search, Filter, Download, CreditCard, Wallet, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, MoreHorizontal } from 'lucide-react'
+import { Search, Filter, Download, CreditCard, Wallet, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, MoreHorizontal, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/Badge'
 import { TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
@@ -72,7 +72,7 @@ function PaymentsContent() {
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pace-border pb-6">
                 <div>
                     <h1 className="text-xl font-medium text-admin-value flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center">
@@ -82,12 +82,21 @@ function PaymentsContent() {
                     </h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Live unified payment and expense ledger</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                        onClick={fetchLedger}
+                        disabled={isLoading}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 text-xs font-semibold cursor-pointer"
+                        title="Refresh transactions"
+                    >
+                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+                        <span>Refresh Ledger</span>
+                    </button>
                     <button 
                         onClick={() => toast.success('Transactions exported', { description: 'CSV format ready.' })}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-pace-bg-subtle border border-pace-border text-admin-dim rounded-xl hover:text-pace-purple hover:border-pace-purple transition-all text-sm font-medium shadow-sm active:scale-95"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-semibold shadow-sm active:scale-95 cursor-pointer"
                     >
-                        <Download size={16} />
+                        <Download size={15} />
                         <span>Export CSV</span>
                     </button>
                 </div>

@@ -156,24 +156,25 @@ function DashboardContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Dashboard</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Infrastructure orchestration and performance summary</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                     <div className="w-full sm:w-auto">
                         <GlobalFilters onFilterChange={(f) => setFilters(prev => ({ ...prev, ...f }))} />
                     </div>
-                    <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                         <button
                             onClick={fetchData}
                             disabled={isRefreshing}
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-sm font-medium disabled:opacity-50"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold disabled:opacity-50 cursor-pointer"
+                            title="Refresh dashboard"
                         >
-                            <RefreshCw size={16} className={cn(isRefreshing && "animate-spin")} />
-                            <span className="sm:hidden">Refresh Data</span>
+                            <RefreshCw size={14} className={cn(isRefreshing && "animate-spin")} />
+                            <span>Refresh Data</span>
                         </button>
                         <Link
                             href="/dashboard/customers"
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-sm font-medium shadow-sm active:scale-95"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-semibold shadow-sm active:scale-95"
                         >
-                            <Plus size={16} />
+                            <Plus size={15} />
                             <span>Provision Subscriber</span>
                         </Link>
                     </div>

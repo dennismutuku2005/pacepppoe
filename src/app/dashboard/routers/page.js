@@ -22,23 +22,24 @@ function RoutersContent() {
     const [selectedRouter, setSelectedRouter] = useState(null)
     const [isSystemInfoOpen, setIsSystemInfoOpen] = useState(false)
 
-    useEffect(() => {
-        async function fetchRouters() {
-            setIsLoading(true)
-            try {
-                const res = await routerService.getRouters()
-                if (res.status === 'success') {
-                    setRouters(res.data)
-                } else {
-                    throw new Error(res.message)
-                }
-            } catch (err) {
-                console.warn("Failed to load dynamic routers, falling back to mocks:", err)
-                setRouters(mockRouters)
-            } finally {
-                setIsLoading(false)
+    const fetchRouters = async () => {
+        setIsLoading(true)
+        try {
+            const res = await routerService.getRouters()
+            if (res.status === 'success') {
+                setRouters(res.data)
+            } else {
+                throw new Error(res.message)
             }
+        } catch (err) {
+            console.warn("Failed to load dynamic routers, falling back to mocks:", err)
+            setRouters(mockRouters)
+        } finally {
+            setIsLoading(false)
         }
+    }
+
+    useEffect(() => {
         fetchRouters()
     }, [])
 
@@ -67,10 +68,28 @@ function RoutersContent() {
     return (
         <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree text-sm">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pace-border pb-6">
                 <div>
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Routers</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Manage and monitor your network infrastructure</p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                        onClick={fetchRouters}
+                        disabled={isLoading}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 text-xs font-semibold cursor-pointer"
+                        title="Refresh routers"
+                    >
+                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
+                        <span>Refresh Routers</span>
+                    </button>
+                    <button 
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 shadow-sm transition-all active:scale-95 cursor-pointer"
+                    >
+                        <Plus size={15} />
+                        <span>Add Router</span>
+                    </button>
                 </div>
             </div>
 

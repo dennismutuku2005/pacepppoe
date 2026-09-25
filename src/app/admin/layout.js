@@ -28,7 +28,7 @@ const ADMIN_NAVIGATION = [
 export default function AdminLayout({ children }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [user, setUser] = useState(null)
@@ -52,6 +52,11 @@ export default function AdminLayout({ children }) {
     const handleResize = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
+      if (mobile) {
+        setIsSidebarOpen(false)
+      } else {
+        setIsSidebarOpen(true)
+      }
     }
 
     handleResize()
