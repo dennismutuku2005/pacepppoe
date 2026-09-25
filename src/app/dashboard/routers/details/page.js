@@ -4,8 +4,8 @@ import React, { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { 
     Router as RouterIcon, Cpu, HardDrive, Users, Clock, 
-    ChevronLeft, RefreshCw, Power, Settings, ShieldCheck,
-    Activity, Globe, Zap, Network, List, ArrowUpRight, ArrowDownRight
+    RefreshCw, Power, Settings, ShieldCheck,
+    Activity, Globe, Layers, Network, List, ArrowUpRight, ArrowDownRight
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { mockRouters, mockCustomers } from '@/services/mockData'
@@ -73,15 +73,7 @@ function RouterDetailsContent() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#501DAA] via-transparent to-black/10" />
                 
-                <div className="absolute inset-0 p-6 sm:p-10 flex flex-col justify-between">
-                    <button 
-                        onClick={() => router.back()}
-                        className="flex items-center gap-2 text-white/80 hover:text-white transition-colors w-fit"
-                    >
-                        <ChevronLeft size={20} />
-                        <span className="text-sm font-medium">Back to Infrastructure</span>
-                    </button>
-
+                <div className="absolute inset-0 p-6 sm:p-10 flex flex-col justify-end">
                     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
                         <div className="flex items-center gap-6">
                             <div className="space-y-1">

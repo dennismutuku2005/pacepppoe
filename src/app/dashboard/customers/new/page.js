@@ -13,7 +13,7 @@ import {
     User, Network, CreditCard, ChevronRight,
     ChevronLeft, CheckCircle2, Building2,
     MapPin, Globe, Calendar, BadgeDollarSign,
-    ArrowLeft, Send, Sparkles, AlertCircle
+    Send, Sparkles, AlertCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -71,17 +71,13 @@ export default function NewClientPage() {
     return (
         <div className="max-w-4xl mx-auto space-y-8 font-figtree pb-20">
             {/* Page Header */}
-            <div className="flex items-center justify-between">
-                <button
-                    onClick={() => router.back()}
-                    className="flex items-center gap-2 text-admin-label hover:text-admin-value transition-colors group"
-                >
-                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                    <span className="text-[11px] font-bold uppercase tracking-widest">Back to Directory</span>
-                </button>
+            <div className="flex items-center justify-between border-b border-pace-border pb-6">
+                <div>
+                    <h1 className="text-xl font-bold text-admin-value leading-none">Register New ISP</h1>
+                    <p className="text-xs text-admin-dim mt-1 font-medium">Provision new operator account credentials and service routing</p>
+                </div>
                 <div className="text-right">
-                    <h1 className="text-[20px] font-bold text-admin-value leading-none">Register New ISP</h1>
-                    <p className="text-[11px] text-admin-label mt-2 font-medium uppercase tracking-tighter">Step {step} of 3</p>
+                    <p className="text-[11px] text-pace-purple font-bold uppercase tracking-wider">Step {step} of 3</p>
                 </div>
             </div>
 

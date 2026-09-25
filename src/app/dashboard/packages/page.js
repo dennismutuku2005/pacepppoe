@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react'
-import { Plus, Edit3, Trash2, Zap, Activity, Search, DollarSign, Network, Users, RefreshCw } from 'lucide-react'
+import { Plus, Edit3, Trash2, Layers, Activity, Search, DollarSign, Network, Users, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { AdminCardSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { planService } from '@/services/isp/plans'
@@ -171,7 +171,7 @@ function PackagesContent() {
         {
             label: 'Total Tiers',
             value: totalPlans,
-            icon: Zap,
+            icon: Layers,
             color: 'text-pace-purple',
             bg: 'bg-pace-purple/5',
             accent: 'bg-gradient-to-b from-pace-purple to-indigo-500',
@@ -307,7 +307,7 @@ function PackagesContent() {
                                             <td className="px-6 py-3">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-lg bg-pace-purple/10 flex items-center justify-center text-pace-purple font-bold text-xs shrink-0">
-                                                        <Zap size={14} />
+                                                        <Layers size={14} />
                                                     </div>
                                                     <div>
                                                         <div className="text-xs font-semibold text-admin-value">{p.name}</div>

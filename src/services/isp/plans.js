@@ -62,9 +62,10 @@ export const planService = {
         }
     },
 
-    getPlanAnalytics: async () => {
+    getPlanAnalytics: async (section = null) => {
         try {
-            const res = await apiFetch('/isp/plans.php?analytics=1');
+            const url = section ? `/isp/plans.php?analytics=1&section=${section}` : '/isp/plans.php?analytics=1';
+            const res = await apiFetch(url);
             if (res && res.status === 'success') {
                 return {
                     status: 'success',
@@ -75,6 +76,46 @@ export const planService = {
         } catch (e) {
             console.error("getPlanAnalytics failed", e);
             throw e;
+        }
+    },
+
+    getPlanKPIs: async () => {
+        try {
+            const res = await apiFetch('/isp/plans.php?analytics=1&section=kpis');
+            return res?.status === 'success' ? res.data : null;
+        } catch (e) {
+            console.error("getPlanKPIs failed", e);
+            return null;
+        }
+    },
+
+    getPlanDistribution: async () => {
+        try {
+            const res = await apiFetch('/isp/plans.php?analytics=1&section=distribution');
+            return res?.status === 'success' ? res.data : null;
+        } catch (e) {
+            console.error("getPlanDistribution failed", e);
+            return null;
+        }
+    },
+
+    getPlanHistory: async () => {
+        try {
+            const res = await apiFetch('/isp/plans.php?analytics=1&section=history');
+            return res?.status === 'success' ? res.data : null;
+        } catch (e) {
+            console.error("getPlanHistory failed", e);
+            return null;
+        }
+    },
+
+    getPlanSummary: async () => {
+        try {
+            const res = await apiFetch('/isp/plans.php?analytics=1&section=summary');
+            return res?.status === 'success' ? res.data : null;
+        } catch (e) {
+            console.error("getPlanSummary failed", e);
+            return null;
         }
     }
 };
