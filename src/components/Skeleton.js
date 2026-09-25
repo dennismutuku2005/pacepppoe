@@ -9,23 +9,29 @@ export const Skeleton = ({ className }) => (
 // Admin stats card skeleton — Exactly matches 1:1 with admin metric cards
 export const AdminCardSkeleton = ({ className }) => (
     <div className={cn("relative overflow-hidden bg-card-bg border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm min-w-0 flex items-center justify-between gap-3", className)}>
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-pace-bg-subtle" />
         <div className="space-y-1.5 flex-1 min-w-0">
-            <Skeleton className="h-4 w-20 sm:w-28 rounded-md" />
-            <Skeleton className="h-7 sm:h-8 w-14 sm:w-20 rounded-md mt-1" />
+            <Skeleton className="h-3.5 w-20 sm:w-28 rounded-md" />
+            <Skeleton className="h-6 sm:h-7 w-16 sm:w-24 rounded-md mt-1" />
+            <Skeleton className="h-2.5 w-12 sm:w-16 rounded-md mt-1" />
         </div>
         <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl shrink-0" />
     </div>
 );
 
-// Card skeleton for dashboard metrics
-export const CardSkeleton = () => (
-    <div className="bg-card-bg border border-pace-border rounded-xl p-5">
-        <div className="flex justify-between items-start mb-4">
-            <Skeleton className="w-10 h-10 rounded-xl" />
-        </div>
-        <div className="space-y-2">
-            <Skeleton className="h-6 w-24" />
-            <Skeleton className="h-3.5 w-16" />
+// Card skeleton for dashboard metrics — Exactly matches 1:1 with dashboard metric cards
+export const CardSkeleton = ({ className }) => (
+    <div className={cn("relative overflow-hidden bg-card-bg border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm min-w-0", className)}>
+        {/* Left accent color strip placeholder */}
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-pace-bg-subtle" />
+        
+        <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+                <Skeleton className="h-3.5 w-24 sm:w-28 rounded-md" />
+                <Skeleton className="h-6 sm:h-7 w-20 sm:w-28 rounded-md mt-2" />
+                <Skeleton className="h-2.5 w-16 sm:w-20 rounded-md mt-1.5" />
+            </div>
+            <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl shrink-0" />
         </div>
     </div>
 );
