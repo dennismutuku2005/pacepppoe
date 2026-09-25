@@ -317,30 +317,26 @@ function CustomersContent() {
         });
     }, [customers, search, filterRouter, filterPlan, filterStatus]);
 
-    if (isLoading) {
-        return <TablePageSkeleton />;
-    }
-
     return (
-        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree">
+        <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-12 font-figtree">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pace-border pb-6">
                 <div>
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Subscriber Management</h1>
-                    <p className="text-xs font-medium text-gray-400 mt-1">PPPoE subscriber provisioning, authentication secrets, and QoS profiles</p>
+                    <p className="text-xs font-medium text-gray-400 mt-1">PPPoE subscriber provisioning, authentication secrets, and QoS profiles.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 self-start sm:self-auto">
                     <button
                         onClick={fetchInitialData}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold cursor-pointer"
+                        disabled={isLoading}
+                        className="p-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 shrink-0 cursor-pointer"
                         title="Refresh list"
                     >
-                        <RefreshCw size={14} />
-                        <span>Refresh</span>
+                        <RefreshCw size={15} className={isLoading ? "animate-spin" : ""} />
                     </button>
                     <button 
                         onClick={() => handleOpenModal()}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-semibold shadow-sm active:scale-95 cursor-pointer"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 shadow-sm transition-all cursor-pointer"
                     >
                         <UserPlus size={15} />
                         <span>Add Subscriber</span>
@@ -350,7 +346,9 @@ function CustomersContent() {
 
             {/* Top Metrics Cards - Dashboard Theme */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
+                {isLoading ? (
+                    [...Array(4)].map((_, i) => <CardSkeleton key={i} />)
+                ) : [
                     {
                         label: "Total Subscribers",
                         value: metrics.total.toLocaleString(),
@@ -510,105 +508,132 @@ function CustomersContent() {
             </div>
 
             {/* Subscribers Matrix Table */}
-            <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left whitespace-nowrap">
+            <div className="bg-card-bg border border-pace-border rounded-2xl overflow-hidden shadow-sm w-full">
+                <div className="overflow-x-auto w-full">
+                    <table className="w-full text-left whitespace-nowrap min-w-[950px]">
                         <thead>
-                            <tr className="bg-pace-bg-subtle/50 border-b border-pace-border">
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Subscriber / Account</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">PPPoE Credentials</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">MikroTik Router</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider">Assigned QoS Plan</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Billing / Expiry</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-center">Status</th>
-                                <th className="px-6 py-3 text-[10px] font-semibold text-admin-dim uppercase tracking-wider text-right">Actions</th>
+                            <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-semibold text-admin-dim uppercase tracking-wider text-[10px]">
+                                <th className="px-6 py-3.5">Subscriber / Account</th>
+                                <th className="px-6 py-3.5">PPPoE Credentials</th>
+                                <th className="px-6 py-3.5">Router Gateway</th>
+                                <th className="px-6 py-3.5">Assigned Plan</th>
+                                <th className="px-6 py-3.5 text-center">Billing & Expiry</th>
+                                <th className="px-6 py-3.5 text-center">Status</th>
+                                <th className="px-6 py-3.5 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-pace-border">
-                            {filteredCustomers.length === 0 ? (
+                        <tbody className="divide-y divide-pace-border/70">
+                            {isLoading ? (
+                                Array.from({ length: 7 }).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td className="px-6 py-4"><div className="h-4 w-32 bg-pace-bg-subtle rounded" /></td>
+                                        <td className="px-6 py-4"><div className="h-4 w-28 bg-pace-bg-subtle rounded" /></td>
+                                        <td className="px-6 py-4"><div className="h-4 w-24 bg-pace-bg-subtle rounded" /></td>
+                                        <td className="px-6 py-4"><div className="h-4 w-28 bg-pace-bg-subtle rounded" /></td>
+                                        <td className="px-6 py-4 text-center"><div className="h-4 w-20 bg-pace-bg-subtle rounded mx-auto" /></td>
+                                        <td className="px-6 py-4 text-center"><div className="h-5 w-16 bg-pace-bg-subtle rounded-full mx-auto" /></td>
+                                        <td className="px-6 py-4 text-right"><div className="h-4 w-16 bg-pace-bg-subtle rounded ml-auto" /></td>
+                                    </tr>
+                                ))
+                            ) : filteredCustomers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="py-24 text-center text-admin-dim text-sm font-medium">
-                                        No subscribers found in database. Click "Add Subscriber" to provision one.
+                                    <td colSpan="7" className="py-24 text-center">
+                                        <div className="flex flex-col items-center justify-center gap-2">
+                                            <div className="w-12 h-12 rounded-2xl bg-pace-bg-subtle flex items-center justify-center text-admin-dim">
+                                                <Users size={24} />
+                                            </div>
+                                            <p className="text-sm font-medium text-admin-value">No subscribers found</p>
+                                            <p className="text-xs text-admin-dim font-normal">Add a subscriber or adjust your filters above.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : (
                                 filteredCustomers.map((c) => {
                                     const fullName = c.name || `${c.firstName} ${c.lastName}`;
+                                    const isEnabled = c.status === 'enabled' || c.status === 'active';
                                     return (
-                                        <tr key={c.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
-                                            <td className="px-6 py-3">
+                                        <tr key={c.id} className="hover:bg-pace-bg-subtle/40 transition-colors group">
+                                            {/* Subscriber */}
+                                            <td className="px-6 py-3.5">
                                                 <div className="flex flex-col">
-                                                    <span className="font-semibold text-admin-value text-xs group-hover:text-pace-purple transition-colors">{fullName}</span>
+                                                    <span className="font-medium text-admin-value text-xs group-hover:text-pace-purple transition-colors">{fullName}</span>
                                                     <div className="flex items-center gap-2 mt-0.5">
-                                                        <span className="text-[10px] text-admin-dim font-mono">Acc: {c.accountNumber || c.phone}</span>
-                                                        <span className="text-[10px] text-gray-400">•</span>
-                                                        <span className="text-[10px] text-admin-dim">{c.phone}</span>
+                                                        <span className="text-[11px] text-admin-dim font-mono">{c.accountNumber || c.phone}</span>
+                                                        {c.phone && c.accountNumber && c.accountNumber !== c.phone && (
+                                                            <>
+                                                                <span className="text-[10px] text-gray-400">•</span>
+                                                                <span className="text-[11px] text-admin-dim font-normal">{c.phone}</span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-3">
+
+                                            {/* PPPoE Credentials */}
+                                            <td className="px-6 py-3.5">
                                                 <div className="flex flex-col">
-                                                    <span className="text-[11px] font-semibold text-pace-purple font-mono">{c.username}</span>
-                                                    <span className="text-[9px] text-gray-400 font-medium">PAP/CHAP Auth</span>
+                                                    <span className="text-xs font-mono font-medium text-pace-purple">{c.username}</span>
+                                                    <span className="text-[10px] text-admin-dim font-normal">PAP/CHAP</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-3">
-                                                <span className="text-xs font-semibold text-admin-value">{c.router || 'Unassigned'}</span>
+
+                                            {/* Router */}
+                                            <td className="px-6 py-3.5 text-xs font-normal text-admin-value">
+                                                <span>{c.router || 'Unassigned'}</span>
                                             </td>
-                                            <td className="px-6 py-3">
+
+                                            {/* Plan */}
+                                            <td className="px-6 py-3.5">
                                                 <div className="flex flex-col">
-                                                    <span className="font-semibold text-admin-value text-[11px]">{c.plan || 'Standard Plan'}</span>
-                                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                                        {c.bandwidth && <span className="text-[9px] text-pace-purple font-mono font-bold">{c.bandwidth}</span>}
-                                                        <span className="text-[9px] text-admin-dim font-mono font-medium">KES {Number(c.price || 0).toLocaleString()}</span>
-                                                    </div>
+                                                    <span className="font-medium text-admin-value text-xs">{c.plan || 'Standard Plan'}</span>
+                                                    <span className="text-[11px] text-admin-dim font-normal mt-0.5">
+                                                        KES {Number(c.price || 0).toLocaleString()}
+                                                    </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-3 text-center">
+
+                                            {/* Billing / Expiry */}
+                                            <td className="px-6 py-3.5 text-center">
                                                 <div className="flex flex-col items-center">
-                                                    <span className="text-[11px] font-bold text-admin-value font-mono">
+                                                    <span className="text-xs font-mono font-normal text-admin-value">
                                                         {c.nextPayment ? c.nextPayment.split(' ')[0] : 'No Expiry'}
                                                     </span>
-                                                    <span className="text-[9px] text-admin-dim font-medium mt-0.5">
-                                                        {c.totalSpent > 0 ? `Setup: KES ${Number(c.totalSpent).toLocaleString()}` : 'Regular Plan'}
-                                                    </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-3 text-center">
+
+                                            {/* Status Toggle */}
+                                            <td className="px-6 py-3.5 text-center">
                                                 <button 
                                                     onClick={() => handleToggleStatus(c.id, c.status)}
-                                                    className="transition-transform active:scale-95"
-                                                    title="Click to toggle status"
+                                                    className="transition-transform active:scale-95 cursor-pointer"
+                                                    title={isEnabled ? "Click to suspend account" : "Click to activate account"}
                                                 >
-                                                    <Badge className={cn(
-                                                        "border-none px-2.5 py-0.5 text-[8px] font-black tracking-widest uppercase min-w-[62px] block text-center transition-all cursor-pointer",
-                                                        c.status === 'enabled' 
-                                                            ? "bg-green-500/10 text-green-600 hover:bg-green-500/20" 
-                                                            : "bg-red-500/10 text-red-600 hover:bg-red-500/20"
-                                                    )}>
-                                                        {c.status === 'enabled' ? 'Active' : 'Disabled'}
+                                                    <Badge variant={isEnabled ? 'success' : 'error'} className="text-[10px] font-medium">
+                                                        {isEnabled ? 'Active' : 'Suspended'}
                                                     </Badge>
                                                 </button>
                                             </td>
-                                            <td className="px-6 py-3 text-right">
-                                                <div className="flex justify-end items-center gap-1.5">
+
+                                            {/* Actions */}
+                                            <td className="px-6 py-3.5 text-right">
+                                                <div className="flex items-center justify-end gap-1">
                                                     <button 
-                                                        onClick={() => handleOpenModal(c)}
-                                                        className="p-1.5 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-lg transition-all"
-                                                        title="Edit Subscriber"
-                                                    >
-                                                        <Edit2 size={14} />
-                                                    </button>
-                                                    <button 
-                                                        className="p-1.5 text-admin-dim hover:text-orange-500 hover:bg-orange-500/5 rounded-lg transition-all"
-                                                        title="Open Support Ticket"
                                                         onClick={() => router.push(`/dashboard/tickets?customer=${encodeURIComponent(fullName)}`)}
+                                                        className="p-1.5 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/10 rounded-lg transition-colors cursor-pointer"
+                                                        title="Open Support Ticket"
                                                     >
                                                         <LifeBuoy size={14} />
                                                     </button>
                                                     <button 
+                                                        onClick={() => handleOpenModal(c)}
+                                                        className="p-1.5 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/10 rounded-lg transition-colors cursor-pointer"
+                                                        title="Edit Subscriber Profile"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                    <button 
                                                         onClick={() => handleDelete(c.id, fullName)}
-                                                        className="p-1.5 text-admin-dim hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-all"
+                                                        className="p-1.5 text-admin-dim hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
                                                         title="Delete Subscriber"
                                                     >
                                                         <Trash2 size={14} />
@@ -621,6 +646,13 @@ function CustomersContent() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Bottom Footer Total */}
+                <div className="px-6 py-4 border-t border-pace-border flex items-center justify-between bg-pace-bg-subtle/20 text-xs">
+                    <span className="text-admin-dim font-normal">
+                        Showing <span className="font-semibold text-admin-value">{filteredCustomers.length}</span> of <span className="font-semibold text-admin-value">{customers.length}</span> total subscribers
+                    </span>
                 </div>
             </div>
 
