@@ -97,7 +97,7 @@ export default function AdminProfilePage() {
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
           <button
-            onClick={fetchProfile}
+            onClick={loadProfile}
             disabled={isLoading}
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
             title="Reload Profile"
