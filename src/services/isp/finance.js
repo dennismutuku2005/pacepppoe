@@ -134,18 +134,99 @@ export const financeService = {
     },
 
     // ── Reports & Financial Intelligence ─────────────────────────────────────────
+    getReportStats: async () => {
+        try {
+            const res = await apiFetch('/isp/finance/reports.php?section=stats');
+            return (res && res.status === 'success') ? res.data : null;
+        } catch (e) {
+            console.error("getReportStats failed", e);
+            return null;
+        }
+    },
+
+    getReportRevenueByDay: async () => {
+        try {
+            const res = await apiFetch('/isp/finance/reports.php?section=revenue_by_day');
+            return (res && res.status === 'success') ? res.data : [];
+        } catch (e) {
+            console.error("getReportRevenueByDay failed", e);
+            return [];
+        }
+    },
+
+    getReportIncomeVsExpenses: async () => {
+        try {
+            const res = await apiFetch('/isp/finance/reports.php?section=income_vs_expenses');
+            return (res && res.status === 'success') ? res.data : [];
+        } catch (e) {
+            console.error("getReportIncomeVsExpenses failed", e);
+            return [];
+        }
+    },
+
+    getReportPlansTrend: async () => {
+        try {
+            const res = await apiFetch('/isp/finance/reports.php?section=plans_trend');
+            return (res && res.status === 'success') ? res.data : { monthlyRevenueByPlan: [], monthlySubscribersByPlan: [] };
+        } catch (e) {
+            console.error("getReportPlansTrend failed", e);
+            return { monthlyRevenueByPlan: [], monthlySubscribersByPlan: [] };
+        }
+    },
+
+    getReportPackagePopularity: async () => {
+        try {
+            const res = await apiFetch('/isp/finance/reports.php?section=package_popularity');
+            return (res && res.status === 'success') ? res.data : [];
+        } catch (e) {
+            console.error("getReportPackagePopularity failed", e);
+            return [];
+        }
+    },
+
+    getReportRecent: async () => {
+        try {
+            const res = await apiFetch('/isp/finance/reports.php?section=recent');
+            return (res && res.status === 'success') ? res.data : { recentPayments: [], expenses: [] };
+        } catch (e) {
+            console.error("getReportRecent failed", e);
+            return { recentPayments: [], expenses: [] };
+        }
+    },
+
     getReports: async () => {
         try {
-            const res = await apiFetch('/isp/finance/reports.php');
-            if (res && res.status === 'success') {
-                return {
-                    status: 'success',
-                    data: res.data
-                };
-            }
-            return { status: 'error', message: res?.message || 'Failed to fetch financial reports', data: null };
+            const [statsRes, revDayRes, incExpRes, plansRes, packRes, recentRes] = await Promise.allSettled([
+                financeService.getReportStats(),
+                financeService.getReportRevenueByDay(),
+                financeService.getReportIncomeVsExpenses(),
+                financeService.getReportPlansTrend(),
+                financeService.getReportPackagePopularity(),
+                financeService.getReportRecent()
+            ]);
+
+            const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
+            const revenueByDay = revDayRes.status === 'fulfilled' ? revDayRes.value : [];
+            const incomeVsExpenses = incExpRes.status === 'fulfilled' ? incExpRes.value : [];
+            const plansTrend = plansRes.status === 'fulfilled' ? plansRes.value : {};
+            const packagePopularity = packRes.status === 'fulfilled' ? packRes.value : [];
+            const recent = recentRes.status === 'fulfilled' ? recentRes.value : {};
+
+            return {
+                status: 'success',
+                data: {
+                    stats: stats || {},
+                    revenueByDay,
+                    monthlyRevenueByPlan: plansTrend?.monthlyRevenueByPlan || [],
+                    monthlySubscribersByPlan: plansTrend?.monthlySubscribersByPlan || [],
+                    incomeVsExpenses,
+                    packagePopularity,
+                    recentPayments: recent?.recentPayments || [],
+                    expenses: recent?.expenses || []
+                }
+            };
         } catch (e) {
-            console.error("getReports failed", e);
+            console.error("getReports parallel failed", e);
             throw e;
         }
     },

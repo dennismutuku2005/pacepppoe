@@ -17,79 +17,70 @@ import {
 } from 'recharts'
 
 function ReportsContent() {
-    const [isLoading, setIsLoading] = useState(true)
-    const [timeframe, setTimeframe] = useState('This Month')
-    const [reportsData, setReportsData] = useState(null)
+    const [isStatsLoading, setIsStatsLoading] = useState(true)
+    const [isChartsLoading, setIsChartsLoading] = useState(true)
+    const [isRecentLoading, setIsRecentLoading] = useState(true)
 
-    const fetchReports = async () => {
-        try {
-            setIsLoading(true)
-            const res = await financeService.getReports()
-            if (res && res.status === 'success' && res.data) {
-                setReportsData(res.data)
-            } else {
-                toast.error('Failed to load reports', { description: res?.message })
-            }
-        } catch (err) {
-            console.error("Error loading reports:", err)
-            toast.error('Failed to connect to reports service')
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        fetchReports()
-    }, [])
-
-    if (isLoading) return (
-        <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-pace-border pb-6">
-                <div className="space-y-2">
-                    <Skeleton className="h-7 w-64 bg-gray-200 dark:bg-gray-800" />
-                    <Skeleton className="h-3.5 w-80 bg-gray-200 dark:bg-gray-800" />
-                </div>
-                <div className="flex gap-3">
-                    <Skeleton className="h-10 w-28 rounded-xl bg-gray-200 dark:bg-gray-800" />
-                    <Skeleton className="h-10 w-32 rounded-xl bg-gray-200 dark:bg-gray-800" />
-                </div>
-            </div>
-            {/* Financial Summary Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {[...Array(4)].map((_, i) => <CardSkeleton key={i} />)}
-            </div>
-            {/* Chart Area */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-8 bg-card-bg border border-pace-border rounded-xl p-6 shadow-sm h-[380px] flex flex-col justify-between">
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-40 bg-gray-200 dark:bg-gray-800" />
-                        <Skeleton className="h-3 w-28 bg-gray-200 dark:bg-gray-800" />
-                    </div>
-                    <Skeleton className="h-[220px] w-full rounded-xl bg-gray-200 dark:bg-gray-800" />
-                </div>
-                <div className="lg:col-span-4 bg-card-bg border border-pace-border rounded-xl p-6 shadow-sm h-[380px] flex flex-col justify-between">
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-32 bg-gray-200 dark:bg-gray-800" />
-                        <Skeleton className="h-3 w-24 bg-gray-200 dark:bg-gray-800" />
-                    </div>
-                    <Skeleton className="h-[220px] w-full rounded-xl bg-gray-200 dark:bg-gray-800" />
-                </div>
-            </div>
-        </div>
-    )
-
-    const stats = reportsData?.stats || {
+    const [stats, setStats] = useState({
         totalRevenueMonth: 0,
         totalExpensesMonth: 0,
         netProfitMonth: 0,
+        revenueGrowthPct: 0,
+        expenseGrowthPct: 0,
+        profitGrowthPct: 0,
         collectionRate: '100%'
+    })
+    const [revenueByDay, setRevenueByDay] = useState([])
+    const [incomeVsExpenses, setIncomeVsExpenses] = useState([])
+    const [packagePopularity, setPackagePopularity] = useState([])
+    const [recentPayments, setRecentPayments] = useState([])
+    const [expenses, setExpenses] = useState([])
+
+    const fetchReportsParallel = () => {
+        setIsStatsLoading(true)
+        setIsChartsLoading(true)
+        setIsRecentLoading(true)
+
+        // 1. Fetch Stats in parallel (instant top cards)
+        financeService.getReportStats().then(s => {
+            if (s) setStats(s)
+            setIsStatsLoading(false)
+        }).catch(err => {
+            console.error("Stats fetch error:", err)
+            setIsStatsLoading(false)
+        })
+
+        // 2. Fetch Charts & breakdown in parallel
+        Promise.allSettled([
+            financeService.getReportRevenueByDay(),
+            financeService.getReportIncomeVsExpenses(),
+            financeService.getReportPackagePopularity()
+        ]).then(([revRes, incRes, packRes]) => {
+            if (revRes.status === 'fulfilled') setRevenueByDay(revRes.value)
+            if (incRes.status === 'fulfilled') setIncomeVsExpenses(incRes.value)
+            if (packRes.status === 'fulfilled') setPackagePopularity(packRes.value)
+            setIsChartsLoading(false)
+        }).catch(err => {
+            console.error("Charts fetch error:", err)
+            setIsChartsLoading(false)
+        })
+
+        // 3. Fetch Recent payments and expenses in parallel
+        financeService.getReportRecent().then(r => {
+            if (r) {
+                setRecentPayments(r.recentPayments || [])
+                setExpenses(r.expenses || [])
+            }
+            setIsRecentLoading(false)
+        }).catch(err => {
+            console.error("Recent records fetch error:", err)
+            setIsRecentLoading(false)
+        })
     }
-    const revenueByDay = reportsData?.revenueByDay || []
-    const packagePopularity = reportsData?.packagePopularity || []
-    const incomeVsExpenses = reportsData?.incomeVsExpenses || []
-    const recentPayments = reportsData?.recentPayments || []
-    const expenses = reportsData?.expenses || []
+
+    useEffect(() => {
+        fetchReportsParallel()
+    }, [])
 
     const financialMetrics = [
         { 
@@ -158,7 +149,9 @@ function ReportsContent() {
 
             {/* Financial Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {financialMetrics.map((m, i) => (
+                {isStatsLoading ? (
+                    [...Array(4)].map((_, i) => <CardSkeleton key={i} />)
+                ) : financialMetrics.map((m, i) => (
                     <div 
                         key={i} 
                         className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0"

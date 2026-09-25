@@ -51,30 +51,51 @@ function DashboardContent() {
     const [isRevenueBlurred, setIsRevenueBlurred] = useState(true)
     const [filters, setFilters] = useState({ router: 'All Routers', dateRange: 'Today' })
 
-    const fetchData = async () => {
+    const fetchData = () => {
         setIsRefreshing(true)
         setIsWidgetsLoading(true)
         setIsChartsLoading(true)
         setIsTxLoading(true)
 
-        try {
-            const res = await dashboardService.getDashboardData(filters)
-            if (res?.status === 'success') {
-                setWidgets(res.data.widgets)
-                setCharts(res.data.charts.revenue_over_time)
-                setTransactions(res.data.recent_transactions)
-                setRouters(res.data.router_status)
-                setTickets(res.data.recent_tickets || [])
-                setSmsLogs(res.data.recent_sms || [])
-            }
-        } catch (e) {
-            console.error("Dashboard fetch error:", e)
-        } finally {
+        // 1. Fetch widgets in parallel (instant top metric cards)
+        dashboardService.getWidgets().then(w => {
+            setWidgets(w)
             setIsWidgetsLoading(false)
+        }).catch(err => {
+            console.error("Widgets fetch error:", err)
+            setIsWidgetsLoading(false)
+        })
+
+        // 2. Fetch revenue charts in parallel
+        dashboardService.getCharts().then(c => {
+            setCharts(c)
             setIsChartsLoading(false)
+        }).catch(err => {
+            console.error("Charts fetch error:", err)
+            setIsChartsLoading(false)
+        })
+
+        // 3. Fetch recent transactions in parallel
+        dashboardService.getRecentTransactions().then(tx => {
+            setTransactions(tx)
             setIsTxLoading(false)
-            setIsRefreshing(false)
-        }
+        }).catch(err => {
+            console.error("Transactions fetch error:", err)
+            setIsTxLoading(false)
+        })
+
+        // 4. Fetch router telemetry in parallel
+        dashboardService.getRouterStatus().then(r => {
+            setRouters(r)
+        }).catch(err => {
+            console.error("Router status fetch error:", err)
+        })
+
+        // 5. Fetch recent tickets & SMS in parallel
+        dashboardService.getRecentTickets().then(t => setTickets(t)).catch(console.error)
+        dashboardService.getRecentSms().then(s => setSmsLogs(s)).catch(console.error)
+
+        setTimeout(() => setIsRefreshing(false), 400)
     }
 
     useEffect(() => {
