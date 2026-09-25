@@ -101,7 +101,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
                     {/* White Overlay */}
                     <div className="absolute inset-0 bg-white/75 dark:bg-card-bg/85 backdrop-blur-[0.5px]" />
 
-                    <Link href={createHref("/dashboard")} className="relative z-10 flex items-center justify-center">
+                    <Link href={createHref("/dashboard")} className="relative z-10 flex items-center justify-center w-full px-8">
                         <Image
                             src="/logoc.png"
                             alt="Pace"
@@ -114,10 +114,10 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
                     {isMobile && isSidebarOpen && (
                         <button
                             onClick={() => setIsSidebarOpen(false)}
-                            className="relative z-10 absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-gray-700 hover:text-black hover:bg-black/5 rounded-lg transition-all cursor-pointer"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center rounded-xl bg-white/90 dark:bg-card-bg/95 border border-pace-border/70 text-admin-dim hover:text-admin-value hover:bg-card-bg shadow-xs transition-all active:scale-95 cursor-pointer"
                             title="Close Menu"
                         >
-                            <X size={18} />
+                            <X size={15} />
                         </button>
                     )}
                 </div>
