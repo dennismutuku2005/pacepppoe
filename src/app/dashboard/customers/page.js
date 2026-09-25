@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useState, useEffect, Suspense } from 'react'
-import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin } from 'lucide-react'
+import React, { useState, useEffect, useMemo, Suspense } from 'react'
+import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin, Users, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { Skeleton, TablePageSkeleton } from '@/components/Skeleton'
+import { Skeleton, CardSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { customerService } from '@/services/isp/customers'
 import { routerService } from '@/services/isp/routers'
 import { planService } from '@/services/isp/plans'
@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 const MapPicker = dynamic(() => import('@/components/MapPicker'), { 
     ssr: false,
@@ -20,6 +20,7 @@ const MapPicker = dynamic(() => import('@/components/MapPicker'), {
 
 function CustomersContent() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
     const [customers, setCustomers] = useState([])
@@ -29,6 +30,7 @@ function CustomersContent() {
     const [search, setSearch] = useState('')
     const [filterRouter, setFilterRouter] = useState('')
     const [filterPlan, setFilterPlan] = useState('')
+    const [filterStatus, setFilterStatus] = useState('ALL')
     
     // Subscriber Add/Edit Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -268,26 +270,52 @@ function CustomersContent() {
         }
     }
 
+    // Deep link status filter support (?status=active / ?status=suspended)
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const st = searchParams.get('status');
+            if (st) {
+                const clean = st.toLowerCase();
+                if (clean === 'active' || clean === 'enabled') setFilterStatus('enabled');
+                else if (clean === 'suspended' || clean === 'disabled') setFilterStatus('disabled');
+            }
+        }
+    }, [searchParams]);
+
     // Filter plans attached to the currently selected router in the modal
     const availablePlansForSelectedRouter = allPlansList.filter(
         p => String(p.router_id) === String(formData.router_id)
     );
 
-    // Filters for table
+    // Filter options
     const routerOptions = [...new Set(customers.map(c => c.router).filter(Boolean))];
     const planOptions = [...new Set(customers.map(c => c.plan).filter(Boolean))];
 
-    const filteredCustomers = customers.filter(c => {
-        const fullName = c.name || `${c.firstName} ${c.lastName}`;
-        const matchesSearch =
-            fullName.toLowerCase().includes(search.toLowerCase()) ||
-            c.username?.toLowerCase().includes(search.toLowerCase()) ||
-            c.phone?.includes(search) ||
-            c.accountNumber?.includes(search);
-        const matchesRouter = filterRouter === '' || c.router === filterRouter;
-        const matchesPlan = filterPlan === '' || c.plan === filterPlan;
-        return matchesSearch && matchesRouter && matchesPlan;
-    });
+    // Calculated metrics
+    const metrics = useMemo(() => {
+        const total = customers.length;
+        const active = customers.filter(c => c.status === 'enabled' || c.status === 'active').length;
+        const suspended = customers.filter(c => c.status === 'disabled' || c.status === 'suspended').length;
+        const billing = customers.reduce((sum, c) => sum + (parseFloat(c.price || 0)), 0);
+        return { total, active, suspended, billing };
+    }, [customers]);
+
+    const filteredCustomers = useMemo(() => {
+        return customers.filter(c => {
+            const fullName = c.name || `${c.firstName} ${c.lastName}`;
+            const matchesSearch =
+                fullName.toLowerCase().includes(search.toLowerCase()) ||
+                c.username?.toLowerCase().includes(search.toLowerCase()) ||
+                c.phone?.includes(search) ||
+                c.accountNumber?.includes(search);
+            const matchesRouter = filterRouter === '' || c.router === filterRouter;
+            const matchesPlan = filterPlan === '' || c.plan === filterPlan;
+            const matchesStatus = filterStatus === 'ALL' || 
+                (filterStatus === 'enabled' && (c.status === 'enabled' || c.status === 'active')) ||
+                (filterStatus === 'disabled' && (c.status === 'disabled' || c.status === 'suspended'));
+            return matchesSearch && matchesRouter && matchesPlan && matchesStatus;
+        });
+    }, [customers, search, filterRouter, filterPlan, filterStatus]);
 
     if (isLoading) {
         return <TablePageSkeleton />;
@@ -304,7 +332,7 @@ function CustomersContent() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={fetchInitialData}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold cursor-pointer"
                         title="Refresh list"
                     >
                         <RefreshCw size={14} />
@@ -312,7 +340,7 @@ function CustomersContent() {
                     </button>
                     <button 
                         onClick={() => handleOpenModal()}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-semibold shadow-sm active:scale-95"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:opacity-90 transition-all text-xs font-semibold shadow-sm active:scale-95 cursor-pointer"
                     >
                         <UserPlus size={15} />
                         <span>Add Subscriber</span>
@@ -320,53 +348,165 @@ function CustomersContent() {
                 </div>
             </div>
 
+            {/* Top Metrics Cards - Dashboard Theme */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                    {
+                        label: "Total Subscribers",
+                        value: metrics.total.toLocaleString(),
+                        sub: "All registered accounts",
+                        icon: Users,
+                        color: 'text-pace-purple',
+                        bg: 'bg-pace-purple/5',
+                        iconBorder: 'border-pace-purple/10 group-hover:border-pace-purple/30',
+                        accent: 'bg-gradient-to-b from-pace-purple to-indigo-500',
+                        filter: 'ALL'
+                    },
+                    {
+                        label: "Active Accounts",
+                        value: metrics.active.toLocaleString(),
+                        sub: "Connected & provisioned",
+                        icon: CheckCircle2,
+                        color: 'text-emerald-500',
+                        bg: 'bg-emerald-500/5',
+                        iconBorder: 'border-emerald-500/10 group-hover:border-emerald-500/30',
+                        accent: 'bg-gradient-to-b from-emerald-400 to-teal-500',
+                        filter: 'enabled'
+                    },
+                    {
+                        label: "Suspended Accounts",
+                        value: metrics.suspended.toLocaleString(),
+                        sub: "Disabled or disconnected",
+                        icon: AlertCircle,
+                        color: 'text-rose-500',
+                        bg: 'bg-rose-500/5',
+                        iconBorder: 'border-rose-500/10 group-hover:border-rose-500/30',
+                        accent: 'bg-gradient-to-b from-rose-400 to-red-500',
+                        filter: 'disabled'
+                    },
+                    {
+                        label: "Monthly Billing Value",
+                        value: `KES ${metrics.billing.toLocaleString()}`,
+                        sub: "Combined package value",
+                        icon: Wallet,
+                        color: 'text-blue-500',
+                        bg: 'bg-blue-500/5',
+                        iconBorder: 'border-blue-500/10 group-hover:border-blue-500/30',
+                        accent: 'bg-gradient-to-b from-blue-400 to-cyan-500',
+                        filter: 'ALL'
+                    },
+                ].map((metric, i) => {
+                    const isActive = filterStatus.toLowerCase() === metric.filter.toLowerCase();
+                    return (
+                        <div
+                            key={i}
+                            onClick={() => {
+                                if (metric.filter === 'ALL') {
+                                    setFilterStatus('ALL');
+                                } else {
+                                    setFilterStatus(prev => prev === metric.filter ? 'ALL' : metric.filter);
+                                }
+                            }}
+                            className={cn(
+                                "relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border rounded-2xl p-4 sm:p-5 shadow-sm transition-all duration-300 min-w-0 cursor-pointer",
+                                isActive && metric.filter !== 'ALL'
+                                    ? "border-pace-purple ring-1 ring-pace-purple/30 shadow-md"
+                                    : "border-pace-border hover:border-pace-purple/30 hover:shadow-md"
+                            )}
+                        >
+                            {/* Left accent color strip */}
+                            <div className={cn("absolute left-0 top-0 bottom-0 w-1", metric.accent)} />
+                            
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={metric.label}>
+                                        {metric.label}
+                                    </p>
+                                    <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                                        {metric.value}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <p className="text-[10px] text-admin-dim truncate">{metric.sub}</p>
+                                    </div>
+                                </div>
+                                <div className={cn("w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", metric.iconBorder, metric.bg)}>
+                                    <metric.icon className={cn(metric.color, "w-4 h-4")} />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
             {/* Controls */}
-            <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                 {/* Search */}
-                <div className="relative w-full sm:w-72 group">
+                <div className="relative flex-1 max-w-md group">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
                     <input
                         type="text"
                         placeholder="Search by name, username, phone, account…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+                        className="w-full pl-10 pr-4 py-2 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
                     />
                 </div>
 
-                {/* Router Filter */}
-                <select
-                    value={filterRouter}
-                    onChange={e => setFilterRouter(e.target.value)}
-                    className="w-full sm:w-48 px-3 py-2.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all appearance-none"
-                >
-                    <option value="">All Routers</option>
-                    {routerOptions.map(r => (
-                        <option key={r} value={r}>{r}</option>
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Status filter pills */}
+                    {[
+                        { label: 'All', value: 'ALL' },
+                        { label: 'Active', value: 'enabled' },
+                        { label: 'Suspended', value: 'disabled' }
+                    ].map((st) => (
+                        <button
+                            key={st.value}
+                            onClick={() => setFilterStatus(st.value)}
+                            className={cn(
+                                "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer",
+                                filterStatus.toLowerCase() === st.value.toLowerCase()
+                                    ? "bg-pace-purple text-white shadow-sm"
+                                    : "bg-pace-bg-subtle text-admin-dim hover:bg-pace-purple/10 hover:text-pace-purple border border-pace-border"
+                            )}
+                        >
+                            {st.label}
+                        </button>
                     ))}
-                </select>
 
-                {/* Plan Filter */}
-                <select
-                    value={filterPlan}
-                    onChange={e => setFilterPlan(e.target.value)}
-                    className="w-full sm:w-48 px-3 py-2.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all appearance-none"
-                >
-                    <option value="">All Plans</option>
-                    {planOptions.map(p => (
-                        <option key={p} value={p}>{p}</option>
-                    ))}
-                </select>
-
-                {/* Clear filters */}
-                {(filterRouter || filterPlan || search) && (
-                    <button
-                        onClick={() => { setSearch(''); setFilterRouter(''); setFilterPlan('') }}
-                        className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-admin-dim border border-pace-border rounded-xl hover:text-red-500 hover:border-red-400/40 transition-all"
+                    {/* Router Filter */}
+                    <select
+                        value={filterRouter}
+                        onChange={e => setFilterRouter(e.target.value)}
+                        className="px-3 py-1.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all cursor-pointer"
                     >
-                        <X size={13} /> Clear
-                    </button>
-                )}
+                        <option value="">All Routers</option>
+                        {routerOptions.map(r => (
+                            <option key={r} value={r}>{r}</option>
+                        ))}
+                    </select>
+
+                    {/* Plan Filter */}
+                    <select
+                        value={filterPlan}
+                        onChange={e => setFilterPlan(e.target.value)}
+                        className="px-3 py-1.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all cursor-pointer"
+                    >
+                        <option value="">All Plans</option>
+                        {planOptions.map(p => (
+                            <option key={p} value={p}>{p}</option>
+                        ))}
+                    </select>
+
+                    {/* Clear filters */}
+                    {(filterRouter || filterPlan || search || filterStatus !== 'ALL') && (
+                        <button
+                            onClick={() => { setSearch(''); setFilterRouter(''); setFilterPlan(''); setFilterStatus('ALL') }}
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-admin-dim border border-pace-border rounded-xl hover:text-red-500 hover:border-red-400/40 transition-all cursor-pointer"
+                        >
+                            <X size={13} /> Clear
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Subscribers Matrix Table */}
