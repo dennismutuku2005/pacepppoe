@@ -429,14 +429,9 @@ export default function AdminRoutersPage() {
                 filteredRouters.map((routerItem) => (
                   <tr key={routerItem.id} className="hover:bg-pace-purple/[0.02] transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-pace-purple/5 border border-pace-purple/10 flex items-center justify-center text-pace-purple shrink-0 group-hover:scale-105 transition-transform">
-                          <Cpu size={15} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-admin-value group-hover:text-pace-purple transition-colors">{routerItem.name}</p>
-                          <p className="text-[10px] text-admin-dim font-medium">{routerItem.model || 'MikroTik'}</p>
-                        </div>
+                      <div>
+                        <p className="text-xs font-bold text-admin-value group-hover:text-pace-purple transition-colors">{routerItem.name}</p>
+                        <p className="text-[10px] text-admin-dim font-medium">{routerItem.model || 'MikroTik'}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4">
