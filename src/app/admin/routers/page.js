@@ -617,12 +617,12 @@ export default function AdminRoutersPage() {
               </div>
             </div>
 
-            {/* Live Hardware Telemetry Section */}
+            {/* Realtime Info Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-admin-value uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-bold text-admin-value flex items-center gap-2">
                   <Server size={14} className="text-pace-purple" />
-                  <span>Live System Telemetry</span>
+                  <span>Realtime Info</span>
                 </h4>
                 <button
                   onClick={() => fetchLiveTelemetry(selectedRouter.id)}
