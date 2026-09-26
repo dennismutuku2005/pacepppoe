@@ -121,5 +121,37 @@ export const routerService = {
             console.error("deleteRouter failed", e);
             throw e;
         }
+    },
+
+    async getSystemInfo(id) {
+        try {
+            return await apiFetch(`/admin/routers.php?id=${id}&action=system_info`);
+        } catch (e) {
+            console.error("getSystemInfo failed", e);
+            throw e;
+        }
+    },
+
+    async pingRouter(id) {
+        try {
+            return await apiFetch(`/admin/routers.php?id=${id}&action=ping`, {
+                method: 'POST'
+            });
+        } catch (e) {
+            console.error("pingRouter failed", e);
+            throw e;
+        }
+    },
+
+    async rebootRouter(id) {
+        try {
+            return await apiFetch(`/admin/routers.php?id=${id}&action=reboot`, {
+                method: 'POST'
+            });
+        } catch (e) {
+            console.error("rebootRouter failed", e);
+            throw e;
+        }
     }
 };
+

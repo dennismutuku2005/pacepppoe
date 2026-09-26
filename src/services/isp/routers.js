@@ -58,38 +58,34 @@ export const routerService = {
         }
     },
 
-    async pingRouter(ip, port) {
-        return new Promise((resolve) => {
-            setTimeout(async () => {
-                try {
-                    const res = await apiFetch('/isp/routers.php');
-                    if (res && res.status === 'success') {
-                        const match = (res.data.routers || []).find(r => r.ip_address === ip);
-                        if (match) {
-                            resolve({
-                                status: 'success',
-                                data: {
-                                    status: match.status === 'online' ? 'Online' : 'Offline',
-                                    cpu: `${match.cpu_usage || 0}%`,
-                                    uptime: match.uptime || 'N/A'
-                                }
-                            });
-                            return;
-                        }
-                    }
-                } catch (err) {
-                    console.error("pingRouter fetch failed", err);
-                }
-                
-                resolve({
-                    status: 'success',
-                    data: {
-                        status: 'Offline',
-                        cpu: '0%',
-                        uptime: 'N/A'
-                    }
-                });
-            }, 500);
-        });
+    async getSystemInfo(id) {
+        try {
+            return await apiFetch(`/isp/routers.php?id=${id}&action=system_info`);
+        } catch (e) {
+            console.error("getSystemInfo failed", e);
+            throw e;
+        }
+    },
+
+    async pingRouter(id) {
+        try {
+            return await apiFetch(`/isp/routers.php?id=${id}&action=ping`, {
+                method: 'POST'
+            });
+        } catch (e) {
+            console.error("pingRouter failed", e);
+            throw e;
+        }
+    },
+
+    async rebootRouter(id) {
+        try {
+            return await apiFetch(`/isp/routers.php?id=${id}&action=reboot`, {
+                method: 'POST'
+            });
+        } catch (e) {
+            console.error("rebootRouter failed", e);
+            throw e;
+        }
     }
 };

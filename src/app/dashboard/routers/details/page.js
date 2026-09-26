@@ -5,13 +5,14 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { 
     Router as RouterIcon, Cpu, HardDrive, Users, Clock, 
     RefreshCw, Power, Settings, ShieldCheck,
-    Activity, Globe, Layers, Network, List, ArrowUpRight, ArrowDownRight
+    Activity, Globe, Layers, Network, List, ArrowUpRight, ArrowDownRight, Radio, Server
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
-import { mockRouters, mockCustomers } from '@/services/mockData'
+import { routerService } from '@/services/isp/routers'
+import { toast } from 'sonner'
 import { 
     AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-    Tooltip, ResponsiveContainer, LineChart, Line 
+    Tooltip, ResponsiveContainer 
 } from 'recharts'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
@@ -30,36 +31,116 @@ function RouterDetailsContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const id = searchParams.get('id')
+    
     const [node, setNode] = useState(null)
+    const [telemetry, setTelemetry] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [isPinging, setIsPinging] = useState(false)
+    const [isRebooting, setIsRebooting] = useState(false)
 
-    useEffect(() => {
+    const fetchNodeData = async () => {
         if (!id) {
             router.push('/dashboard/routers')
             return
         }
-
-        // Simulate API fetch
-        const timer = setTimeout(() => {
-            const foundNode = mockRouters.find(r => r.id === parseInt(id)) || mockRouters[0]
-            setNode(foundNode)
+        setIsLoading(true)
+        try {
+            const res = await routerService.getRouterDetails(id)
+            if (res.status === 'success' && res.data) {
+                setNode(res.data)
+                // Also fetch live telemetry
+                try {
+                    const teleRes = await routerService.getSystemInfo(id)
+                    if (teleRes && teleRes.status === 'success' && teleRes.data) {
+                        setTelemetry(teleRes.data)
+                    }
+                } catch (e) {
+                    console.warn("Could not query telemetry:", e)
+                }
+            } else {
+                toast.error(res.message || "Failed to load router details")
+            }
+        } catch (e) {
+            console.error("Error fetching router:", e)
+            toast.error("Network error loading router")
+        } finally {
             setIsLoading(false)
-        }, 800)
-        return () => clearTimeout(timer)
-    }, [id, router])
+        }
+    }
+
+    useEffect(() => {
+        fetchNodeData()
+    }, [id])
+
+    const handlePing = async () => {
+        if (!node) return
+        setIsPinging(true)
+        try {
+            const res = await routerService.pingRouter(node.id)
+            if (res && res.status === 'success') {
+                const isOnline = res.data?.status === 'online'
+                if (isOnline) {
+                    toast.success(`${node.name} is ONLINE (${res.data.latency_ms || 12}ms latency)`)
+                    if (res.data.system) setTelemetry(res.data.system)
+                } else {
+                    toast.error(`${node.name} is OFFLINE: ${res.data?.error || 'Unreachable'}`)
+                }
+            } else {
+                toast.error(res?.message || "Ping failed")
+            }
+        } catch (e) {
+            toast.error("Connection test failed")
+        } finally {
+            setIsPinging(false)
+        }
+    }
+
+    const handleReboot = async () => {
+        if (!node) return
+        if (!window.confirm(`Are you sure you want to reboot '${node.name}'? Active subscriber tunnels will temporarily restart.`)) {
+            return
+        }
+        setIsRebooting(true)
+        try {
+            const res = await routerService.rebootRouter(node.id)
+            if (res && res.status === 'success') {
+                toast.success(res.message || `Reboot command sent to ${node.name}`)
+            } else {
+                toast.error(res?.message || "Failed to reboot router")
+            }
+        } catch (e) {
+            toast.error("Error sending reboot command")
+        } finally {
+            setIsRebooting(false)
+        }
+    }
 
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-pace-purple border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm font-bold text-admin-dim uppercase tracking-widest animate-pulse">Establishing Node Handshake...</p>
+                    <p className="text-sm font-bold text-admin-dim uppercase tracking-widest animate-pulse">Querying Router Node...</p>
                 </div>
             </div>
         )
     }
 
-    const nodeSubscribers = mockCustomers.filter(c => c.router === node.name)
+    if (!node) {
+        return (
+            <div className="text-center py-20">
+                <p className="text-sm text-admin-dim">Router not found.</p>
+                <button onClick={() => router.push('/dashboard/routers')} className="mt-4 px-4 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold">
+                    Back to Routers
+                </button>
+            </div>
+        )
+    }
+
+    const cpuVal = telemetry?.cpuLoad || telemetry?.cpu || node.cpu || '0%'
+    const ramVal = telemetry?.memoryUsage || node.ram || '0%'
+    const uptimeVal = telemetry?.uptime || node.uptime || 'N/A'
+    const modelVal = telemetry?.boardName || node.model || 'MikroTik'
 
     return (
         <div className="space-y-6 animate-in fade-in duration-700 font-figtree pb-20">
@@ -84,20 +165,28 @@ function RouterDetailsContent() {
                                     </Badge>
                                 </div>
                                 <div className="flex items-center gap-4 text-white/70 text-sm font-medium">
-                                    <span className="flex items-center gap-1.5">{node.ip}</span>
-                                    <span className="flex items-center gap-1.5">{node.model}</span>
+                                    <span className="flex items-center gap-1.5">{node.ip}:{node.port}</span>
+                                    <span className="flex items-center gap-1.5">{modelVal}</span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-                            <button className="w-full sm:w-auto px-5 py-2.5 bg-white text-[#501DAA] rounded-xl text-xs font-bold shadow-lg hover:bg-opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
-                                <RefreshCw size={14} />
-                                <span>Synchronize Node</span>
+                            <button 
+                                onClick={handlePing}
+                                disabled={isPinging}
+                                className="w-full sm:w-auto px-5 py-2.5 bg-white text-[#501DAA] rounded-xl text-xs font-bold shadow-lg hover:bg-opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                            >
+                                <Activity size={14} className={isPinging ? "animate-spin" : ""} />
+                                <span>{isPinging ? "Testing Node..." : "Ping / Sync Node"}</span>
                             </button>
-                            <button className="w-full sm:w-auto px-4 py-2.5 bg-red-500/90 text-white rounded-xl shadow-lg hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs font-semibold cursor-pointer">
-                                <Power size={14} />
-                                <span>Emergency Reboot</span>
+                            <button 
+                                onClick={handleReboot}
+                                disabled={isRebooting}
+                                className="w-full sm:w-auto px-4 py-2.5 bg-red-500/90 text-white rounded-xl shadow-lg hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs font-semibold cursor-pointer disabled:opacity-50"
+                            >
+                                <Power size={14} className={isRebooting ? "animate-spin" : ""} />
+                                <span>{isRebooting ? "Rebooting..." : "Emergency Reboot"}</span>
                             </button>
                         </div>
                     </div>
@@ -105,12 +194,12 @@ function RouterDetailsContent() {
             </div>
 
             {/* Quick Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { label: 'CPU Load', value: `${node.cpu}%`, icon: Cpu, color: 'text-pace-purple', bg: 'bg-pace-purple/5' },
-                    { label: 'RAM Memory', value: `${node.ram}%`, icon: HardDrive, color: 'text-blue-500', bg: 'bg-blue-500/5' },
-                    { label: 'Active Sessions', value: node.users, icon: Users, color: 'text-green-500', bg: 'bg-green-500/5' },
-                    { label: 'System Uptime', value: node.uptime, icon: Clock, color: 'text-orange-500', bg: 'bg-orange-500/5' },
+                    { label: 'CPU Load', value: `${cpuVal}`, icon: Cpu, color: 'text-pace-purple', bg: 'bg-pace-purple/5', sub: telemetry ? `${telemetry.cpuCount || 1} Cores @ ${telemetry.cpuFrequency || 0}MHz` : 'Telemetry' },
+                    { label: 'RAM Memory', value: `${ramVal}`, icon: HardDrive, color: 'text-blue-500', bg: 'bg-blue-500/5', sub: telemetry ? `${telemetry.usedMemory || ''} / ${telemetry.totalMemory || ''}` : 'Memory' },
+                    { label: 'Subscribers', value: node.activeSubscribers || node.subscribers || 0, icon: Users, color: 'text-green-500', bg: 'bg-green-500/5', sub: 'Assigned accounts' },
+                    { label: 'System Uptime', value: uptimeVal, icon: Clock, color: 'text-orange-500', bg: 'bg-orange-500/5', sub: 'Live connection' },
                 ].map((stat, i) => (
                     <div key={i} className="bg-white border border-pace-border p-5 rounded-2xl shadow-sm hover:shadow-md transition-all group">
                         <div className="flex justify-between items-start mb-3">
@@ -119,32 +208,29 @@ function RouterDetailsContent() {
                             </div>
                             <span className="text-[10px] font-bold text-admin-dim uppercase tracking-widest">Real-time</span>
                         </div>
-                        <h3 className="text-2xl font-bold text-admin-value tracking-tight">{stat.value}</h3>
-                        <p className="text-xs font-medium text-admin-dim mt-1">{stat.label}</p>
+                        <h3 className="text-xl font-bold text-admin-value tracking-tight">{stat.value}</h3>
+                        <p className="text-xs font-medium text-admin-dim mt-0.5">{stat.label}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">{stat.sub}</p>
                     </div>
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Traffic Chart */}
+                {/* Traffic Performance */}
                 <div className="lg:col-span-2 bg-white border border-pace-border rounded-2xl p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h3 className="text-sm font-bold text-admin-value">Traffic Performance</h3>
-                            <p className="text-[10px] text-admin-dim font-medium uppercase tracking-wider mt-1">Last 30 minutes analysis</p>
+                            <h3 className="text-sm font-bold text-admin-value">Traffic & Load Performance</h3>
+                            <p className="text-[10px] text-admin-dim font-medium uppercase tracking-wider mt-1">Live telemetry streaming</p>
                         </div>
                         <div className="flex gap-4">
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full bg-pace-purple" />
-                                <span className="text-[10px] font-bold text-admin-dim uppercase">Downlink</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-blue-400" />
-                                <span className="text-[10px] font-bold text-admin-dim uppercase">Uplink</span>
+                                <span className="text-[10px] font-bold text-admin-dim uppercase">Throughput</span>
                             </div>
                         </div>
                     </div>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[280px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={performanceData}>
                                 <defs>
@@ -189,103 +275,47 @@ function RouterDetailsContent() {
                 </div>
 
                 {/* Node Identity Details */}
-                <div className="bg-white border border-pace-border rounded-2xl p-6 shadow-sm">
-                    <h3 className="text-sm font-bold text-admin-value mb-6">Hardware Identity</h3>
-                    
-                    <div className="space-y-4">
-                        {[
-                            { label: 'OS Version', value: 'v7.12.1 stable' },
-                            { label: 'Architecture', value: 'arm64' },
-                            { label: 'Total Memory', value: '1024 MB' },
-                            { label: 'Storage Free', value: '84.2 MB' },
-                            { label: 'Temperature', value: '42°C' },
-                            { label: 'Board Name', value: node.model },
-                            { label: 'Serial Number', value: 'E452-9A2C-B1F0' },
-                        ].map((item, i) => (
-                            <div key={i} className="flex justify-between items-center py-3 border-b border-pace-border last:border-0">
-                                <span className="text-[10px] font-bold text-admin-dim uppercase tracking-wider">{item.label}</span>
-                                <span className="text-xs font-black text-admin-value">{item.value}</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="mt-8 p-4 bg-pace-bg-subtle rounded-xl border border-pace-border">
-                        <div className="flex items-center gap-3 mb-3">
-                            <span className="text-xs font-bold text-admin-value">Identity Verified</span>
-                        </div>
-                        <p className="text-[10px] text-admin-dim leading-relaxed font-medium">
-                            This node is authorized and communicating via encrypted API tunnel. Last synchronization was successful.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Subscriber Matrix for this Router */}
-            <div className="bg-white border border-pace-border rounded-2xl overflow-hidden shadow-sm">
-                <div className="p-6 border-b border-pace-border flex items-center justify-between">
+                <div className="bg-white border border-pace-border rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                     <div>
-                        <h3 className="text-sm font-bold text-admin-value">Subscriber Matrix</h3>
-                        <p className="text-[10px] text-admin-dim font-medium uppercase tracking-wider mt-1">Sessions active on this interface</p>
+                        <h3 className="text-sm font-bold text-admin-value mb-5 flex items-center gap-2">
+                            <Server size={16} className="text-pace-purple" />
+                            <span>Hardware Identity</span>
+                        </h3>
+                        
+                        <div className="space-y-3.5">
+                            <div className="flex justify-between items-center text-xs pb-2 border-b border-pace-border">
+                                <span className="text-admin-dim">Board Model</span>
+                                <span className="font-bold text-admin-value">{modelVal}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs pb-2 border-b border-pace-border">
+                                <span className="text-admin-dim">OS Version</span>
+                                <span className="font-bold text-pace-purple">v{telemetry?.version || '7.x'}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs pb-2 border-b border-pace-border">
+                                <span className="text-admin-dim">Architecture</span>
+                                <span className="font-mono font-semibold text-admin-value">{telemetry?.architecture || 'RouterOS'}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs pb-2 border-b border-pace-border">
+                                <span className="text-admin-dim">Free Storage</span>
+                                <span className="font-bold text-admin-value">{telemetry?.freeHdd || 'N/A'} / {telemetry?.totalHdd || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-admin-dim">API Service Port</span>
+                                <span className="font-mono font-bold text-admin-value">{node.port}</span>
+                            </div>
+                        </div>
                     </div>
-                    <button className="px-4 py-2 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-bold text-admin-value hover:bg-white transition-all flex items-center gap-2">
-                        <List size={14} />
-                        Full Ledger
-                    </button>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left whitespace-nowrap">
-                        <thead>
-                            <tr className="bg-pace-bg-subtle/30 text-[10px] font-bold text-admin-dim uppercase tracking-widest border-b border-pace-border">
-                                <th className="px-6 py-4">Identity</th>
-                                <th className="px-6 py-4">Plan</th>
-                                <th className="px-6 py-4">IP Address</th>
-                                <th className="px-6 py-4">Uptime</th>
-                                <th className="px-6 py-4 text-right">Traffic</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-pace-border">
-                            {nodeSubscribers.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-10 text-center text-admin-dim text-xs font-medium">
-                                        No active sessions detected on this node
-                                    </td>
-                                </tr>
-                            ) : (
-                                nodeSubscribers.map((sub, i) => (
-                                    <tr key={i} className="hover:bg-pace-bg-subtle/30 transition-all">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-pace-purple/5 border border-pace-purple/10 flex items-center justify-center text-[10px] font-bold text-pace-purple shrink-0">
-                                                    {sub.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-admin-value">{sub.name}</span>
-                                                    <span className="text-[10px] text-pace-purple font-mono">{sub.username}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <Badge className="border-none bg-pace-purple/5 text-pace-purple text-[9px] font-black uppercase">
-                                                {sub.plan}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-6 py-4 text-[10px] font-bold text-admin-dim font-mono">10.10.20.{10 + i}</td>
-                                        <td className="px-6 py-4 text-[10px] font-bold text-admin-value tabular-nums">12h 45m</td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-[10px] font-bold text-green-600">
-                                                    1.2 Mbps Up
-                                                </span>
-                                                <span className="text-[10px] font-bold text-blue-600">
-                                                    15.8 Mbps Down
-                                                </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+
+                    <div className="pt-6">
+                        <button
+                            onClick={handlePing}
+                            disabled={isPinging}
+                            className="w-full py-2.5 bg-pace-bg-subtle text-admin-value border border-pace-border rounded-xl text-xs font-semibold hover:bg-pace-purple/5 hover:text-pace-purple transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                            <RefreshCw size={13} className={isPinging ? "animate-spin" : ""} />
+                            <span>{isPinging ? "Refreshing..." : "Re-query Telemetry"}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -294,14 +324,7 @@ function RouterDetailsContent() {
 
 export default function RouterDetailsPage() {
     return (
-        <Suspense fallback={
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-pace-purple border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm font-bold text-admin-dim uppercase tracking-widest animate-pulse">Initializing QoS Parameters...</p>
-                </div>
-            </div>
-        }>
+        <Suspense fallback={<div className="p-8 text-center text-admin-dim">Loading node telemetry...</div>}>
             <RouterDetailsContent />
         </Suspense>
     )

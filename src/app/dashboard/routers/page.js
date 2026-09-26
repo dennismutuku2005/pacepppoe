@@ -2,15 +2,13 @@
 
 import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Search, Router as RouterIcon, Activity, RefreshCw, Power, Settings, ShieldCheck, Network, MoreVertical, List } from 'lucide-react'
+import { Plus, Search, Router as RouterIcon, Activity, RefreshCw, Power, Settings, ShieldCheck, Network, MoreVertical, List, Cpu, HardDrive, CpuIcon, Radio, Server, Clock } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, CardSkeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
-import { mockRouters } from '@/services/mockData'
 import { routerService } from '@/services/isp/routers'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { cn } from '@/lib/utils'
-import { Cpu, HardDrive, CpuIcon } from 'lucide-react'
 
 function RoutersContent() {
     const router = useRouter()
@@ -18,9 +16,13 @@ function RoutersContent() {
     const [routers, setRouters] = useState([])
     const [search, setSearch] = useState('')
 
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [selectedRouter, setSelectedRouter] = useState(null)
     const [isSystemInfoOpen, setIsSystemInfoOpen] = useState(false)
+    const [systemInfoData, setSystemInfoData] = useState(null)
+    const [isLoadingSystemInfo, setIsLoadingSystemInfo] = useState(false)
+
+    const [pingingRouterId, setPingingRouterId] = useState(null)
+    const [rebootingRouterId, setRebootingRouterId] = useState(null)
 
     const fetchRouters = async () => {
         setIsLoading(true)
@@ -32,8 +34,8 @@ function RoutersContent() {
                 throw new Error(res.message)
             }
         } catch (err) {
-            console.warn("Failed to load dynamic routers, falling back to mocks:", err)
-            setRouters(mockRouters)
+            console.warn("Failed to load routers:", err)
+            toast.error("Failed to load network routers")
         } finally {
             setIsLoading(false)
         }
@@ -43,17 +45,77 @@ function RoutersContent() {
         fetchRouters()
     }, [])
 
+    const fetchLiveTelemetry = async (routerId) => {
+        setIsLoadingSystemInfo(true)
+        setSystemInfoData(null)
+        try {
+            const res = await routerService.getSystemInfo(routerId)
+            if (res && res.status === 'success' && res.data) {
+                setSystemInfoData(res.data)
+            } else {
+                setSystemInfoData(null)
+            }
+        } catch (e) {
+            console.warn("Telemetry fetch error:", e)
+            setSystemInfoData(null)
+        } finally {
+            setIsLoadingSystemInfo(false)
+        }
+    }
+
     const handleOpenSystemInfo = (r) => {
         setSelectedRouter(r)
         setIsSystemInfoOpen(true)
+        fetchLiveTelemetry(r.id)
     }
 
-    const handleReboot = (name) => {
-        toast.promise(new Promise(res => setTimeout(res, 2000)), {
-            loading: `Rebooting ${name}...`,
-            success: 'Reboot signal sent successfully.',
-            error: 'Failed to communicate with node.',
-        });
+    const handlePing = async (r, e) => {
+        if (e) e.stopPropagation()
+        setPingingRouterId(r.id)
+        try {
+            const res = await routerService.pingRouter(r.id)
+            if (res && res.status === 'success') {
+                const isOnline = res.data?.status === 'online'
+                if (isOnline) {
+                    toast.success(`${r.name} is ONLINE (${res.data.latency_ms || 12}ms latency)`)
+                } else {
+                    toast.error(`${r.name} is OFFLINE: ${res.data?.error || 'Unreachable'}`)
+                }
+                setRouters(prev => prev.map(item => item.id === r.id ? { ...item, status: isOnline ? 'Online' : 'Offline' } : item))
+                if (selectedRouter?.id === r.id) {
+                    fetchLiveTelemetry(r.id)
+                }
+            } else {
+                toast.error(res?.message || `Ping failed for ${r.name}`)
+            }
+        } catch (err) {
+            toast.error(`Connection test failed for ${r.name}`)
+        } finally {
+            setPingingRouterId(null)
+        }
+    }
+
+    const handleReboot = async (r, e) => {
+        if (e) e.stopPropagation()
+        if (!window.confirm(`Are you sure you want to reboot MikroTik node '${r.name}'? Active subscriber tunnels will temporarily disconnect.`)) {
+            return
+        }
+        setRebootingRouterId(r.id)
+        try {
+            const res = await routerService.rebootRouter(r.id)
+            if (res && res.status === 'success') {
+                toast.success(res.message || `Reboot command sent to ${r.name}`)
+                if (selectedRouter?.id === r.id) {
+                    setIsSystemInfoOpen(false)
+                }
+            } else {
+                toast.error(res?.message || `Failed to reboot ${r.name}`)
+            }
+        } catch (err) {
+            toast.error(`Error sending reboot signal to ${r.name}`)
+        } finally {
+            setRebootingRouterId(null)
+        }
     }
 
     const filteredRouters = routers.filter(r =>
@@ -71,7 +133,7 @@ function RoutersContent() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pace-border pb-6">
                 <div>
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Routers</h1>
-                    <p className="text-xs font-medium text-gray-400 mt-1">Manage and monitor your network infrastructure</p>
+                    <p className="text-xs font-medium text-gray-400 mt-1">Manage and monitor your assigned edge router infrastructure</p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                     <button
@@ -82,13 +144,6 @@ function RoutersContent() {
                     >
                         <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
                         <span>Refresh Routers</span>
-                    </button>
-                    <button 
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 shadow-sm transition-all active:scale-95 cursor-pointer"
-                    >
-                        <Plus size={15} />
-                        <span>Add Router</span>
                     </button>
                 </div>
             </div>
@@ -118,7 +173,7 @@ function RoutersContent() {
                                 <th className="px-6 py-3 text-center">Status</th>
                                 <th className="px-6 py-3">CPU Usage</th>
                                 <th className="px-6 py-3">RAM Usage</th>
-                                <th className="px-6 py-3 text-center">Sessions</th>
+                                <th className="px-6 py-3 text-center">Subscribers</th>
                                 <th className="px-6 py-3">Uptime</th>
                                 <th className="px-6 py-3 text-right">Operations</th>
                             </tr>
@@ -126,60 +181,78 @@ function RoutersContent() {
                         <tbody className="divide-y divide-pace-border">
                             {filteredRouters.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="py-24 text-center text-admin-dim text-sm font-medium">No routers found</td>
+                                    <td colSpan="8" className="py-24 text-center text-admin-dim text-sm font-medium">No routers found</td>
                                 </tr>
                             ) : (
                                 filteredRouters.map((r) => (
                                     <tr key={r.id} className="hover:bg-pace-bg-subtle/50 transition-all duration-200 group">
-                                        <td className="px-6 py-2">
+                                        <td className="px-6 py-3">
                                             <div 
                                                 className="cursor-pointer group/node"
-                                                onClick={() => router.push(`/dashboard/routers/details?id=${r.id}`)}
+                                                onClick={() => handleOpenSystemInfo(r)}
                                             >
-                                                <p className="text-xs font-medium text-admin-value group-hover/node:text-pace-purple transition-colors">{r.name}</p>
+                                                <p className="text-xs font-semibold text-admin-value group-hover/node:text-pace-purple transition-colors">{r.name}</p>
                                                 <p className="text-[10px] text-admin-dim font-mono">{r.ip}</p>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-2">
+                                        <td className="px-6 py-3">
                                             <span className="text-[11px] font-medium text-admin-dim uppercase tracking-tight">{r.model}</span>
                                         </td>
-                                        <td className="px-6 py-2 text-center">
-                                            <Badge variant={r.status === 'online' ? 'success' : 'error'} className="text-[8px] font-black border-none px-2 py-0.5 uppercase tracking-widest">
+                                        <td className="px-6 py-3 text-center">
+                                            <Badge variant={r.status === 'Online' ? 'success' : 'error'} className="text-[8px] font-black border-none px-2 py-0.5 uppercase tracking-widest">
                                                 {r.status}
                                             </Badge>
                                         </td>
-                                        <td className="px-6 py-2">
+                                        <td className="px-6 py-3">
                                             <div className="flex items-center gap-3 w-28">
                                                 <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
                                                     <div className={cn(
                                                         "h-full transition-all duration-1000",
-                                                        r.cpu > 70 ? "bg-red-500" : r.cpu > 40 ? "bg-amber-500" : "bg-pace-purple"
-                                                    )} style={{ width: `${r.cpu}%` }} />
+                                                        parseInt(r.cpu) > 70 ? "bg-red-500" : parseInt(r.cpu) > 40 ? "bg-amber-500" : "bg-pace-purple"
+                                                    )} style={{ width: `${parseInt(r.cpu) || 0}%` }} />
                                                 </div>
-                                                <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.cpu}%</span>
+                                                <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.cpu}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-2">
+                                        <td className="px-6 py-3">
                                             <div className="flex items-center gap-3 w-28">
                                                 <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
-                                                    <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${r.ram}%` }} />
+                                                    <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${parseInt(r.ram) || 0}%` }} />
                                                 </div>
-                                                <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.ram}%</span>
+                                                <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.ram}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-2 text-center text-xs font-medium text-admin-value tabular-nums">{r.users}</td>
-                                        <td className="px-6 py-2 text-xs font-medium text-pace-purple tabular-nums">{r.uptime}</td>
-                                        <td className="px-6 py-2 text-right">
-                                            <div className="flex justify-end gap-2">
+                                        <td className="px-6 py-3 text-center text-xs font-medium text-admin-value tabular-nums">{r.subscribers}</td>
+                                        <td className="px-6 py-3 text-xs font-medium text-pace-purple tabular-nums">{r.uptime}</td>
+                                        <td className="px-6 py-3 text-right">
+                                            <div className="flex justify-end items-center gap-1.5">
+                                                {/* Ping Button */}
                                                 <button 
-                                                    onClick={() => handleReboot(r.name)}
-                                                    className="p-2 text-admin-dim hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all active:scale-90"
-                                                    title="Emergency Reboot"
+                                                    onClick={(e) => handlePing(r, e)}
+                                                    disabled={pingingRouterId === r.id}
+                                                    className="p-2 text-admin-dim hover:text-emerald-600 hover:bg-emerald-500/10 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                                                    title="Ping / Test Connection"
                                                 >
-                                                    <Power size={14} />
+                                                    <Activity size={14} className={pingingRouterId === r.id ? "animate-spin text-emerald-600" : ""} />
                                                 </button>
-                                                <button className="p-2 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-xl transition-all active:scale-90">
-                                                    <Settings size={14} />
+
+                                                {/* Emergency Reboot */}
+                                                <button 
+                                                    onClick={(e) => handleReboot(r, e)}
+                                                    disabled={rebootingRouterId === r.id}
+                                                    className="p-2 text-admin-dim hover:text-rose-600 hover:bg-rose-500/10 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                                                    title="Remote Reboot Router"
+                                                >
+                                                    <Power size={14} className={rebootingRouterId === r.id ? "animate-spin text-rose-600" : ""} />
+                                                </button>
+
+                                                {/* Node Telemetry View */}
+                                                <button 
+                                                    onClick={() => handleOpenSystemInfo(r)}
+                                                    className="p-2 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 rounded-xl transition-all cursor-pointer"
+                                                    title="View Hardware Telemetry"
+                                                >
+                                                    <Server size={14} />
                                                 </button>
                                             </div>
                                         </td>
@@ -195,102 +268,109 @@ function RoutersContent() {
             <Modal
                 isOpen={isSystemInfoOpen}
                 onClose={() => setIsSystemInfoOpen(false)}
-                title="Node System Identity"
-                description={`Hardware specifications and performance metrics for ${selectedRouter?.name}`}
+                title={selectedRouter?.name || "Node Telemetry"}
+                description={`Real-time hardware specifications and RouterOS health for ${selectedRouter?.name}`}
                 maxWidth="max-w-md"
             >
                 {selectedRouter && (
-                    <div className="space-y-6 font-figtree">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-2">
-                                <div className="flex items-center gap-2 text-admin-dim">
-                                    <CpuIcon size={14} />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">CPU Load</span>
-                                </div>
-                                <p className="text-2xl font-bold text-admin-value tabular-nums">{selectedRouter.cpu}%</p>
-                                <div className="h-1 bg-pace-border rounded-full overflow-hidden">
-                                    <div className="h-full bg-pace-purple" style={{ width: `${selectedRouter.cpu}%` }} />
-                                </div>
+                    <div className="space-y-5 font-figtree">
+                        {/* Quick Controls */}
+                        <div className="flex items-center justify-between p-3.5 bg-pace-bg-subtle border border-pace-border rounded-xl">
+                            <div>
+                                <p className="text-xs font-bold text-admin-value">{selectedRouter.name}</p>
+                                <p className="text-[10px] text-admin-dim font-mono">{selectedRouter.ip} • Port: {selectedRouter.port}</p>
                             </div>
-                            <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-2">
-                                <div className="flex items-center gap-2 text-admin-dim">
-                                    <HardDrive size={14} />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">RAM Memory</span>
-                                </div>
-                                <p className="text-2xl font-bold text-admin-value tabular-nums">{selectedRouter.ram}%</p>
-                                <div className="h-1 bg-pace-border rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-500" style={{ width: `${selectedRouter.ram}%` }} />
-                                </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handlePing(selectedRouter)}
+                                    disabled={pingingRouterId === selectedRouter.id}
+                                    className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-xs font-bold hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                                >
+                                    <Activity size={12} className={pingingRouterId === selectedRouter.id ? "animate-spin" : ""} />
+                                    <span>Ping</span>
+                                </button>
+                                <button
+                                    onClick={() => handleReboot(selectedRouter)}
+                                    disabled={rebootingRouterId === selectedRouter.id}
+                                    className="px-2.5 py-1 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                                >
+                                    <Power size={12} className={rebootingRouterId === selectedRouter.id ? "animate-spin" : ""} />
+                                    <span>Reboot</span>
+                                </button>
                             </div>
                         </div>
 
-                        <div className="space-y-3 bg-pace-bg-subtle border border-pace-border rounded-xl p-4">
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">Model Identifier</span>
-                                <span className="font-bold text-admin-value">{selectedRouter.model}</span>
+                        {/* Live Telemetry Display */}
+                        {isLoadingSystemInfo ? (
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-2 animate-pulse h-24" />
+                                <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-2 animate-pulse h-24" />
                             </div>
-                            <div className="flex justify-between items-center text-xs border-t border-pace-border pt-3">
-                                <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">Management IP</span>
-                                <span className="font-mono font-bold text-pace-purple">{selectedRouter.ip}</span>
+                        ) : systemInfoData ? (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-2">
+                                        <div className="flex items-center gap-2 text-admin-dim">
+                                            <CpuIcon size={14} />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">CPU Load</span>
+                                        </div>
+                                        <p className="text-2xl font-bold text-admin-value tabular-nums">{systemInfoData.cpuLoad || systemInfoData.cpu || 0}%</p>
+                                        <div className="h-1 bg-pace-border rounded-full overflow-hidden">
+                                            <div className="h-full bg-pace-purple" style={{ width: `${systemInfoData.cpuLoad || systemInfoData.cpu || 0}%` }} />
+                                        </div>
+                                        <p className="text-[9px] text-admin-dim">{systemInfoData.cpuCount || 1} Cores @ {systemInfoData.cpuFrequency || 0}MHz</p>
+                                    </div>
+                                    <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-2">
+                                        <div className="flex items-center gap-2 text-admin-dim">
+                                            <HardDrive size={14} />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">RAM Memory</span>
+                                        </div>
+                                        <p className="text-2xl font-bold text-admin-value tabular-nums">{systemInfoData.memoryUsage || '0%'}</p>
+                                        <div className="h-1 bg-pace-border rounded-full overflow-hidden">
+                                            <div className="h-full bg-blue-500" style={{ width: `${systemInfoData.memoryUsage || '0%'}` }} />
+                                        </div>
+                                        <p className="text-[9px] text-admin-dim">{systemInfoData.usedMemory || '0 MB'} / {systemInfoData.totalMemory || '0 MB'}</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl p-4 text-xs">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">Hardware Model</span>
+                                        <span className="font-bold text-admin-value">{systemInfoData.boardName || selectedRouter.model}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center border-t border-pace-border pt-2">
+                                        <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">RouterOS Version</span>
+                                        <span className="font-bold text-pace-purple">v{systemInfoData.version || '7.x'} ({systemInfoData.architecture || 'arch'})</span>
+                                    </div>
+                                    <div className="flex justify-between items-center border-t border-pace-border pt-2">
+                                        <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">Free Storage</span>
+                                        <span className="font-bold text-admin-value">{systemInfoData.freeHdd || '0 MB'} / {systemInfoData.totalHdd || '0 MB'}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center border-t border-pace-border pt-2">
+                                        <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">System Uptime</span>
+                                        <span className="font-bold text-admin-value">{systemInfoData.uptime || selectedRouter.uptime}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center border-t border-pace-border pt-2">
+                                        <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">Subscribers</span>
+                                        <span className="font-bold text-admin-value">{selectedRouter.subscribers} Online</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center text-xs border-t border-pace-border pt-3">
-                                <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">System Uptime</span>
-                                <span className="font-bold text-admin-value">{selectedRouter.uptime}</span>
+                        ) : (
+                            <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-center space-y-1">
+                                <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">Router Unreachable</p>
+                                <p className="text-[11px] text-admin-dim">Could not query RouterOS API on {selectedRouter.ip}:{selectedRouter.port}. Check VPN tunnel.</p>
                             </div>
-                            <div className="flex justify-between items-center text-xs border-t border-pace-border pt-3">
-                                <span className="text-admin-dim font-medium uppercase tracking-wider text-[9px]">Active Sessions</span>
-                                <span className="font-bold text-admin-value">{selectedRouter.users} Subscribers</span>
-                            </div>
-                        </div>
+                        )}
 
                         <button 
                             onClick={() => setIsSystemInfoOpen(false)}
-                            className="w-full bg-pace-purple text-white py-3.5 rounded-xl font-medium text-sm hover:opacity-95 transition-all active:scale-[0.98] shadow-sm flex items-center justify-center"
+                            className="w-full bg-pace-purple text-white py-3 rounded-xl font-semibold text-xs hover:opacity-95 transition-all active:scale-[0.98] shadow-sm flex items-center justify-center cursor-pointer"
                         >
-                            Dismiss Identity
+                            Close Telemetry
                         </button>
                     </div>
                 )}
-            </Modal>
-
-            {/* Add Router Modal */}
-            <Modal
-                isOpen={isAddModalOpen}
-                onClose={() => setIsAddModalOpen(false)}
-                title="Authorize Network Node"
-                description="Establish a secure connection with a new MikroTik or Ubiquiti router."
-                maxWidth="max-w-md"
-            >
-                <div className="space-y-4 font-figtree">
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Node Label</label>
-                        <input type="text" className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value" placeholder="e.g. West-Station-01" />
-                    </div>
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Management IP</label>
-                        <input type="text" className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-mono font-bold text-admin-value" placeholder="192.168.x.x" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">API Username</label>
-                            <input type="text" className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value" placeholder="admin" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">API Password</label>
-                            <input type="password" className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value" placeholder="••••••••" />
-                        </div>
-                    </div>
-                    <button 
-                        onClick={() => {
-                            toast.success("Node Initialized", { description: "Infrastructure handshake completed successfully." });
-                            setIsAddModalOpen(false);
-                        }}
-                        className="w-full bg-pace-purple text-white py-3.5 rounded-xl font-medium text-sm hover:opacity-95 transition-all active:scale-[0.98] mt-4 shadow-sm flex items-center justify-center gap-2"
-                    >
-                        <ShieldCheck size={18} />
-                        Authorize Connection
-                    </button>
-                </div>
             </Modal>
         </div>
     )
@@ -298,7 +378,7 @@ function RoutersContent() {
 
 export default function RoutersPage() {
     return (
-        <Suspense fallback={<div className="p-8 text-center text-admin-dim animate-pulse text-sm font-medium">Syncing infrastructure...</div>}>
+        <Suspense fallback={<TablePageSkeleton />}>
             <RoutersContent />
         </Suspense>
     )

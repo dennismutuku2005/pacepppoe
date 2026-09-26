@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, Power, Settings, RefreshCw, Cpu, HardDrive, Users, Edit, Trash2, ShieldCheck, AlertCircle, Eye, EyeOff, Download, ExternalLink, FileText, Sparkles, Lock, Key, Shield, CheckCircle2, ChevronDown } from 'lucide-react'
+import { Plus, Search, Power, Settings, RefreshCw, Cpu, HardDrive, Users, Edit, Trash2, ShieldCheck, AlertCircle, Eye, EyeOff, Download, ExternalLink, FileText, Sparkles, Lock, Key, Shield, CheckCircle2, ChevronDown, Activity, Radio, Server, Clock, Zap } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
 import { IspAutocomplete } from '@/components/IspAutocomplete'
@@ -25,6 +25,12 @@ export default function AdminRoutersPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoadingNextResources, setIsLoadingNextResources] = useState(false)
   const [isResourcesConfirmed, setIsResourcesConfirmed] = useState(false)
+
+  // Live Telemetry & Quick Action states
+  const [pingingRouterId, setPingingRouterId] = useState(null)
+  const [rebootingRouterId, setRebootingRouterId] = useState(null)
+  const [systemInfoData, setSystemInfoData] = useState(null)
+  const [isLoadingSystemInfo, setIsLoadingSystemInfo] = useState(false)
 
   // Form states
   const [showPassword, setShowPassword] = useState(false)
@@ -94,6 +100,76 @@ export default function AdminRoutersPage() {
     loadRouters()
   }
 
+  // Live Telemetry loader
+  const fetchLiveTelemetry = async (routerId) => {
+    setIsLoadingSystemInfo(true)
+    setSystemInfoData(null)
+    try {
+      const res = await routerService.getSystemInfo(routerId)
+      if (res && res.status === 'success' && res.data) {
+        setSystemInfoData(res.data)
+      } else {
+        setSystemInfoData(null)
+      }
+    } catch (e) {
+      console.warn("Could not load live telemetry for router", e)
+      setSystemInfoData(null)
+    } finally {
+      setIsLoadingSystemInfo(false)
+    }
+  }
+
+  // Ping router handler
+  const handlePing = async (routerItem, e) => {
+    if (e) e.stopPropagation()
+    setPingingRouterId(routerItem.id)
+    try {
+      const res = await routerService.pingRouter(routerItem.id)
+      if (res && res.status === 'success') {
+        const isOnline = res.data?.status === 'online'
+        if (isOnline) {
+          toast.success(`${routerItem.name} is ONLINE (${res.data.latency_ms || 12}ms latency)`)
+        } else {
+          toast.error(`${routerItem.name} is OFFLINE: ${res.data?.error || 'Node unreachable'}`)
+        }
+        setRouters(prev => prev.map(r => r.id === routerItem.id ? { ...r, status: isOnline ? 'Online' : 'Offline' } : r))
+        if (selectedRouter?.id === routerItem.id) {
+          fetchLiveTelemetry(routerItem.id)
+        }
+      } else {
+        toast.error(res?.message || `Ping failed for ${routerItem.name}`)
+      }
+    } catch (err) {
+      toast.error(`Connection test failed for ${routerItem.name}`)
+    } finally {
+      setPingingRouterId(null)
+    }
+  }
+
+  // Reboot router handler
+  const handleReboot = async (routerItem, e) => {
+    if (e) e.stopPropagation()
+    if (!window.confirm(`Are you sure you want to reboot MikroTik node '${routerItem.name}'? All active PPPoE subscriber tunnels will temporarily restart.`)) {
+      return
+    }
+    setRebootingRouterId(routerItem.id)
+    try {
+      const res = await routerService.rebootRouter(routerItem.id)
+      if (res && res.status === 'success') {
+        toast.success(res.message || `Reboot command sent to ${routerItem.name}`)
+        if (selectedRouter?.id === routerItem.id) {
+          setIsInfoOpen(false)
+        }
+      } else {
+        toast.error(res?.message || `Failed to reboot ${routerItem.name}`)
+      }
+    } catch (err) {
+      toast.error(`Error sending reboot signal to ${routerItem.name}`)
+    } finally {
+      setRebootingRouterId(null)
+    }
+  }
+
   // Search filtering
   const filteredRouters = routers.filter((router) =>
     router.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -132,6 +208,7 @@ export default function AdminRoutersPage() {
   const openInfoModal = (router) => {
     setSelectedRouter(router)
     setIsInfoOpen(true)
+    fetchLiveTelemetry(router.id)
   }
 
   const openCreateModal = () => {
@@ -442,13 +519,36 @@ export default function AdminRoutersPage() {
                     <td className="px-6 py-4 text-xs font-semibold text-admin-value">{routerItem.subscribers}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5 opacity-90 group-hover:opacity-100">
+                        {/* Ping Quick Action */}
+                        <button
+                          onClick={(e) => handlePing(routerItem, e)}
+                          disabled={pingingRouterId === routerItem.id}
+                          title="Ping / Test Node Reachability"
+                          className="p-1.5 hover:bg-emerald-500/10 rounded-lg text-admin-dim hover:text-emerald-600 transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <Activity size={15} className={pingingRouterId === routerItem.id ? "animate-spin text-emerald-600" : ""} />
+                        </button>
+
+                        {/* Reboot Quick Action */}
+                        <button
+                          onClick={(e) => handleReboot(routerItem, e)}
+                          disabled={rebootingRouterId === routerItem.id}
+                          title="Remote Reboot MikroTik"
+                          className="p-1.5 hover:bg-amber-500/10 rounded-lg text-admin-dim hover:text-amber-600 transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <Power size={15} className={rebootingRouterId === routerItem.id ? "animate-spin text-amber-600" : ""} />
+                        </button>
+
+                        {/* View Telemetry */}
                         <button
                           onClick={() => openInfoModal(routerItem)}
-                          title="View Router Telemetry & OVPN"
+                          title="View Live Telemetry & OVPN"
                           className="p-1.5 hover:bg-pace-purple/10 rounded-lg text-admin-dim hover:text-pace-purple transition-all cursor-pointer"
                         >
                           <Eye size={15} />
                         </button>
+
+                        {/* Edit Settings */}
                         <button
                           onClick={() => openEditModal(routerItem)}
                           title="Edit Router Configuration"
@@ -456,6 +556,8 @@ export default function AdminRoutersPage() {
                         >
                           <Edit size={15} />
                         </button>
+
+                        {/* Delete Router */}
                         <button
                           onClick={() => openDeleteModal(routerItem)}
                           title="De-authorize Router"
@@ -479,41 +581,117 @@ export default function AdminRoutersPage() {
         isOpen={isInfoOpen}
         onClose={() => setIsInfoOpen(false)}
         title={selectedRouter?.name || 'Router Detail'}
-        description="Comprehensive configuration, VPN addresses, and downloadable OpenVPN credentials."
+        description="Real-time hardware telemetry, RouterOS health, and downloadable OpenVPN credentials."
         maxWidth="max-w-xl"
       >
         {selectedRouter && (
           <div className="space-y-6 font-figtree">
-            {/* Quick Status Bar */}
-            <div className="flex items-center justify-between p-4 bg-pace-bg-subtle border border-pace-border rounded-xl">
+            {/* Quick Status & Control Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-pace-bg-subtle border border-pace-border rounded-xl gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-pace-purple/10 border border-pace-purple/20 flex items-center justify-center text-pace-purple">
                   <Cpu size={20} />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-admin-value">{selectedRouter.name}</h3>
-                  <p className="text-xs font-mono text-admin-dim">VPN IP: {selectedRouter.ip}</p>
+                  <p className="text-xs font-mono text-admin-dim">VPN: {selectedRouter.ip} • API: {selectedRouter.port}</p>
                 </div>
               </div>
-              <Badge variant={selectedRouter.status === 'Online' ? 'success' : 'error'}>
-                {selectedRouter.status}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePing(selectedRouter)}
+                  disabled={pingingRouterId === selectedRouter.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-xs font-bold hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
+                  title="Test Connectivity"
+                >
+                  <Activity size={13} className={pingingRouterId === selectedRouter.id ? "animate-spin" : ""} />
+                  <span>Ping</span>
+                </button>
+                <button
+                  onClick={() => handleReboot(selectedRouter)}
+                  disabled={rebootingRouterId === selectedRouter.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-all cursor-pointer disabled:opacity-50"
+                  title="Reboot Node"
+                >
+                  <Power size={13} className={rebootingRouterId === selectedRouter.id ? "animate-spin" : ""} />
+                  <span>Reboot</span>
+                </button>
+                <Badge variant={selectedRouter.status === 'Online' ? 'success' : 'error'}>
+                  {selectedRouter.status}
+                </Badge>
+              </div>
             </div>
 
-            {/* Resources Grid */}
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="p-3 bg-card-bg border border-pace-border rounded-xl">
-                <p className="text-xs text-admin-dim font-medium mb-1">CPU Usage</p>
-                <p className="text-lg font-bold text-admin-value">{selectedRouter.cpu}%</p>
+            {/* Live Hardware Telemetry Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-admin-value uppercase tracking-wider flex items-center gap-2">
+                  <Server size={14} className="text-pace-purple" />
+                  <span>Live System Telemetry</span>
+                </h4>
+                <button
+                  onClick={() => fetchLiveTelemetry(selectedRouter.id)}
+                  disabled={isLoadingSystemInfo}
+                  className="text-[11px] font-semibold text-pace-purple hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw size={11} className={isLoadingSystemInfo ? "animate-spin" : ""} />
+                  <span>{isLoadingSystemInfo ? "Querying Router..." : "Refresh Stats"}</span>
+                </button>
               </div>
-              <div className="p-3 bg-card-bg border border-pace-border rounded-xl">
-                <p className="text-xs text-admin-dim font-medium mb-1">RAM Used</p>
-                <p className="text-lg font-bold text-admin-value">{selectedRouter.ram}%</p>
-              </div>
-              <div className="p-3 bg-card-bg border border-pace-border rounded-xl">
-                <p className="text-xs text-admin-dim font-medium mb-1">PPPoE Users</p>
-                <p className="text-lg font-bold text-admin-value">{selectedRouter.subscribers}</p>
-              </div>
+
+              {isLoadingSystemInfo ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="p-3 bg-card-bg border border-pace-border rounded-xl space-y-2">
+                      <div className="h-3 w-16 bg-pace-border/50 rounded animate-pulse" />
+                      <div className="h-5 w-20 bg-pace-border/50 rounded animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : systemInfoData ? (
+                <div className="space-y-3">
+                  {/* Metric Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+                    <div className="p-3 bg-card-bg border border-pace-border rounded-xl">
+                      <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider mb-1">CPU Load</p>
+                      <p className="text-base font-bold text-admin-value tabular-nums">{systemInfoData.cpuLoad || systemInfoData.cpu || 0}%</p>
+                      <p className="text-[9px] text-admin-dim font-medium">{systemInfoData.cpuCount || 1} Cores @ {systemInfoData.cpuFrequency || 0}MHz</p>
+                    </div>
+                    <div className="p-3 bg-card-bg border border-pace-border rounded-xl">
+                      <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider mb-1">RAM Memory</p>
+                      <p className="text-base font-bold text-admin-value tabular-nums">{systemInfoData.memoryUsage || '0%'}</p>
+                      <p className="text-[9px] text-admin-dim font-medium">{systemInfoData.usedMemory || '0 MB'} / {systemInfoData.totalMemory || '0 MB'}</p>
+                    </div>
+                    <div className="p-3 bg-card-bg border border-pace-border rounded-xl">
+                      <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider mb-1">Free Storage</p>
+                      <p className="text-base font-bold text-admin-value tabular-nums">{systemInfoData.freeHdd || '0 MB'}</p>
+                      <p className="text-[9px] text-admin-dim font-medium">Total: {systemInfoData.totalHdd || '0 MB'}</p>
+                    </div>
+                    <div className="p-3 bg-card-bg border border-pace-border rounded-xl">
+                      <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider mb-1">System Uptime</p>
+                      <p className="text-sm font-bold text-pace-purple truncate tabular-nums">{systemInfoData.uptime || 'N/A'}</p>
+                      <p className="text-[9px] text-admin-dim font-medium">Online</p>
+                    </div>
+                  </div>
+
+                  {/* Hardware & OS Version Info */}
+                  <div className="p-3 bg-pace-bg-subtle/50 border border-pace-border rounded-xl flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <Radio size={14} className="text-emerald-500 shrink-0" />
+                      <span className="font-semibold text-admin-value">{systemInfoData.boardName || selectedRouter.model}</span>
+                      <span className="text-[10px] text-admin-dim font-mono">({systemInfoData.architecture || 'RouterOS'})</span>
+                    </div>
+                    <span className="text-[10px] font-bold bg-pace-purple/10 text-pace-purple px-2 py-0.5 rounded-md">
+                      RouterOS v{systemInfoData.version || '7.x'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-center space-y-1">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">Unable to query live telemetry from RouterOS API</p>
+                  <p className="text-[11px] text-admin-dim">Check if router OpenVPN client is connected to VPN IP <span className="font-mono">{selectedRouter.ip}</span> on API port <span className="font-mono">{selectedRouter.port}</span>.</p>
+                </div>
+              )}
             </div>
 
             {/* Detail Key-Values */}
