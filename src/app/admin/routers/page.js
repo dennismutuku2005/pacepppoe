@@ -200,7 +200,7 @@ export default function AdminRoutersPage() {
 
       const res = await routerService.authorizeRouter(payload)
       if (res && res.status === 'success') {
-        toast.success(`Router ${createForm.name} provisioned & pool incremented successfully!`)
+        toast.success(`Router ${createForm.name} added successfully!`)
         setIsCreateOpen(false)
         loadRouters()
       } else {
@@ -277,7 +277,7 @@ export default function AdminRoutersPage() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-pace-border pb-6">
         <div>
           <h1 className="text-xl font-medium text-admin-value tracking-tight">Router Infrastructure</h1>
-          <p className="text-xs font-medium text-gray-400 mt-1">Provision edge routers with automated (+1) IP/port pools and OpenVPN tunnel keys.</p>
+          <p className="text-xs font-medium text-gray-400 mt-1">Manage edge routers with automated (+1) IP/port pools and OpenVPN tunnel keys.</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
           <div className="relative w-full sm:w-64 group">
@@ -897,7 +897,7 @@ export default function AdminRoutersPage() {
               className="px-5 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all disabled:opacity-50 shadow-sm cursor-pointer disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               {isSaving && <RefreshCw size={12} className="animate-spin" />}
-              Add & Provision Router
+              Add Router
             </button>
           </div>
         </div>
