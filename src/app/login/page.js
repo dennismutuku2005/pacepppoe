@@ -82,11 +82,11 @@ export default function LoginPage() {
                     animate={{ opacity: 1, x: 0 }}
                     className="w-full"
                 >
-                    <div className="mb-10">
-                        <div className="mb-8">
-                            <Image src="/logoc.png" alt="Pace" width={140} height={46} className="h-10 w-auto object-contain" priority />
+                    <div className="mb-10 flex flex-col items-center text-center">
+                        <div className="mb-6 flex justify-center">
+                            <Image src="/logoc.png" alt="Pace" width={180} height={56} className="h-12 w-auto object-contain" priority />
                         </div>
-                        <h1 className="text-2xl font-semibold text-admin-value tracking-tight">ISP LOGIN</h1>
+                        <h1 className="text-2xl font-bold text-admin-value tracking-tight">ISP LOGIN</h1>
                     </div>
 
                     <form onSubmit={enterDashboard} className="space-y-5">
