@@ -30,6 +30,7 @@ export default function AdminRoutersPage() {
   const [pingingRouterId, setPingingRouterId] = useState(null)
   const [rebootingRouterId, setRebootingRouterId] = useState(null)
   const [systemInfoData, setSystemInfoData] = useState(null)
+  const [systemInfoError, setSystemInfoError] = useState(null)
   const [isLoadingSystemInfo, setIsLoadingSystemInfo] = useState(false)
 
   // Form states
@@ -104,15 +105,20 @@ export default function AdminRoutersPage() {
   const fetchLiveTelemetry = async (routerId) => {
     setIsLoadingSystemInfo(true)
     setSystemInfoData(null)
+    setSystemInfoError(null)
     try {
       const res = await routerService.getSystemInfo(routerId)
       if (res && res.status === 'success' && res.data) {
         setSystemInfoData(res.data)
       } else {
+        const errorDetail = res?.message || res?.data?.raw_error || res?.data?.error || 'Router unreachable'
+        console.error(`[MikroTik Telemetry Error for Router ${routerId}]:`, res)
+        setSystemInfoError(typeof errorDetail === 'object' ? JSON.stringify(errorDetail) : errorDetail)
         setSystemInfoData(null)
       }
     } catch (e) {
-      console.warn("Could not load live telemetry for router", e)
+      console.error(`[MikroTik Telemetry Exception for Router ${routerId}]:`, e)
+      setSystemInfoError(e?.message || "Could not query router API")
       setSystemInfoData(null)
     } finally {
       setIsLoadingSystemInfo(false)
@@ -130,17 +136,22 @@ export default function AdminRoutersPage() {
         if (isOnline) {
           toast.success(`${routerItem.name} is ONLINE (${res.data.latency_ms || 12}ms latency)`)
         } else {
-          toast.error(`${routerItem.name} is OFFLINE: ${res.data?.error || 'Node unreachable'}`)
+          const exactErr = res.data?.error || res.message || 'Node connection timed out'
+          console.error(`[MikroTik Ping Error for ${routerItem.name}]:`, res)
+          toast.error(`${routerItem.name} is OFFLINE: ${exactErr}`, { duration: 6000 })
         }
         setRouters(prev => prev.map(r => r.id === routerItem.id ? { ...r, status: isOnline ? 'Online' : 'Offline' } : r))
         if (selectedRouter?.id === routerItem.id) {
           fetchLiveTelemetry(routerItem.id)
         }
       } else {
-        toast.error(res?.message || `Ping failed for ${routerItem.name}`)
+        const exactErr = res?.message || res?.data?.error || `Ping failed for ${routerItem.name}`
+        console.error(`[MikroTik Ping Failed for ${routerItem.name}]:`, res)
+        toast.error(`${routerItem.name}: ${exactErr}`, { duration: 6000 })
       }
     } catch (err) {
-      toast.error(`Connection test failed for ${routerItem.name}`)
+      console.error(`[MikroTik Ping Exception for ${routerItem.name}]:`, err)
+      toast.error(`Connection test failed for ${routerItem.name}: ${err?.message || 'Network error'}`)
     } finally {
       setPingingRouterId(null)
     }
@@ -682,8 +693,13 @@ export default function AdminRoutersPage() {
                   </div>
                 </div>
               ) : (
-                <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-center space-y-1">
+                <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-center space-y-2">
                   <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">Unable to query realtime info from RouterOS API</p>
+                  {systemInfoError && (
+                    <div className="text-[11px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 py-1.5 px-3 rounded-lg max-w-lg mx-auto break-all border border-red-500/20">
+                      Error: {systemInfoError}
+                    </div>
+                  )}
                   <p className="text-[11px] text-admin-dim">Check if router OpenVPN client is connected to VPN IP <span className="font-mono">{selectedRouter.ip}</span> (API port <span className="font-mono">8729</span>).</p>
                 </div>
               )}
