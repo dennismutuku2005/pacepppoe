@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, Power, Settings, RefreshCw, Cpu, HardDrive, Users, Edit, Trash2, ShieldCheck, AlertCircle, Eye, EyeOff, Download, ExternalLink, FileText, Sparkles, Lock, Key, Shield, CheckCircle2, ChevronDown, Activity, Radio, Server, Clock, Zap } from 'lucide-react'
+import { Plus, Search, Power, Settings, RefreshCw, Cpu, HardDrive, Users, Edit, Trash2, ShieldCheck, AlertCircle, Eye, EyeOff, Download, ExternalLink, FileText, Sparkles, Lock, Key, Shield, CheckCircle2, ChevronDown, Activity, Loader2, Radio, Server, Clock, Zap } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
 import { IspAutocomplete } from '@/components/IspAutocomplete'
@@ -450,7 +450,7 @@ export default function AdminRoutersPage() {
                     <td className="px-6 py-4">
                       {routerItem.pinging || pingingMap[routerItem.id] ? (
                         <Badge variant="warning" className="text-[9px] font-bold border-none px-2 py-0.5 uppercase tracking-wider inline-flex items-center gap-1">
-                          <Activity size={10} className="animate-spin text-amber-500" />
+                          <Loader2 size={10} className="animate-spin text-amber-500" />
                           <span>Pinging...</span>
                         </Badge>
                       ) : (routerItem.status === 'Online' || routerItem.status === 'online') ? (
@@ -531,7 +531,11 @@ export default function AdminRoutersPage() {
                           title="Ping / Test Node Reachability"
                           className="p-1.5 hover:bg-emerald-500/10 rounded-lg text-admin-dim hover:text-emerald-600 transition-all cursor-pointer disabled:opacity-50"
                         >
-                          <Activity size={15} className={pingingMap[routerItem.id] ? "animate-spin text-emerald-600" : ""} />
+                          {pingingMap[routerItem.id] ? (
+                            <Loader2 size={15} className="animate-spin text-emerald-600" />
+                          ) : (
+                            <Activity size={15} />
+                          )}
                         </button>
 
                         {/* Reboot Quick Action */}
@@ -541,7 +545,11 @@ export default function AdminRoutersPage() {
                           title="Remote Reboot MikroTik"
                           className="p-1.5 hover:bg-amber-500/10 rounded-lg text-admin-dim hover:text-amber-600 transition-all cursor-pointer disabled:opacity-50"
                         >
-                          <Power size={15} className={rebootingRouterId === routerItem.id ? "animate-spin text-amber-600" : ""} />
+                          {rebootingRouterId === routerItem.id ? (
+                            <Loader2 size={15} className="animate-spin text-amber-600" />
+                          ) : (
+                            <Power size={15} />
+                          )}
                         </button>
 
                         {/* View Telemetry */}

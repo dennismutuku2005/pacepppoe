@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Search, Router as RouterIcon, Activity, RefreshCw, Power, Settings, ShieldCheck, Network, MoreVertical, List, Cpu, HardDrive, CpuIcon, Radio, Server, Clock } from 'lucide-react'
+import { Plus, Search, Router as RouterIcon, Activity, Loader2, RefreshCw, Power, Settings, ShieldCheck, Network, MoreVertical, List, Cpu, HardDrive, CpuIcon, Radio, Server, Clock } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, CardSkeleton, TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { routerService } from '@/services/isp/routers'
@@ -220,7 +220,7 @@ function RoutersContent() {
                                         <td className="px-6 py-3 text-center">
                                             {r.pinging || pingingMap[r.id] ? (
                                                 <Badge variant="warning" className="text-[10px] font-medium inline-flex items-center gap-1.5 px-2 py-0.5">
-                                                    <Activity size={11} className="animate-spin text-amber-500" />
+                                                    <Loader2 size={11} className="animate-spin text-amber-500" />
                                                     <span>Pinging...</span>
                                                 </Badge>
                                             ) : r.status === 'Online' ? (
@@ -265,7 +265,11 @@ function RoutersContent() {
                                                     className="p-2 text-admin-dim hover:text-emerald-600 hover:bg-emerald-500/10 rounded-xl transition-all cursor-pointer disabled:opacity-50"
                                                     title="Ping / Test Connection"
                                                 >
-                                                    <Activity size={14} className={pingingMap[r.id] ? "animate-spin text-emerald-600" : ""} />
+                                                    {pingingMap[r.id] ? (
+                                                        <Loader2 size={14} className="animate-spin text-emerald-600" />
+                                                    ) : (
+                                                        <Activity size={14} />
+                                                    )}
                                                 </button>
 
                                                 {/* Emergency Reboot */}
@@ -275,7 +279,11 @@ function RoutersContent() {
                                                     className="p-2 text-admin-dim hover:text-rose-600 hover:bg-rose-500/10 rounded-xl transition-all cursor-pointer disabled:opacity-50"
                                                     title="Remote Reboot Router"
                                                 >
-                                                    <Power size={14} className={rebootingRouterId === r.id ? "animate-spin text-rose-600" : ""} />
+                                                    {rebootingRouterId === r.id ? (
+                                                        <Loader2 size={14} className="animate-spin text-rose-600" />
+                                                    ) : (
+                                                        <Power size={14} />
+                                                    )}
                                                 </button>
 
                                                 {/* Node Telemetry View */}
@@ -318,7 +326,11 @@ function RoutersContent() {
                                     disabled={pingingMap[selectedRouter.id]}
                                     className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-xs font-bold hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1"
                                 >
-                                    <Activity size={12} className={pingingMap[selectedRouter.id] ? "animate-spin" : ""} />
+                                    {pingingMap[selectedRouter.id] ? (
+                                        <Loader2 size={12} className="animate-spin" />
+                                    ) : (
+                                        <Activity size={12} />
+                                    )}
                                     <span>{pingingMap[selectedRouter.id] ? "Pinging..." : "Ping"}</span>
                                 </button>
                                 <button

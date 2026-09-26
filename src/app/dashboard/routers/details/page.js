@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { 
     Router as RouterIcon, Cpu, HardDrive, Users, Clock, 
     RefreshCw, Power, Settings, ShieldCheck,
-    Activity, Globe, Layers, Network, List, ArrowUpRight, ArrowDownRight, Radio, Server
+    Activity, Loader2, Globe, Layers, Network, List, ArrowUpRight, ArrowDownRight, Radio, Server
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { routerService } from '@/services/isp/routers'
@@ -181,7 +181,7 @@ function RouterDetailsContent() {
                                     <h1 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">{node.name}</h1>
                                     {isPinging ? (
                                         <Badge variant="warning" className="text-[10px] font-medium inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                            <Activity size={11} className="animate-spin text-amber-400" />
+                                            <Loader2 size={11} className="animate-spin text-amber-400" />
                                             <span>Pinging...</span>
                                         </Badge>
                                     ) : (node.status === 'Online' || node.status === 'online') ? (
@@ -209,7 +209,11 @@ function RouterDetailsContent() {
                                 disabled={isPinging}
                                 className="w-full sm:w-auto px-5 py-2.5 bg-white text-[#501DAA] rounded-xl text-xs font-bold shadow-lg hover:bg-opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                             >
-                                <Activity size={14} className={isPinging ? "animate-spin" : ""} />
+                                {isPinging ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                    <Activity size={14} />
+                                )}
                                 <span>{isPinging ? "Pinging Node..." : "Ping / Sync Node"}</span>
                             </button>
                             <button 
@@ -217,7 +221,11 @@ function RouterDetailsContent() {
                                 disabled={isRebooting}
                                 className="w-full sm:w-auto px-4 py-2.5 bg-red-500/90 text-white rounded-xl shadow-lg hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs font-semibold cursor-pointer disabled:opacity-50"
                             >
-                                <Power size={14} className={isRebooting ? "animate-spin" : ""} />
+                                {isRebooting ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                    <Power size={14} />
+                                )}
                                 <span>{isRebooting ? "Rebooting..." : "Emergency Reboot"}</span>
                             </button>
                         </div>
