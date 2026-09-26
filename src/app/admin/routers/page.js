@@ -112,12 +112,10 @@ export default function AdminRoutersPage() {
         setSystemInfoData(res.data)
       } else {
         const errorDetail = res?.message || res?.data?.raw_error || res?.data?.error || 'Router unreachable'
-        console.error(`[MikroTik Telemetry Error for Router ${routerId}]:`, res)
         setSystemInfoError(typeof errorDetail === 'object' ? JSON.stringify(errorDetail) : errorDetail)
         setSystemInfoData(null)
       }
     } catch (e) {
-      console.error(`[MikroTik Telemetry Exception for Router ${routerId}]:`, e)
       setSystemInfoError(e?.message || "Could not query router API")
       setSystemInfoData(null)
     } finally {
@@ -137,8 +135,7 @@ export default function AdminRoutersPage() {
           toast.success(`${routerItem.name} is ONLINE (${res.data.latency_ms || 12}ms latency)`)
         } else {
           const exactErr = res.data?.error || res.message || 'Node connection timed out'
-          console.error(`[MikroTik Ping Error for ${routerItem.name}]:`, res)
-          toast.error(`${routerItem.name} is OFFLINE: ${exactErr}`, { duration: 6000 })
+          toast.error(`${routerItem.name} is OFFLINE: ${exactErr}`, { duration: 5000 })
         }
         setRouters(prev => prev.map(r => r.id === routerItem.id ? { ...r, status: isOnline ? 'Online' : 'Offline' } : r))
         if (selectedRouter?.id === routerItem.id) {
@@ -146,11 +143,9 @@ export default function AdminRoutersPage() {
         }
       } else {
         const exactErr = res?.message || res?.data?.error || `Ping failed for ${routerItem.name}`
-        console.error(`[MikroTik Ping Failed for ${routerItem.name}]:`, res)
-        toast.error(`${routerItem.name}: ${exactErr}`, { duration: 6000 })
+        toast.error(`${routerItem.name}: ${exactErr}`, { duration: 5000 })
       }
     } catch (err) {
-      console.error(`[MikroTik Ping Exception for ${routerItem.name}]:`, err)
       toast.error(`Connection test failed for ${routerItem.name}: ${err?.message || 'Network error'}`)
     } finally {
       setPingingRouterId(null)
@@ -700,7 +695,7 @@ export default function AdminRoutersPage() {
                       Error: {systemInfoError}
                     </div>
                   )}
-                  <p className="text-[11px] text-admin-dim">Check if router OpenVPN client is connected to VPN IP <span className="font-mono">{selectedRouter.ip}</span> (API port <span className="font-mono">8729</span>).</p>
+                  <p className="text-[11px] text-admin-dim">Check if router OpenVPN client is connected to VPN IP <span className="font-mono">{selectedRouter.ip}</span> (API port <span className="font-mono">8728</span>).</p>
                 </div>
               )}
             </div>
