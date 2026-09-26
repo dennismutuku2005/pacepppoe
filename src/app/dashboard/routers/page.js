@@ -21,22 +21,59 @@ function RoutersContent() {
     const [systemInfoData, setSystemInfoData] = useState(null)
     const [isLoadingSystemInfo, setIsLoadingSystemInfo] = useState(false)
 
-    const [pingingRouterId, setPingingRouterId] = useState(null)
+    const [pingingMap, setPingingMap] = useState({})
     const [rebootingRouterId, setRebootingRouterId] = useState(null)
+
+    const pingSingleRouter = async (r, showToast = false) => {
+        setPingingMap(prev => ({ ...prev, [r.id]: true }))
+        try {
+            const res = await routerService.pingRouter(r.id)
+            if (res && res.status === 'success') {
+                const isOnline = res.data?.status === 'online'
+                const latency = res.data?.latency_ms || 12
+                if (showToast) {
+                    if (isOnline) {
+                        toast.success(`${r.name} is ONLINE (${latency}ms latency)`)
+                    } else {
+                        toast.error(`${r.name} is OFFLINE: ${res.data?.error || 'Node unreachable'}`)
+                    }
+                }
+                setRouters(prev => prev.map(item => item.id === r.id ? { 
+                    ...item, 
+                    status: isOnline ? 'Online' : 'Offline',
+                    latency: isOnline ? latency : null,
+                    pinging: false 
+                } : item))
+            } else {
+                if (showToast) toast.error(res?.message || `Ping failed for ${r.name}`)
+                setRouters(prev => prev.map(item => item.id === r.id ? { ...item, status: 'Offline', latency: null, pinging: false } : item))
+            }
+        } catch (err) {
+            if (showToast) toast.error(`Connection test failed for ${r.name}`)
+            setRouters(prev => prev.map(item => item.id === r.id ? { ...item, status: 'Offline', latency: null, pinging: false } : item))
+        } finally {
+            setPingingMap(prev => ({ ...prev, [r.id]: false }))
+        }
+    }
 
     const fetchRouters = async () => {
         setIsLoading(true)
         try {
             const res = await routerService.getRouters()
             if (res.status === 'success') {
-                setRouters(res.data)
+                const list = (res.data || []).map(r => ({ ...r, pinging: true }))
+                setRouters(list)
+                setIsLoading(false)
+                // Ping all routers live on load to verify reachability
+                list.forEach(r => {
+                    pingSingleRouter(r, false)
+                })
             } else {
                 throw new Error(res.message)
             }
         } catch (err) {
             console.warn("Failed to load routers:", err)
             toast.error("Failed to load network routers")
-        } finally {
             setIsLoading(false)
         }
     }
@@ -71,27 +108,9 @@ function RoutersContent() {
 
     const handlePing = async (r, e) => {
         if (e) e.stopPropagation()
-        setPingingRouterId(r.id)
-        try {
-            const res = await routerService.pingRouter(r.id)
-            if (res && res.status === 'success') {
-                const isOnline = res.data?.status === 'online'
-                if (isOnline) {
-                    toast.success(`${r.name} is ONLINE (${res.data.latency_ms || 12}ms latency)`)
-                } else {
-                    toast.error(`${r.name} is OFFLINE: ${res.data?.error || 'Unreachable'}`)
-                }
-                setRouters(prev => prev.map(item => item.id === r.id ? { ...item, status: isOnline ? 'Online' : 'Offline' } : item))
-                if (selectedRouter?.id === r.id) {
-                    fetchLiveTelemetry(r.id)
-                }
-            } else {
-                toast.error(res?.message || `Ping failed for ${r.name}`)
-            }
-        } catch (err) {
-            toast.error(`Connection test failed for ${r.name}`)
-        } finally {
-            setPingingRouterId(null)
+        await pingSingleRouter(r, true)
+        if (selectedRouter?.id === r.id) {
+            fetchLiveTelemetry(r.id)
         }
     }
 
@@ -199,9 +218,22 @@ function RoutersContent() {
                                             <span className="text-[11px] font-medium text-admin-dim uppercase tracking-tight">{r.model}</span>
                                         </td>
                                         <td className="px-6 py-3 text-center">
-                                            <Badge variant={r.status === 'Online' ? 'success' : 'error'} className="text-[10px] font-medium">
-                                                {r.status}
-                                            </Badge>
+                                            {r.pinging || pingingMap[r.id] ? (
+                                                <Badge variant="warning" className="text-[10px] font-medium inline-flex items-center gap-1.5 px-2 py-0.5">
+                                                    <Activity size={11} className="animate-spin text-amber-500" />
+                                                    <span>Pinging...</span>
+                                                </Badge>
+                                            ) : r.status === 'Online' ? (
+                                                <Badge variant="success" className="text-[10px] font-medium inline-flex items-center gap-1.5 px-2 py-0.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                    <span>Online {r.latency ? `(${r.latency}ms)` : ''}</span>
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="error" className="text-[10px] font-medium inline-flex items-center gap-1.5 px-2 py-0.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                                    <span>Offline</span>
+                                                </Badge>
+                                            )}
                                         </td>
                                         <td className="px-6 py-3">
                                             <div className="flex items-center gap-3 w-28">
@@ -229,11 +261,11 @@ function RoutersContent() {
                                                 {/* Ping Button */}
                                                 <button 
                                                     onClick={(e) => handlePing(r, e)}
-                                                    disabled={pingingRouterId === r.id}
+                                                    disabled={pingingMap[r.id]}
                                                     className="p-2 text-admin-dim hover:text-emerald-600 hover:bg-emerald-500/10 rounded-xl transition-all cursor-pointer disabled:opacity-50"
                                                     title="Ping / Test Connection"
                                                 >
-                                                    <Activity size={14} className={pingingRouterId === r.id ? "animate-spin text-emerald-600" : ""} />
+                                                    <Activity size={14} className={pingingMap[r.id] ? "animate-spin text-emerald-600" : ""} />
                                                 </button>
 
                                                 {/* Emergency Reboot */}
@@ -283,11 +315,11 @@ function RoutersContent() {
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => handlePing(selectedRouter)}
-                                    disabled={pingingRouterId === selectedRouter.id}
+                                    disabled={pingingMap[selectedRouter.id]}
                                     className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-lg text-xs font-bold hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1"
                                 >
-                                    <Activity size={12} className={pingingRouterId === selectedRouter.id ? "animate-spin" : ""} />
-                                    <span>Ping</span>
+                                    <Activity size={12} className={pingingMap[selectedRouter.id] ? "animate-spin" : ""} />
+                                    <span>{pingingMap[selectedRouter.id] ? "Pinging..." : "Ping"}</span>
                                 </button>
                                 <button
                                     onClick={() => handleReboot(selectedRouter)}

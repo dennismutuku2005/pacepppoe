@@ -35,8 +35,41 @@ function RouterDetailsContent() {
     const [node, setNode] = useState(null)
     const [telemetry, setTelemetry] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
-    const [isPinging, setIsPinging] = useState(false)
-    const [isRebooting, setIsRebooting] = useState(false)
+    const [latency, setLatency] = useState(null)
+
+    const runPing = async (targetNode, showToast = false) => {
+        if (!targetNode) return
+        setIsPinging(true)
+        try {
+            const res = await routerService.pingRouter(targetNode.id)
+            if (res && res.status === 'success') {
+                const isOnline = res.data?.status === 'online'
+                const lat = res.data?.latency_ms || 12
+                setLatency(isOnline ? lat : null)
+                setNode(prev => prev ? { ...prev, status: isOnline ? 'Online' : 'Offline' } : prev)
+                if (showToast) {
+                    if (isOnline) {
+                        toast.success(`${targetNode.name} is ONLINE (${lat}ms latency)`)
+                    } else {
+                        toast.error(`${targetNode.name} is OFFLINE: ${res.data?.error || 'Node unreachable'}`)
+                    }
+                }
+                if (isOnline && res.data?.system) {
+                    setTelemetry(res.data.system)
+                }
+            } else {
+                setNode(prev => prev ? { ...prev, status: 'Offline' } : prev)
+                setLatency(null)
+                if (showToast) toast.error(res?.message || "Ping failed")
+            }
+        } catch (e) {
+            setNode(prev => prev ? { ...prev, status: 'Offline' } : prev)
+            setLatency(null)
+            if (showToast) toast.error("Connection test failed")
+        } finally {
+            setIsPinging(false)
+        }
+    }
 
     const fetchNodeData = async () => {
         if (!id) {
@@ -48,6 +81,9 @@ function RouterDetailsContent() {
             const res = await routerService.getRouterDetails(id)
             if (res.status === 'success' && res.data) {
                 setNode(res.data)
+                setIsLoading(false)
+                // Trigger live reachability ping on load
+                runPing(res.data, false)
                 // Also fetch live telemetry
                 try {
                     const teleRes = await routerService.getSystemInfo(id)
@@ -58,13 +94,13 @@ function RouterDetailsContent() {
                     console.warn("Could not query telemetry:", e)
                 }
             } else {
+                setIsLoading(false)
                 toast.error(res.message || "Failed to load router details")
             }
         } catch (e) {
+            setIsLoading(false)
             console.error("Error fetching router:", e)
             toast.error("Network error loading router")
-        } finally {
-            setIsLoading(false)
         }
     }
 
@@ -74,25 +110,7 @@ function RouterDetailsContent() {
 
     const handlePing = async () => {
         if (!node) return
-        setIsPinging(true)
-        try {
-            const res = await routerService.pingRouter(node.id)
-            if (res && res.status === 'success') {
-                const isOnline = res.data?.status === 'online'
-                if (isOnline) {
-                    toast.success(`${node.name} is ONLINE (${res.data.latency_ms || 12}ms latency)`)
-                    if (res.data.system) setTelemetry(res.data.system)
-                } else {
-                    toast.error(`${node.name} is OFFLINE: ${res.data?.error || 'Unreachable'}`)
-                }
-            } else {
-                toast.error(res?.message || "Ping failed")
-            }
-        } catch (e) {
-            toast.error("Connection test failed")
-        } finally {
-            setIsPinging(false)
-        }
+        await runPing(node, true)
     }
 
     const handleReboot = async () => {
@@ -105,6 +123,7 @@ function RouterDetailsContent() {
             const res = await routerService.rebootRouter(node.id)
             if (res && res.status === 'success') {
                 toast.success(res.message || `Reboot command sent to ${node.name}`)
+                setTimeout(() => runPing(node, false), 5000)
             } else {
                 toast.error(res?.message || "Failed to reboot router")
             }
@@ -120,7 +139,7 @@ function RouterDetailsContent() {
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-pace-purple border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm font-bold text-admin-dim uppercase tracking-widest animate-pulse">Querying Router Node...</p>
+                    <p className="text-sm font-bold text-admin-dim uppercase tracking-widest animate-pulse">Pinging Router and Loading Telemetry...</p>
                 </div>
             </div>
         )
@@ -160,9 +179,22 @@ function RouterDetailsContent() {
                             <div className="space-y-1">
                                 <div className="flex items-center gap-3">
                                     <h1 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">{node.name}</h1>
-                                    <Badge variant={node.status === 'Online' || node.status === 'online' ? 'success' : 'error'} className="text-[10px] font-medium">
-                                        {node.status}
-                                    </Badge>
+                                    {isPinging ? (
+                                        <Badge variant="warning" className="text-[10px] font-medium inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                            <Activity size={11} className="animate-spin text-amber-400" />
+                                            <span>Pinging...</span>
+                                        </Badge>
+                                    ) : (node.status === 'Online' || node.status === 'online') ? (
+                                        <Badge variant="success" className="text-[10px] font-medium inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                            <span>Online {latency ? `(${latency}ms)` : ''}</span>
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="error" className="text-[10px] font-medium inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                                            <span>Offline</span>
+                                        </Badge>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-4 text-white/70 text-sm font-medium">
                                     <span className="flex items-center gap-1.5">{node.ip}:{node.port}</span>
@@ -178,7 +210,7 @@ function RouterDetailsContent() {
                                 className="w-full sm:w-auto px-5 py-2.5 bg-white text-[#501DAA] rounded-xl text-xs font-bold shadow-lg hover:bg-opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                             >
                                 <Activity size={14} className={isPinging ? "animate-spin" : ""} />
-                                <span>{isPinging ? "Testing Node..." : "Ping / Sync Node"}</span>
+                                <span>{isPinging ? "Pinging Node..." : "Ping / Sync Node"}</span>
                             </button>
                             <button 
                                 onClick={handleReboot}

@@ -27,40 +27,48 @@ export default function AdminRoutersPage() {
   const [isResourcesConfirmed, setIsResourcesConfirmed] = useState(false)
 
   // Live Telemetry & Quick Action states
-  const [pingingRouterId, setPingingRouterId] = useState(null)
+  const [pingingMap, setPingingMap] = useState({})
   const [rebootingRouterId, setRebootingRouterId] = useState(null)
   const [systemInfoData, setSystemInfoData] = useState(null)
   const [systemInfoError, setSystemInfoError] = useState(null)
   const [isLoadingSystemInfo, setIsLoadingSystemInfo] = useState(false)
 
-  // Form states
-  const [showPassword, setShowPassword] = useState(false)
-  const [createForm, setCreateForm] = useState({
-    name: '',
-    ip_address: '',
-    public_ip: '165.22.171.98',
-    api_port: '',
-    winbox_port: '',
-    username: 'admin',
-    password: '',
-    model: 'MikroTik',
-    ownerSearch: '',
-    isp_id: ''
-  })
-  const [editForm, setEditForm] = useState({
-    id: null,
-    name: '',
-    ip_address: '',
-    public_ip: '165.22.171.98',
-    api_port: 8728,
-    winbox_port: 8291,
-    username: '',
-    password: '',
-    model: 'MikroTik',
-    status: 'offline',
-    ownerSearch: '',
-    isp_id: ''
-  })
+  const pingSingleRouter = async (routerItem, showToast = false) => {
+    setPingingMap(prev => ({ ...prev, [routerItem.id]: true }))
+    try {
+      const res = await routerService.pingRouter(routerItem.id)
+      if (res && res.status === 'success') {
+        const isOnline = res.data?.status === 'online'
+        const latency = res.data?.latency_ms || 12
+        if (showToast) {
+          if (isOnline) {
+            toast.success(`${routerItem.name} is ONLINE (${latency}ms latency)`)
+          } else {
+            const exactErr = res.data?.error || res.message || 'Node connection timed out'
+            toast.error(`${routerItem.name} is OFFLINE: ${exactErr}`, { duration: 5000 })
+          }
+        }
+        setRouters(prev => prev.map(r => r.id === routerItem.id ? { 
+          ...r, 
+          status: isOnline ? 'Online' : 'Offline',
+          latency: isOnline ? latency : null,
+          pinging: false 
+        } : r))
+        if (selectedRouter?.id === routerItem.id && isOnline) {
+          fetchLiveTelemetry(routerItem.id)
+        }
+      } else {
+        const exactErr = res?.message || res?.data?.error || `Ping failed for ${routerItem.name}`
+        if (showToast) toast.error(`${routerItem.name}: ${exactErr}`, { duration: 5000 })
+        setRouters(prev => prev.map(r => r.id === routerItem.id ? { ...r, status: 'Offline', latency: null, pinging: false } : r))
+      }
+    } catch (err) {
+      if (showToast) toast.error(`Connection test failed for ${routerItem.name}: ${err?.message || 'Network error'}`)
+      setRouters(prev => prev.map(r => r.id === routerItem.id ? { ...r, status: 'Offline', latency: null, pinging: false } : r))
+    } finally {
+      setPingingMap(prev => ({ ...prev, [routerItem.id]: false }))
+    }
+  }
 
   // Fetch routers on load
   const loadRouters = async () => {
@@ -68,14 +76,20 @@ export default function AdminRoutersPage() {
     try {
       const res = await routerService.getRouters()
       if (res && res.status === 'success') {
-        setRouters(res.data || [])
+        const list = (res.data || []).map(r => ({ ...r, pinging: true }))
+        setRouters(list)
+        setIsLoading(false)
+        // Live verify reachability by pinging all routers
+        list.forEach(r => {
+          pingSingleRouter(r, false)
+        })
       } else {
         toast.error(res?.message || 'Failed to load routers')
+        setIsLoading(false)
       }
     } catch (err) {
       console.error(err)
       toast.error('Network error fetching routers inventory')
-    } finally {
       setIsLoading(false)
     }
   }
@@ -126,30 +140,7 @@ export default function AdminRoutersPage() {
   // Ping router handler
   const handlePing = async (routerItem, e) => {
     if (e) e.stopPropagation()
-    setPingingRouterId(routerItem.id)
-    try {
-      const res = await routerService.pingRouter(routerItem.id)
-      if (res && res.status === 'success') {
-        const isOnline = res.data?.status === 'online'
-        if (isOnline) {
-          toast.success(`${routerItem.name} is ONLINE (${res.data.latency_ms || 12}ms latency)`)
-        } else {
-          const exactErr = res.data?.error || res.message || 'Node connection timed out'
-          toast.error(`${routerItem.name} is OFFLINE: ${exactErr}`, { duration: 5000 })
-        }
-        setRouters(prev => prev.map(r => r.id === routerItem.id ? { ...r, status: isOnline ? 'Online' : 'Offline' } : r))
-        if (selectedRouter?.id === routerItem.id) {
-          fetchLiveTelemetry(routerItem.id)
-        }
-      } else {
-        const exactErr = res?.message || res?.data?.error || `Ping failed for ${routerItem.name}`
-        toast.error(`${routerItem.name}: ${exactErr}`, { duration: 5000 })
-      }
-    } catch (err) {
-      toast.error(`Connection test failed for ${routerItem.name}: ${err?.message || 'Network error'}`)
-    } finally {
-      setPingingRouterId(null)
-    }
+    await pingSingleRouter(routerItem, true)
   }
 
   // Reboot router handler
@@ -457,9 +448,22 @@ export default function AdminRoutersPage() {
                       API: <span className="font-semibold text-admin-value">{routerItem.port}</span> • Winbox: <span className="font-semibold text-admin-value">{routerItem.winbox_port || 8291}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant={routerItem.status === 'Online' ? 'success' : 'error'} className="text-[9px] font-bold border-none px-2 py-0.5 uppercase tracking-wider">
-                        {routerItem.status}
-                      </Badge>
+                      {routerItem.pinging || pingingMap[routerItem.id] ? (
+                        <Badge variant="warning" className="text-[9px] font-bold border-none px-2 py-0.5 uppercase tracking-wider inline-flex items-center gap-1">
+                          <Activity size={10} className="animate-spin text-amber-500" />
+                          <span>Pinging...</span>
+                        </Badge>
+                      ) : (routerItem.status === 'Online' || routerItem.status === 'online') ? (
+                        <Badge variant="success" className="text-[9px] font-bold border-none px-2 py-0.5 uppercase tracking-wider inline-flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>Online {routerItem.latency ? `(${routerItem.latency}ms)` : ''}</span>
+                        </Badge>
+                      ) : (
+                        <Badge variant="error" className="text-[9px] font-bold border-none px-2 py-0.5 uppercase tracking-wider inline-flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                          <span>Offline</span>
+                        </Badge>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       {routerItem.ovpn_links ? (
@@ -523,11 +527,11 @@ export default function AdminRoutersPage() {
                         {/* Ping Quick Action */}
                         <button
                           onClick={(e) => handlePing(routerItem, e)}
-                          disabled={pingingRouterId === routerItem.id}
+                          disabled={pingingMap[routerItem.id]}
                           title="Ping / Test Node Reachability"
                           className="p-1.5 hover:bg-emerald-500/10 rounded-lg text-admin-dim hover:text-emerald-600 transition-all cursor-pointer disabled:opacity-50"
                         >
-                          <Activity size={15} className={pingingRouterId === routerItem.id ? "animate-spin text-emerald-600" : ""} />
+                          <Activity size={15} className={pingingMap[routerItem.id] ? "animate-spin text-emerald-600" : ""} />
                         </button>
 
                         {/* Reboot Quick Action */}
