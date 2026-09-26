@@ -164,12 +164,39 @@ class AuthService {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
     localStorage.removeItem('pace_session_last_active');
+    sessionStorage.clear();
 
-    // Clear all cookies
-    document.cookie.split(";").forEach((c) => {
-      document.cookie = c
-        .replace(/^ +/, "")
-        .replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/");
+    const isHttps = window.location.protocol === 'https:';
+    const domain = window.location.hostname;
+    const domainParts = domain.split('.');
+    
+    // Cookie names to explicitly wipe
+    const targetCookies = [this.tokenKey, this.userKey, 'pace_session_last_active', 'pace_auth_token', 'pace_user_data'];
+    
+    // Also extract every cookie currently present in document.cookie
+    document.cookie.split(';').forEach((cookieStr) => {
+      const eqPos = cookieStr.indexOf('=');
+      const name = eqPos > -1 ? cookieStr.substring(0, eqPos).trim() : cookieStr.trim();
+      if (name && !targetCookies.includes(name)) {
+        targetCookies.push(name);
+      }
+    });
+
+    // Domain variants to ensure subdomains and parent domains are cleared
+    const domainsToClear = ['', domain, `.${domain}`];
+    if (domainParts.length > 2) {
+      const rootDomain = domainParts.slice(-2).join('.');
+      domainsToClear.push(rootDomain, `.${rootDomain}`);
+    }
+
+    targetCookies.forEach((name) => {
+      domainsToClear.forEach((dom) => {
+        const domAttr = dom ? `;domain=${dom}` : '';
+        // Clear with and without Secure / SameSite across root path
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;max-age=0${domAttr}`;
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;max-age=0;SameSite=Lax${domAttr}${isHttps ? ';Secure' : ''}`;
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;max-age=0;SameSite=None${domAttr}${isHttps ? ';Secure' : ''}`;
+      });
     });
   }
 

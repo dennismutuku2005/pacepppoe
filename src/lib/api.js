@@ -40,19 +40,39 @@ export async function apiFetch(endpoint, options = {}) {
 
     // Auto-logout on 401 Unauthorized (except for login requests)
     if (response.status === 401 && !cleanEndpoint.includes('/auth/login.php')) {
-      if (typeof window !== 'undefined') {
         localStorage.removeItem('pace_auth_token');
         localStorage.removeItem('pace_user_data');
-        // Clear all cookies
-        document.cookie.split(";").forEach((c) => {
-          document.cookie = c
-            .replace(/^ +/, "")
-            .replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/");
+        localStorage.removeItem('pace_session_last_active');
+        sessionStorage.clear();
+
+        const isHttps = window.location.protocol === 'https:';
+        const domain = window.location.hostname;
+        const domainParts = domain.split('.');
+        const domainsToClear = ['', domain, `.${domain}`];
+        if (domainParts.length > 2) {
+          const rootDomain = domainParts.slice(-2).join('.');
+          domainsToClear.push(rootDomain, `.${rootDomain}`);
+        }
+
+        const targetCookies = ['pace_auth_token', 'pace_user_data', 'pace_session_last_active'];
+        document.cookie.split(';').forEach((cookieStr) => {
+          const eqPos = cookieStr.indexOf('=');
+          const name = eqPos > -1 ? cookieStr.substring(0, eqPos).trim() : cookieStr.trim();
+          if (name && !targetCookies.includes(name)) targetCookies.push(name);
         });
+
+        targetCookies.forEach((name) => {
+          domainsToClear.forEach((dom) => {
+            const domAttr = dom ? `;domain=${dom}` : '';
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;max-age=0${domAttr}`;
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;max-age=0;SameSite=Lax${domAttr}${isHttps ? ';Secure' : ''}`;
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;max-age=0;SameSite=None${domAttr}${isHttps ? ';Secure' : ''}`;
+          });
+        });
+
         // Redirect to login page
         window.location.href = '/login';
-      }
-      throw new Error('Unauthorized session. Please login again.');
+        throw new Error('Unauthorized session. Please login again.');
     }
 
     const data = await response.json();
