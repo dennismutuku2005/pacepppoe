@@ -721,9 +721,24 @@ export default function AdminRoutersPage() {
                 <Lock size={13} className="text-pace-purple" />
                 <span>Auto-Allocated by Server (+1 Pool)</span>
               </div>
-              <span className="text-[10px] bg-pace-purple/10 text-pace-purple font-bold px-2 py-0.5 rounded-md">
-                Locked & Confirmed
-              </span>
+              {isLoadingNextResources ? (
+                <div className="flex items-center gap-1.5 text-[10px] text-pace-purple font-semibold">
+                  <div className="w-2.5 h-2.5 rounded-full border-2 border-pace-purple/30 border-t-pace-purple animate-spin" />
+                  <span>Allocating pool...</span>
+                </div>
+              ) : isResourcesConfirmed ? (
+                <span className="text-[10px] bg-pace-purple/10 text-pace-purple font-bold px-2 py-0.5 rounded-md">
+                  Locked & Confirmed
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={fetchAndConfirmResources}
+                  className="text-[10px] text-red-500 hover:text-red-600 underline font-semibold"
+                >
+                  Retry Allocation
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -731,60 +746,87 @@ export default function AdminRoutersPage() {
                 <label className="text-[11px] font-semibold text-admin-dim block mb-1">
                   VPN Tunnel IP
                 </label>
-                <div className="relative">
-                  <input
-                    readOnly
-                    disabled
-                    value={createForm.ip_address || 'Fetching...'}
-                    className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed select-all"
-                  />
-                  <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
-                </div>
+                {isLoadingNextResources ? (
+                  <div className="h-[34px] w-full rounded-lg border border-pace-border bg-card-bg/60 animate-pulse flex items-center px-3">
+                    <div className="h-2.5 w-20 bg-admin-dim/20 rounded-full animate-pulse" />
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      readOnly
+                      disabled
+                      value={createForm.ip_address || ''}
+                      placeholder="—"
+                      className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed select-all"
+                    />
+                    <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="text-[11px] font-semibold text-admin-dim block mb-1">
                   Server Public IP
                 </label>
-                <div className="relative">
-                  <input
-                    readOnly
-                    disabled
-                    value={createForm.public_ip || '178.62.36.148'}
-                    className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed"
-                  />
-                  <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
-                </div>
+                {isLoadingNextResources ? (
+                  <div className="h-[34px] w-full rounded-lg border border-pace-border bg-card-bg/60 animate-pulse flex items-center px-3">
+                    <div className="h-2.5 w-24 bg-admin-dim/20 rounded-full animate-pulse" />
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      readOnly
+                      disabled
+                      value={createForm.public_ip || '178.62.36.148'}
+                      className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed"
+                    />
+                    <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="text-[11px] font-semibold text-admin-dim block mb-1">
                   API Port
                 </label>
-                <div className="relative">
-                  <input
-                    readOnly
-                    disabled
-                    value={createForm.api_port || 'Fetching...'}
-                    className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed"
-                  />
-                  <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
-                </div>
+                {isLoadingNextResources ? (
+                  <div className="h-[34px] w-full rounded-lg border border-pace-border bg-card-bg/60 animate-pulse flex items-center px-3">
+                    <div className="h-2.5 w-14 bg-admin-dim/20 rounded-full animate-pulse" />
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      readOnly
+                      disabled
+                      value={createForm.api_port || ''}
+                      placeholder="—"
+                      className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed"
+                    />
+                    <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
+                  </div>
+                )}
               </div>
 
               <div>
                 <label className="text-[11px] font-semibold text-admin-dim block mb-1">
                   Winbox Port
                 </label>
-                <div className="relative">
-                  <input
-                    readOnly
-                    disabled
-                    value={createForm.winbox_port || 'Fetching...'}
-                    className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed"
-                  />
-                  <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
-                </div>
+                {isLoadingNextResources ? (
+                  <div className="h-[34px] w-full rounded-lg border border-pace-border bg-card-bg/60 animate-pulse flex items-center px-3">
+                    <div className="h-2.5 w-14 bg-admin-dim/20 rounded-full animate-pulse" />
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      readOnly
+                      disabled
+                      value={createForm.winbox_port || ''}
+                      placeholder="—"
+                      className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed"
+                    />
+                    <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
+                  </div>
+                )}
               </div>
             </div>
           </div>
