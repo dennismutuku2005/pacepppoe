@@ -33,6 +33,35 @@ export default function AdminSmsLogsPage() {
   const [message, setMessage] = useState('')
   const [targetIspId, setTargetIspId] = useState('')
   const [ispSearchQuery, setIspSearchQuery] = useState('')
+  const [showIspDropdown, setShowIspDropdown] = useState(false)
+
+  // Filter matching suggestions when query is >= 3 chars
+  const matchingSuggestions = useMemo(() => {
+    if (!ispSearchQuery || ispSearchQuery.trim().length < 3) return []
+    const q = ispSearchQuery.toLowerCase().trim()
+    
+    // Combine suggestionsList and ispsList avoiding duplicates
+    const all = [...ispsList]
+    suggestionsList.forEach(s => {
+      if (!all.some(i => i.id === s.id)) {
+        all.push(s)
+      }
+    })
+
+    return all.filter(isp => 
+      (isp.name && isp.name.toLowerCase().includes(q)) ||
+      (isp.username && isp.username.toLowerCase().includes(q)) ||
+      (isp.phone && isp.phone.includes(q)) ||
+      (isp.email && isp.email.toLowerCase().includes(q))
+    )
+  }, [ispSearchQuery, suggestionsList, ispsList])
+
+  const handleSelectIsp = (isp) => {
+    setIspSearchQuery(isp.name || '')
+    setPhone(isp.phone || '')
+    setTargetIspId(isp.id ? isp.id.toString() : '')
+    setShowIspDropdown(false)
+  }
 
   // Fetch SMS logs from API
   const loadSMSLogs = async () => {
@@ -78,9 +107,15 @@ export default function AdminSmsLogsPage() {
   const handleIspSearchChange = (e) => {
     const val = e.target.value
     setIspSearchQuery(val)
+    if (val.trim().length >= 3) {
+      setShowIspDropdown(true)
+    } else {
+      setShowIspDropdown(false)
+    }
     
     // Check if the typed value matches one of the ISP suggestions exactly
-    const matched = suggestionsList.find(s => s.name.toLowerCase() === val.toLowerCase())
+    const matched = ispsList.find(s => s.name.toLowerCase() === val.toLowerCase()) || 
+                    suggestionsList.find(s => s.name.toLowerCase() === val.toLowerCase())
     if (matched) {
       setPhone(matched.phone || '')
       setTargetIspId(matched.id.toString())
@@ -422,20 +457,20 @@ export default function AdminSmsLogsPage() {
                 { label: 'Recipient Phone', value: selectedLog.phone },
                 { label: 'ISP Scope Name', value: selectedLog.isp_name },
                 { label: 'SMS Content Message', value: selectedLog.message },
-                { label: 'Delivery Status Code', value: selectedLog.status.toUpperCase() },
+                { label: 'Delivery Status', value: selectedLog.status },
                 { label: 'Date Logged', value: formatDate(selectedLog.created_at) }
               ].map((item) => (
                 <div key={item.label} className="rounded-xl border border-pace-border bg-pace-bg-subtle p-3">
-                  <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold mb-1">{item.label}</p>
-                  <p className="text-xs font-bold text-admin-value leading-relaxed whitespace-pre-wrap">{item.value}</p>
+                  <p className="text-xs font-medium text-admin-dim mb-1">{item.label}</p>
+                  <p className="text-xs font-semibold text-admin-value leading-relaxed whitespace-pre-wrap">{item.value}</p>
                 </div>
               ))}
             </div>
             <button
               onClick={() => setIsViewOpen(false)}
-              className="w-full bg-pace-purple text-white py-2.5 rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all mt-2"
+              className="w-full bg-pace-purple text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all mt-2 cursor-pointer"
             >
-              Dismiss Info
+              Dismiss
             </button>
           </div>
         )}
@@ -444,18 +479,21 @@ export default function AdminSmsLogsPage() {
       {/* COMPOSE SMS MODAL */}
       <Modal
         isOpen={isSendOpen}
-        onClose={() => setIsSendOpen(false)}
+        onClose={() => {
+          setIsSendOpen(false)
+          setShowIspDropdown(false)
+        }}
         title="Compose SMS Broadcast"
         description="Dispatch SMS alerts or system notifications to ISP operator recipients."
         maxWidth="max-w-md"
       >
         <div className="space-y-4 font-figtree">
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Target Audience</label>
+            <label className="text-xs font-medium text-admin-dim">Target Audience</label>
             <select
               value={target}
               onChange={(e) => setTarget(e.target.value)}
-              className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
+              className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:bg-card-bg focus:border-pace-purple cursor-pointer transition-all"
             >
               <option value="all">Broadcast to All Active ISPs</option>
               <option value="specific">Custom Specific Recipient</option>
@@ -464,40 +502,72 @@ export default function AdminSmsLogsPage() {
 
           {target === 'specific' && (
             <div className="space-y-4">
-              <div>
-                <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Search ISP / Recipient Suggestion</label>
-                <input
-                  list="sms-compose-isp-sugg"
-                  value={ispSearchQuery}
-                  onChange={handleIspSearchChange}
-                  placeholder="Type to search active ISP operator..."
-                  className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
-                />
-                <datalist id="sms-compose-isp-sugg">
-                  {suggestionsList.map(item => (
-                    <option key={item.id} value={item.name}>
-                      {item.phone ? `Phone: ${item.phone}` : ''}
-                    </option>
-                  ))}
-                </datalist>
+              <div className="relative">
+                <label className="text-xs font-medium text-admin-dim">Search ISP / Recipient Suggestion</label>
+                <div className="relative mt-1.5">
+                  <input
+                    value={ispSearchQuery}
+                    onChange={handleIspSearchChange}
+                    onFocus={() => {
+                      if (ispSearchQuery.trim().length >= 3) {
+                        setShowIspDropdown(true)
+                      }
+                    }}
+                    placeholder="Type at least 3 letters to search active ISP..."
+                    className="w-full px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-medium text-admin-value outline-none focus:bg-card-bg focus:border-pace-purple transition-all"
+                  />
+                </div>
+
+                {/* Dropdown Suggestions List (Triggers on 3+ letters) */}
+                {showIspDropdown && ispSearchQuery.trim().length >= 3 && (
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-card-bg border border-pace-border rounded-xl shadow-xl z-50 max-h-52 overflow-y-auto divide-y divide-pace-border/60 animate-in fade-in zoom-in-95 duration-150">
+                    {matchingSuggestions.length > 0 ? (
+                      matchingSuggestions.map((isp) => (
+                        <div
+                          key={isp.id || isp.name}
+                          onClick={() => handleSelectIsp(isp)}
+                          className="p-2.5 hover:bg-pace-purple/5 hover:text-pace-purple cursor-pointer transition-colors flex items-center justify-between gap-3 text-xs"
+                        >
+                          <div>
+                            <p className="font-semibold text-admin-value">{isp.name}</p>
+                            <p className="text-[11px] text-admin-dim">
+                              {isp.username ? `@${isp.username}` : ''} {isp.email ? `• ${isp.email}` : ''}
+                            </p>
+                          </div>
+                          {isp.phone ? (
+                            <span className="text-[11px] font-mono text-admin-dim bg-pace-bg-subtle px-2 py-0.5 rounded-md border border-pace-border/60 shrink-0">
+                              {isp.phone}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-admin-dim italic shrink-0">No phone</span>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-3 text-center text-xs text-admin-dim">
+                        No ISP found matching "{ispSearchQuery}"
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Phone Number</label>
+                  <label className="text-xs font-medium text-admin-dim">Phone Number</label>
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. 254711223344"
-                    className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
+                    placeholder="e.g. 0793527494"
+                    className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-medium text-admin-value outline-none focus:bg-card-bg focus:border-pace-purple transition-all"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Link to ISP Owner</label>
+                  <label className="text-xs font-medium text-admin-dim">Link to ISP Owner</label>
                   <select
                     value={targetIspId}
                     onChange={(e) => setTargetIspId(e.target.value)}
-                    className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
+                    className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:bg-card-bg focus:border-pace-purple cursor-pointer transition-all"
                   >
                     <option value="">Admin / None</option>
                     {ispsList.map(isp => (
@@ -510,22 +580,23 @@ export default function AdminSmsLogsPage() {
           )}
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">SMS Message Content</label>
+            <label className="text-xs font-medium text-admin-dim">SMS Message Content</label>
             <textarea
               rows={4}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type your broadcast alert here..."
-              className="w-full mt-1.5 px-3 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-medium text-admin-value leading-relaxed outline-none focus:border-pace-purple resize-none transition-all"
+              className="w-full mt-1.5 px-3 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-medium text-admin-value leading-relaxed outline-none focus:bg-card-bg focus:border-pace-purple resize-none transition-all"
             />
           </div>
 
           <button
             onClick={handleSendSubmit}
             disabled={isSaving}
-            className="w-full bg-pace-purple text-white py-2.5 rounded-xl text-sm font-medium hover:bg-pace-purple/90 transition-all disabled:opacity-50 mt-2"
+            className="w-full bg-pace-purple text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all disabled:opacity-50 mt-2 cursor-pointer shadow-xs flex items-center justify-center gap-2"
           >
-            {isSaving ? "Dispatching..." : "Send Message"}
+            {isSaving && <RefreshCw size={13} className="animate-spin" />}
+            <span>{isSaving ? "Dispatching..." : "Send Message"}</span>
           </button>
         </div>
       </Modal>
