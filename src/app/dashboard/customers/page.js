@@ -35,7 +35,8 @@ function CustomersContent() {
     // Subscriber Add/Edit Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [currentCustomer, setCurrentCustomer] = useState(null)
-    const [accountType, setAccountType] = useState('phone')
+    const [accountLength, setAccountLength] = useState(6) // 4, 5, or 6
+    const [isGeneratingAccount, setIsGeneratingAccount] = useState(false)
     const [formData, setFormData] = useState({ 
         firstName: '', 
         lastName: '', 
@@ -44,16 +45,30 @@ function CustomersContent() {
         router: '',
         plan_id: '',
         plan: '', 
-        price: 0, 
+        price: '', 
         username: '', 
         password: '', 
         status: 'enabled',
         accountNumber: '', 
-        activationFee: 0, 
+        activationFee: '', 
         nextPayment: '',
         lat: '', 
         lng: ''
     })
+
+    const fetchGeneratedAccountNumber = async (len = accountLength) => {
+        setIsGeneratingAccount(true)
+        try {
+            const res = await customerService.generateAccountNumber(len)
+            if (res?.status === 'success' && res.data?.account_number) {
+                setFormData(prev => ({ ...prev, accountNumber: res.data.account_number }))
+            }
+        } catch (e) {
+            console.error("Failed to generate account number", e)
+        } finally {
+            setIsGeneratingAccount(false)
+        }
+    }
 
     const fetchInitialData = async () => {
         setIsLoading(true);
@@ -116,7 +131,7 @@ function CustomersContent() {
             // Reset plan when router changes so user picks from this router's packages
             plan_id: '',
             plan: '',
-            price: 0
+            price: ''
         }));
     }
 
@@ -126,7 +141,7 @@ function CustomersContent() {
             ...prev,
             plan_id: planId,
             plan: selected ? selected.name : '',
-            price: selected ? Number(selected.price) : 0
+            price: selected && selected.price !== undefined ? String(selected.price) : ''
         }));
     }
 
@@ -142,19 +157,19 @@ function CustomersContent() {
                 router: c.router || '',
                 plan_id: c.plan_id ? String(c.plan_id) : '',
                 plan: c.plan || '',
-                price: Number(c.price || 0),
+                price: c.price !== undefined ? String(c.price) : '',
                 username: c.username || '',
                 password: c.password || '',
                 status: c.status || 'enabled',
-                accountNumber: c.accountNumber || c.phone || '',
-                activationFee: Number(c.totalSpent || 0),
+                accountNumber: c.accountNumber || '',
+                activationFee: c.totalSpent ? String(c.totalSpent) : '',
                 nextPayment: c.nextPayment ? c.nextPayment.split(' ')[0] : defaultNextPay,
                 lat: c.lat ? String(c.lat) : '',
                 lng: c.lng ? String(c.lng) : ''
             });
-            setAccountType(c.accountNumber === c.phone ? 'phone' : 'generate');
         } else {
             setCurrentCustomer(null);
+            setAccountLength(6);
             setFormData({ 
                 firstName: '', 
                 lastName: '', 
@@ -163,17 +178,17 @@ function CustomersContent() {
                 router: routersList.length > 0 ? routersList[0].name : '',
                 plan_id: '',
                 plan: '', 
-                price: 0, 
+                price: '', 
                 username: '', 
                 password: '', 
                 status: 'enabled',
                 accountNumber: '', 
-                activationFee: 0, 
+                activationFee: '', 
                 nextPayment: defaultNextPay,
                 lat: '', 
                 lng: ''
             });
-            setAccountType('phone');
+            fetchGeneratedAccountNumber(6);
         }
         setIsModalOpen(true);
     }
@@ -194,10 +209,11 @@ function CustomersContent() {
             username: formData.username.trim(),
             password: formData.password.trim(),
             phone: formData.phone.trim(),
-            account_number: formData.accountNumber || formData.phone.trim(),
+            account_number: formData.accountNumber.trim(),
+            account_length: accountLength,
             router_id: Number(formData.router_id),
             plan_id: Number(formData.plan_id),
-            activation_fee: Number(formData.activationFee || 0),
+            activation_fee: formData.activationFee ? parseFloat(formData.activationFee) : 0,
             next_payment: formData.nextPayment || null,
             status: formData.status || 'enabled'
         };
@@ -691,46 +707,64 @@ function CustomersContent() {
                     </div>
 
                     {/* Mobile Contact & Billing Account Number */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Mobile Contact</label>
                             <input 
                                 type="text" required
                                 value={formData.phone}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        phone: val,
-                                        accountNumber: accountType === 'phone' ? val : prev.accountNumber
-                                    }));
-                                }}
+                                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                                 placeholder="07XXXXXXXX"
                                 className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Billing Account Number</label>
-                            <div className="flex gap-1.5">
+                            <div className="flex items-center justify-between">
+                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">
+                                    Account Number
+                                </label>
+                                {!currentCustomer && (
+                                    <div className="flex items-center gap-1 bg-pace-bg-subtle border border-pace-border rounded-lg p-0.5">
+                                        <span className="text-[9px] text-admin-dim font-bold px-1 uppercase">Len:</span>
+                                        {[4, 5, 6].map(len => (
+                                            <button
+                                                key={len}
+                                                type="button"
+                                                onClick={() => {
+                                                    setAccountLength(len);
+                                                    fetchGeneratedAccountNumber(len);
+                                                }}
+                                                className={cn(
+                                                    "px-1.5 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer",
+                                                    accountLength === len
+                                                        ? "bg-pace-purple text-white shadow-xs"
+                                                        : "text-admin-dim hover:text-admin-value"
+                                                )}
+                                                title={`Generate ${len}-character unique account number`}
+                                            >
+                                                {len}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="relative">
                                 <input 
-                                    type="text" required
-                                    value={formData.accountNumber}
-                                    onChange={(e) => setFormData({...formData, accountNumber: e.target.value})}
-                                    placeholder="Account Number"
-                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
+                                    type="text"
+                                    readOnly
+                                    value={formData.accountNumber || (isGeneratingAccount ? 'Generating...' : '')}
+                                    placeholder={isGeneratingAccount ? "Generating code..." : "Auto-generated"}
+                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/80 border border-pace-border rounded-xl text-sm font-bold text-pace-purple outline-none cursor-not-allowed font-mono tracking-wider"
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setAccountType('generate');
-                                        const rand = Math.floor(100000 + Math.random() * 900000).toString();
-                                        setFormData({...formData, accountNumber: rand});
-                                    }}
-                                    className="px-2.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-[10px] font-bold text-admin-dim hover:text-pace-purple hover:bg-pace-purple/5 transition-all whitespace-nowrap"
-                                    title="Generate 6-digit number"
-                                >
-                                    Gen
-                                </button>
+                                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center">
+                                    {isGeneratingAccount ? (
+                                        <div className="w-3.5 h-3.5 border-2 border-pace-purple border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                            <ShieldCheck size={11} /> Auto
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -799,11 +833,16 @@ function CustomersContent() {
                                 Activation Fee (KES)
                             </label>
                             <input 
-                                type="number"
-                                min="0"
+                                type="text"
+                                inputMode="decimal"
                                 value={formData.activationFee}
-                                onChange={(e) => setFormData({...formData, activationFee: Number(e.target.value)})}
-                                placeholder="0"
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                                        setFormData(prev => ({ ...prev, activationFee: val }));
+                                    }
+                                }}
+                                placeholder="0.00"
                                 className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
                             />
                             <p className="text-[9px] text-admin-dim pl-1">Setup / installation fee (0 or any amount)</p>

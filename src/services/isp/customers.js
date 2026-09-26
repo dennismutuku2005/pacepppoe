@@ -48,6 +48,15 @@ export const customerService = {
         }
     },
 
+    generateAccountNumber: async (length = 6) => {
+        try {
+            return await apiFetch(`/isp/subscribers.php?action=generate_account&length=${length}`);
+        } catch (e) {
+            console.error("generateAccountNumber failed", e);
+            throw e;
+        }
+    },
+
     createCustomer: async (customerData) => {
         try {
             return await apiFetch('/isp/subscribers.php', {

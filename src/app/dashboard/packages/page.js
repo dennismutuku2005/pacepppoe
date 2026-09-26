@@ -415,9 +415,14 @@ function PackagesContent() {
                     <div className="space-y-1">
                         <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Monthly Price (KES)</label>
                         <input 
-                            type="number" required min="0" step="any"
+                            type="text" required inputMode="decimal"
                             value={formData.price}
-                            onChange={(e) => setFormData({...formData, price: e.target.value})}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                                    setFormData(prev => ({ ...prev, price: val }));
+                                }
+                            }}
                             placeholder="1500"
                             className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
                         />
