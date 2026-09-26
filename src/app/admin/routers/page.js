@@ -37,7 +37,7 @@ export default function AdminRoutersPage() {
   const [createForm, setCreateForm] = useState({
     name: '',
     ip_address: '',
-    public_ip: '178.62.36.148',
+    public_ip: '165.22.171.98',
     api_port: '',
     winbox_port: '',
     username: 'admin',
@@ -50,7 +50,7 @@ export default function AdminRoutersPage() {
     id: null,
     name: '',
     ip_address: '',
-    public_ip: '178.62.36.148',
+    public_ip: '165.22.171.98',
     api_port: 8728,
     winbox_port: 8291,
     username: '',
@@ -190,7 +190,7 @@ export default function AdminRoutersPage() {
           ip_address: res.data.next_ip || '10.8.0.2',
           api_port: res.data.next_api_port || 8729,
           winbox_port: res.data.next_winbox_port || 8292,
-          public_ip: res.data.public_ip || '178.62.36.148'
+          public_ip: res.data.public_ip || '165.22.171.98'
         }))
         setIsResourcesConfirmed(true)
       } else {
@@ -215,7 +215,7 @@ export default function AdminRoutersPage() {
     setCreateForm({
       name: '',
       ip_address: '',
-      public_ip: '178.62.36.148',
+      public_ip: '165.22.171.98',
       api_port: '',
       winbox_port: '',
       username: 'admin',
@@ -234,7 +234,7 @@ export default function AdminRoutersPage() {
       id: router.id,
       name: router.name,
       ip_address: router.ip,
-      public_ip: router.public_ip || '178.62.36.148',
+      public_ip: router.public_ip || '165.22.171.98',
       api_port: router.port,
       winbox_port: router.winbox_port || 8291,
       username: router.username || '',
@@ -683,8 +683,8 @@ export default function AdminRoutersPage() {
                 </div>
               ) : (
                 <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-center space-y-1">
-                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">Unable to query live telemetry from RouterOS API</p>
-                  <p className="text-[11px] text-admin-dim">Check if router OpenVPN client is connected to VPN IP <span className="font-mono">{selectedRouter.ip}</span> on API port <span className="font-mono">{selectedRouter.port}</span>.</p>
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">Unable to query realtime info from RouterOS API</p>
+                  <p className="text-[11px] text-admin-dim">Check if router OpenVPN client is connected to VPN IP <span className="font-mono">{selectedRouter.ip}</span> (API port <span className="font-mono">8729</span>).</p>
                 </div>
               )}
             </div>
@@ -705,7 +705,7 @@ export default function AdminRoutersPage() {
               </div>
               <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
                 <span className="text-admin-dim font-medium">Public Gateway IP</span>
-                <span className="font-mono font-bold text-admin-value">{selectedRouter.public_ip || '178.62.36.148'}</span>
+                <span className="font-mono font-bold text-admin-value">{selectedRouter.public_ip || '165.22.171.98'}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-pace-border/60 text-xs">
                 <span className="text-admin-dim font-medium">API Connection Port</span>
@@ -954,7 +954,7 @@ export default function AdminRoutersPage() {
                     <input
                       readOnly
                       disabled
-                      value={createForm.public_ip || '178.62.36.148'}
+                      value={createForm.public_ip || '165.22.171.98'}
                       className="w-full px-3 py-2 rounded-lg border border-pace-border bg-card-bg text-xs font-bold text-admin-value font-mono opacity-80 cursor-not-allowed"
                     />
                     <Lock size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-dim/60" />
