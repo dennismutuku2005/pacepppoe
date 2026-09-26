@@ -178,7 +178,8 @@ export default function AdminRoutersPage() {
 
   // CRUD API Calls
   const handleCreateSubmit = async () => {
-    if (!createForm.name) {
+    const cleanName = (createForm.name || '').replace(/\s+/g, '')
+    if (!cleanName) {
       toast.error('MikroTik Name is required.')
       return
     }
@@ -191,7 +192,7 @@ export default function AdminRoutersPage() {
     setIsSaving(true)
     try {
       const payload = {
-        name: createForm.name,
+        name: cleanName,
         username: createForm.username || 'admin',
         password: createForm.password || '',
         model: createForm.model || 'MikroTik',
@@ -708,8 +709,11 @@ export default function AdminRoutersPage() {
             <label className="text-xs font-semibold text-admin-dim">MikroTik Router Name *</label>
             <input
               value={createForm.name}
-              onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="e.g. Node-Router-01"
+              onChange={(e) => {
+                const noSpace = e.target.value.replace(/\s+/g, '')
+                setCreateForm(prev => ({ ...prev, name: noSpace }))
+              }}
+              placeholder="e.g. Node-Router-01 (no spaces)"
               className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-pace-bg-subtle text-xs font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
             />
           </div>
