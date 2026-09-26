@@ -894,10 +894,12 @@ export default function AdminRoutersPage() {
             <button
               onClick={handleCreateSubmit}
               disabled={isSaving || isLoadingNextResources || !isResourcesConfirmed}
-              className="px-5 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all disabled:opacity-50 shadow-sm cursor-pointer disabled:cursor-not-allowed flex items-center gap-1.5"
+              className="px-5 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all disabled:opacity-50 shadow-sm cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {isSaving && <RefreshCw size={12} className="animate-spin" />}
-              Add Router
+              {isSaving && (
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
+              <span>{isSaving ? "Adding Router..." : "Add Router"}</span>
             </button>
           </div>
         </div>
@@ -975,7 +977,7 @@ export default function AdminRoutersPage() {
           </div>
 
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Status Profile</label>
+            <label className="text-xs font-semibold text-admin-dim">Status Profile</label>
             <select
               value={editForm.status}
               onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
@@ -998,10 +1000,12 @@ export default function AdminRoutersPage() {
             <button
               onClick={handleEditSubmit}
               disabled={isSaving}
-              className="px-5 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all disabled:opacity-50 shadow-sm cursor-pointer flex items-center gap-1.5"
+              className="px-5 py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all disabled:opacity-50 shadow-sm cursor-pointer flex items-center gap-2"
             >
-              {isSaving && <RefreshCw size={12} className="animate-spin" />}
-              Save Configuration
+              {isSaving && (
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
+              <span>{isSaving ? "Saving..." : "Save Configuration"}</span>
             </button>
           </div>
         </div>
