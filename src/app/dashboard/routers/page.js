@@ -168,7 +168,7 @@ function RoutersContent() {
                     <table className="w-full text-left whitespace-nowrap">
                         <thead>
                             <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
-                                <th className="px-6 py-3">Node Identity</th>
+                                <th className="px-6 py-3">Router Name</th>
                                 <th className="px-6 py-3">Hardware Model</th>
                                 <th className="px-6 py-3 text-center">Status</th>
                                 <th className="px-6 py-3">CPU Usage</th>
@@ -199,7 +199,7 @@ function RoutersContent() {
                                             <span className="text-[11px] font-medium text-admin-dim uppercase tracking-tight">{r.model}</span>
                                         </td>
                                         <td className="px-6 py-3 text-center">
-                                            <Badge variant={r.status === 'Online' ? 'success' : 'error'} className="text-[8px] font-black border-none px-2 py-0.5 uppercase tracking-widest">
+                                            <Badge variant={r.status === 'Online' ? 'success' : 'error'} className="text-[10px] font-medium">
                                                 {r.status}
                                             </Badge>
                                         </td>

@@ -160,7 +160,7 @@ function RouterDetailsContent() {
                             <div className="space-y-1">
                                 <div className="flex items-center gap-3">
                                     <h1 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">{node.name}</h1>
-                                    <Badge className="bg-green-500/20 text-green-400 border-none text-[10px] font-black uppercase tracking-widest px-3 py-1">
+                                    <Badge variant={node.status === 'Online' || node.status === 'online' ? 'success' : 'error'} className="text-[10px] font-medium">
                                         {node.status}
                                     </Badge>
                                 </div>
