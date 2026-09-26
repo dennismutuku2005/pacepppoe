@@ -1,2 +1,4 @@
-// This file is used to store the application version to avoid build issues with package.json imports in client components.
-export const APP_VERSION = "5.1.0";
+import pkg from '../../package.json';
+
+export const APP_VERSION = pkg.version;
+export default APP_VERSION;

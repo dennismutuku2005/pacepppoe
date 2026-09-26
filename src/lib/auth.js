@@ -142,7 +142,7 @@ class AuthService {
     localStorage.setItem(this.tokenKey, token);
     localStorage.setItem('pace_session_last_active', Date.now().toString());
     const isHttps = window.location.protocol === 'https:';
-    document.cookie = `${this.tokenKey}=${token};path=/;max-age=86400;SameSite=Lax${isHttps ? ';Secure' : ''}`;
+    document.cookie = `${this.tokenKey}=${token};path=/;max-age=600;SameSite=Lax${isHttps ? ';Secure' : ''}`;
   }
 
   /**
@@ -152,7 +152,7 @@ class AuthService {
     if (typeof window === 'undefined') return;
     localStorage.setItem(this.userKey, JSON.stringify(user));
     const isHttps = window.location.protocol === 'https:';
-    document.cookie = `${this.userKey}=${encodeURIComponent(JSON.stringify(user))};path=/;max-age=86400;SameSite=Lax${isHttps ? ';Secure' : ''}`;
+    document.cookie = `${this.userKey}=${encodeURIComponent(JSON.stringify(user))};path=/;max-age=600;SameSite=Lax${isHttps ? ';Secure' : ''}`;
   }
 
   /**

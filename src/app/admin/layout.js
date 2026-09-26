@@ -97,6 +97,74 @@ export default function AdminLayout({ children }) {
     router.push('/login')
   }
 
+  // Session timeout logic (10 minutes of inactivity)
+  useEffect(() => {
+    const SESSION_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+    const STORAGE_KEY = 'pace_session_last_active';
+
+    // Check availability on mount
+    const checkSession = () => {
+      const lastActive = localStorage.getItem(STORAGE_KEY);
+      const token = authService.getToken();
+
+      if (!token) return true;
+
+      if (lastActive) {
+        const diff = Date.now() - parseInt(lastActive, 10);
+        const decoded = authService.decodeToken(token);
+        // If token was issued less than 2 minutes ago, treat as fresh session
+        const isFreshLogin = decoded && decoded.iat && ((Date.now() / 1000) - decoded.iat < 120);
+
+        if (diff > SESSION_TIMEOUT && !isFreshLogin) {
+          handleLogout();
+          return false;
+        }
+      }
+      localStorage.setItem(STORAGE_KEY, Date.now().toString());
+      return true;
+    };
+
+    const isSessionValid = checkSession();
+    if (!isSessionValid) return;
+
+    // Activity tracker
+    const updateActivity = () => {
+      localStorage.setItem(STORAGE_KEY, Date.now().toString());
+    };
+
+    // Throttle updates to avoid excessive writes
+    let lastUpdate = Date.now();
+    const throttledUpdate = () => {
+      const now = Date.now();
+      if (now - lastUpdate > 30000) { // Update every 30s max on interaction
+        updateActivity();
+        lastUpdate = now;
+      }
+    };
+
+    // Activity events
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => window.addEventListener(event, throttledUpdate));
+
+    const intervalId = setInterval(() => {
+      const lastActive = localStorage.getItem(STORAGE_KEY);
+      if (lastActive && (Date.now() - parseInt(lastActive, 10) > SESSION_TIMEOUT)) {
+        handleLogout();
+      }
+    }, 60000); // Check every minute
+
+    const handleUnload = () => {
+      updateActivity();
+    };
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      events.forEach(event => window.removeEventListener(event, throttledUpdate));
+      clearInterval(intervalId);
+      window.removeEventListener('beforeunload', handleUnload);
+    };
+  }, []);
+
   const getUserInitials = () => {
     if (!user || !user.name) return 'AD'
     return user.name
