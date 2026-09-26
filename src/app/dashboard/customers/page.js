@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react'
-import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin, Users, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react'
+import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin, Users, CheckCircle2, AlertCircle, ShieldCheck, User, Server, KeyRound, Lock } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, CardSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { customerService } from '@/services/isp/customers'
@@ -677,242 +677,286 @@ function CustomersContent() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={currentCustomer ? 'Edit Subscriber' : 'Add Subscriber'}
-                description={currentCustomer ? `Update PPPoE configuration for ${currentCustomer.username}` : 'Select target MikroTik router, attach QoS package, and configure credentials.'}
-                maxWidth="max-w-lg"
+                title={currentCustomer ? 'Edit Subscriber Profile' : 'Add PPPoE Subscriber'}
+                description={currentCustomer ? `Update PPPoE credentials and QoS tier for ${currentCustomer.username}` : 'Provision a new PPPoE subscriber directly to your MikroTik router and billing system.'}
+                maxWidth="max-w-2xl"
             >
                 <form onSubmit={handleSave} className="space-y-4 font-figtree">
-                    {/* First Name & Second Name */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">First Name</label>
-                            <input 
-                                type="text" required
-                                value={formData.firstName}
-                                onChange={(e) => handleNameChange('firstName', e.target.value)}
-                                placeholder="First Name"
-                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
-                            />
+                    
+                    {/* SECTION 1: Identity & Billing Account */}
+                    <div className="bg-card-bg/60 border border-pace-border/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+                        <div className="flex items-center gap-2 pb-1 border-b border-pace-border/50">
+                            <div className="w-6 h-6 rounded-lg bg-pace-purple/10 text-pace-purple flex items-center justify-center">
+                                <User size={13} />
+                            </div>
+                            <h4 className="text-xs font-bold text-admin-value uppercase tracking-wider">
+                                1. Personal & Billing Identity
+                            </h4>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Last / Second Name</label>
-                            <input 
-                                type="text" required
-                                value={formData.lastName}
-                                onChange={(e) => handleNameChange('lastName', e.target.value)}
-                                placeholder="Last Name"
-                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
-                            />
-                        </div>
-                    </div>
 
-                    {/* Mobile Contact & Billing Account Number */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Mobile Contact</label>
-                            <input 
-                                type="text" required
-                                value={formData.phone}
-                                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                                placeholder="07XXXXXXXX"
-                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
-                            />
+                        {/* First Name & Last Name */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-admin-dim">First Name <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text" required
+                                    value={formData.firstName}
+                                    onChange={(e) => handleNameChange('firstName', e.target.value)}
+                                    placeholder="e.g. Dennis"
+                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-medium text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-admin-dim">Last / Surname <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text" required
+                                    value={formData.lastName}
+                                    onChange={(e) => handleNameChange('lastName', e.target.value)}
+                                    placeholder="e.g. Mutuku"
+                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-medium text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all"
+                                />
+                            </div>
                         </div>
+
+                        {/* Mobile Contact */}
                         <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">
-                                    Account Number
+                            <label className="text-[11px] font-semibold text-admin-dim">Mobile Contact <span className="text-red-500">*</span></label>
+                            <div className="relative">
+                                <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-dim" size={14} />
+                                <input 
+                                    type="text" required
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                    placeholder="07XXXXXXXX"
+                                    className="w-full pl-9 pr-3.5 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-medium text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Paybill Account Reference */}
+                        <div className="space-y-1.5 pt-1">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <label className="text-[11px] font-semibold text-admin-dim flex items-center gap-1.5">
+                                    <span>Paybill Account Reference</span>
+                                    <span className="text-red-500">*</span>
                                 </label>
+
                                 {!currentCustomer && (
-                                    <div className="flex items-center gap-1 bg-pace-bg-subtle border border-pace-border rounded-lg p-0.5">
-                                        <span className="text-[9px] text-admin-dim font-bold px-1 uppercase">Len:</span>
-                                        {[4, 5, 6].map(len => (
-                                            <button
-                                                key={len}
-                                                type="button"
-                                                onClick={() => {
-                                                    setAccountLength(len);
-                                                    fetchGeneratedAccountNumber(len);
-                                                }}
-                                                className={cn(
-                                                    "px-1.5 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer",
-                                                    accountLength === len
-                                                        ? "bg-pace-purple text-white shadow-xs"
-                                                        : "text-admin-dim hover:text-admin-value"
-                                                )}
-                                                title={`Generate ${len}-character unique account number`}
-                                            >
-                                                {len}
-                                            </button>
-                                        ))}
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center bg-pace-bg-subtle/80 border border-pace-border rounded-lg p-0.5 shadow-2xs">
+                                            <span className="text-[10px] text-admin-dim font-bold px-1.5 uppercase">Length:</span>
+                                            {[4, 5, 6].map(len => (
+                                                <button
+                                                    key={len}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setAccountLength(len);
+                                                        fetchGeneratedAccountNumber(len);
+                                                    }}
+                                                    className={cn(
+                                                        "px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer",
+                                                        accountLength === len
+                                                            ? "bg-pace-purple text-white shadow-xs"
+                                                            : "text-admin-dim hover:text-admin-value"
+                                                    )}
+                                                    title={`Set account number length to ${len} characters`}
+                                                >
+                                                    {len} Digits
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => fetchGeneratedAccountNumber(accountLength)}
+                                            disabled={isGeneratingAccount}
+                                            className="px-2.5 py-1 bg-pace-bg-subtle/80 hover:bg-pace-purple/10 border border-pace-border hover:border-pace-purple/30 text-admin-dim hover:text-pace-purple rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50"
+                                            title="Generate new unique account code"
+                                        >
+                                            <RefreshCw size={11} className={cn(isGeneratingAccount && "animate-spin text-pace-purple")} />
+                                            <span>Recreate</span>
+                                        </button>
                                     </div>
                                 )}
                             </div>
+
                             <div className="relative">
                                 <input 
                                     type="text"
                                     readOnly
                                     value={formData.accountNumber || (isGeneratingAccount ? 'Generating...' : '')}
-                                    placeholder={isGeneratingAccount ? "Generating code..." : "Auto-generated"}
-                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/80 border border-pace-border rounded-xl text-sm font-bold text-pace-purple outline-none cursor-not-allowed font-mono tracking-wider"
+                                    className="w-full pl-3.5 pr-28 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-sm font-mono font-bold text-pace-purple tracking-widest outline-none cursor-default select-all"
                                 />
                                 <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center">
-                                    {isGeneratingAccount ? (
-                                        <div className="w-3.5 h-3.5 border-2 border-pace-purple border-t-transparent rounded-full animate-spin" />
-                                    ) : (
-                                        <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 rounded-md flex items-center gap-1">
-                                            <ShieldCheck size={11} /> Auto
-                                        </span>
-                                    )}
+                                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                        <ShieldCheck size={12} /> Unique ID
+                                    </span>
                                 </div>
+                            </div>
+                            <p className="text-[10px] text-admin-dim pl-1">Automated unique reference (0-9, A-Z) assigned by server for M-Pesa payments</p>
+                        </div>
+                    </div>
+
+                    {/* SECTION 2: Router & QoS Plan */}
+                    <div className="bg-card-bg/60 border border-pace-border/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+                        <div className="flex items-center gap-2 pb-1 border-b border-pace-border/50">
+                            <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                                <Server size={13} />
+                            </div>
+                            <h4 className="text-xs font-bold text-admin-value uppercase tracking-wider">
+                                2. Router & QoS Package
+                            </h4>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {/* Router Selection */}
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-admin-dim">Gateway Router <span className="text-red-500">*</span></label>
+                                <select 
+                                    required
+                                    value={formData.router_id}
+                                    onChange={(e) => handleRouterChange(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-semibold text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all cursor-pointer appearance-none"
+                                >
+                                    <option value="">-- Select MikroTik Router --</option>
+                                    {routersList.map(r => (
+                                        <option key={r.id} value={r.id}>
+                                            {r.name} ({r.ip || 'No IP'}) {r.status ? `• ${r.status}` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Plan Selection */}
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-admin-dim">Service QoS Plan <span className="text-red-500">*</span></label>
+                                <select 
+                                    required
+                                    disabled={!formData.router_id}
+                                    value={formData.plan_id}
+                                    onChange={(e) => handlePlanChange(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-semibold text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all cursor-pointer appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {!formData.router_id ? (
+                                        <option value="">Select a router first</option>
+                                    ) : availablePlansForSelectedRouter.length === 0 ? (
+                                        <option value="">No plans configured for this router</option>
+                                    ) : (
+                                        <>
+                                            <option value="">-- Select QoS Plan --</option>
+                                            {availablePlansForSelectedRouter.map(p => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.name} ({p.bandwidth}) — KES {Number(p.price).toLocaleString()}
+                                                </option>
+                                            ))}
+                                        </>
+                                    )}
+                                </select>
                             </div>
                         </div>
                     </div>
 
-                    {/* STEP 1: Select Router */}
-                    <div className="space-y-1 border-t border-pace-border pt-3">
-                        <label className="text-[10px] font-bold text-pace-purple uppercase tracking-wider pl-1">
-                            1. Select MikroTik Router
-                        </label>
-                        <select 
-                            required
-                            value={formData.router_id}
-                            onChange={(e) => handleRouterChange(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
-                        >
-                            <option value="">-- Choose Router --</option>
-                            {routersList.map(r => (
-                                <option key={r.id} value={r.id}>
-                                    {r.name} ({r.ip || 'No IP'}) {r.status ? `• ${r.status}` : ''}
-                                </option>
-                            ))}
-                        </select>
-                        {routersList.length === 0 && (
-                            <p className="text-[10px] text-red-500 font-medium pl-1">No routers registered. Please add a router first.</p>
-                        )}
-                    </div>
-
-                    {/* STEP 2: Select Package / Plan Attached to that Router */}
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-pace-purple uppercase tracking-wider pl-1">
-                            2. Service QoS Plan (Attached to Router)
-                        </label>
-                        <select 
-                            required
-                            disabled={!formData.router_id}
-                            value={formData.plan_id}
-                            onChange={(e) => handlePlanChange(e.target.value)}
-                            className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {!formData.router_id ? (
-                                <option value="">Please select a router first</option>
-                            ) : availablePlansForSelectedRouter.length === 0 ? (
-                                <option value="">No service plans created for this router</option>
-                            ) : (
-                                <>
-                                    <option value="">-- Choose QoS Plan --</option>
-                                    {availablePlansForSelectedRouter.map(p => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.name} ({p.bandwidth}) — KES {Number(p.price).toLocaleString()}
-                                        </option>
-                                    ))}
-                                </>
-                            )}
-                        </select>
-                        {formData.router_id && availablePlansForSelectedRouter.length === 0 && (
-                            <p className="text-[10px] text-amber-500 font-medium pl-1">
-                                No plans attached to this router yet. Create a plan for this router under Service Plans.
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Activation Fee & Next Payment Date */}
-                    <div className="grid grid-cols-2 gap-3 border-t border-pace-border pt-3">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">
-                                Activation Fee (KES)
-                            </label>
-                            <input 
-                                type="text"
-                                inputMode="decimal"
-                                value={formData.activationFee}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
-                                        setFormData(prev => ({ ...prev, activationFee: val }));
-                                    }
-                                }}
-                                placeholder="0.00"
-                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
-                            />
-                            <p className="text-[9px] text-admin-dim pl-1">Setup / installation fee (0 or any amount)</p>
+                    {/* SECTION 3: PPPoE Credentials & Expiry */}
+                    <div className="bg-card-bg/60 border border-pace-border/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+                        <div className="flex items-center gap-2 pb-1 border-b border-pace-border/50">
+                            <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                <KeyRound size={13} />
+                            </div>
+                            <h4 className="text-xs font-bold text-admin-value uppercase tracking-wider">
+                                3. PPPoE Secrets & Expiry Settings
+                            </h4>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">
-                                Next Payment Due Date
-                            </label>
-                            <input 
-                                type="date"
-                                value={formData.nextPayment}
-                                onChange={(e) => setFormData({...formData, nextPayment: e.target.value})}
-                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all"
-                            />
-                            <p className="text-[9px] text-admin-dim pl-1">Subscription expiry / renewal date</p>
-                        </div>
-                    </div>
 
-                    {/* Connection State Policy */}
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Connection State Policy</label>
-                        <select 
-                            value={formData.status}
-                            onChange={(e) => setFormData({...formData, status: e.target.value})}
-                            className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-medium text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
-                        >
-                            <option value="enabled">Enabled (Active Internet Access)</option>
-                            <option value="disabled">Disabled (Suspended Session)</option>
-                        </select>
-                    </div>
-
-                    {/* PPPoE Credentials */}
-                    <div className="grid grid-cols-2 gap-3 border-t border-pace-border pt-3">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-pace-purple uppercase tracking-wider pl-1">PPPoE Username</label>
-                            <input 
-                                type="text" required
-                                value={formData.username}
-                                onChange={(e) => setFormData({...formData, username: e.target.value})}
-                                placeholder="pppoe_user"
-                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
-                            />
+                        {/* PPPoE Credentials */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-admin-dim">PPPoE Username <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text" required
+                                    value={formData.username}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                                    placeholder="pppoe_user"
+                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-mono font-semibold text-pace-purple outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-admin-dim">PPPoE Password <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text" required
+                                    value={formData.password}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                                    placeholder="secret_password"
+                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-mono font-semibold text-pace-purple outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all"
+                                />
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-pace-purple uppercase tracking-wider pl-1">PPPoE Password</label>
-                            <input 
-                                type="text" required
-                                value={formData.password}
-                                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                                placeholder="secret_password"
-                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
-                            />
+
+                        {/* Activation Fee, Expiry Date & Connection Status */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-admin-dim">Activation Fee (KES)</label>
+                                <input 
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={formData.activationFee}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                                            setFormData(prev => ({ ...prev, activationFee: val }));
+                                        }
+                                    }}
+                                    placeholder="0.00"
+                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-mono font-medium text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-admin-dim">Next Expiry Date</label>
+                                <input 
+                                    type="date"
+                                    value={formData.nextPayment}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, nextPayment: e.target.value }))}
+                                    className="w-full px-3 py-2 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-medium text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-admin-dim">Account Policy</label>
+                                <select 
+                                    value={formData.status}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
+                                    className="w-full px-3 py-2 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-medium text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all cursor-pointer appearance-none"
+                                >
+                                    <option value="enabled">Active / Enabled</option>
+                                    <option value="disabled">Suspended / Disabled</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="pt-4 grid grid-cols-2 gap-3">
+                    <div className="pt-3 flex items-center justify-end gap-3 border-t border-pace-border">
                         <button 
                             type="button" 
                             onClick={() => setIsModalOpen(false)}
-                            className="w-full px-5 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all"
+                            className="px-5 py-2.5 border border-pace-border hover:bg-pace-bg-subtle rounded-xl text-xs font-semibold text-admin-dim hover:text-admin-value transition-all cursor-pointer"
                         >
                             Cancel
                         </button>
                         <button 
                             type="submit"
                             disabled={isSaving}
-                            className="w-full px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:opacity-90 shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                            className="px-6 py-2.5 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                         >
-                            {isSaving ? 'Saving...' : (currentCustomer ? 'Save Changes' : 'Provision Subscriber')}
+                            {isSaving ? (
+                                <>
+                                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    <span>Provisioning...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus size={14} />
+                                    <span>{currentCustomer ? 'Save Changes' : 'Provision Subscriber'}</span>
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>
