@@ -46,7 +46,6 @@ function DashboardContent() {
     const [transactions, setTransactions] = useState([])
     const [routers, setRouters] = useState([])
     const [tickets, setTickets] = useState([])
-    const [smsLogs, setSmsLogs] = useState([])
 
     const [isRevenueBlurred, setIsRevenueBlurred] = useState(true)
     const [filters, setFilters] = useState({ router: 'All Routers', dateRange: 'Today' })
@@ -91,9 +90,8 @@ function DashboardContent() {
             console.error("Router status fetch error:", err)
         })
 
-        // 5. Fetch recent tickets & SMS in parallel
+        // 5. Fetch recent tickets in parallel
         dashboardService.getRecentTickets().then(t => setTickets(t)).catch(console.error)
-        dashboardService.getRecentSms().then(s => setSmsLogs(s)).catch(console.error)
 
         setTimeout(() => setIsRefreshing(false), 400)
     }
@@ -122,7 +120,8 @@ function DashboardContent() {
             color: 'text-blue-500', 
             bg: 'bg-blue-500/5', 
             iconBorder: 'border-blue-500/10 group-hover:border-blue-500/30',
-            accent: 'bg-gradient-to-b from-blue-400 to-cyan-500' 
+            accent: 'bg-gradient-to-b from-blue-400 to-cyan-500',
+            href: '/dashboard/customers'
         },
         { 
             label: "Today's Revenue", 
@@ -136,15 +135,15 @@ function DashboardContent() {
             isRevenue: true 
         },
         { 
-            label: "SMS Balance", 
-            value: `KES ${widgets.sms_balance.value.toLocaleString()}`, 
-            sub: 'Credit Nexus', 
-            icon: MessageSquare, 
+            label: "Wallet Balance", 
+            value: `KES ${(widgets.sms_balance?.value || 0).toLocaleString()}`, 
+            sub: 'Settlement Pool', 
+            icon: CreditCard, 
             color: 'text-amber-500', 
             bg: 'bg-amber-500/5', 
             iconBorder: 'border-amber-500/10 group-hover:border-amber-500/30',
             accent: 'bg-gradient-to-b from-amber-400 to-orange-500', 
-            href: '/dashboard/sms' 
+            href: '/dashboard/wallet' 
         },
     ] : []
 
@@ -375,16 +374,16 @@ function DashboardContent() {
                     </div>
                 </div>
 
-                <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="lg:col-span-7">
                     {/* Support Queue */}
-                    <div className="bg-card-bg border border-pace-border rounded-xl p-6">
+                    <div className="bg-card-bg border border-pace-border rounded-2xl p-6 shadow-sm">
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h4 className="text-sm font-medium text-admin-value">Support Queue</h4>
-                                <p className="text-[10px] text-gray-400 font-medium uppercase mt-0.5 tracking-wider">Active Tickets</p>
+                                <p className="text-[10px] text-gray-400 font-medium uppercase mt-0.5 tracking-wider">Active Customer Inquiries</p>
                             </div>
                             <Link href="/dashboard/tickets">
-                                <Badge variant="info" className="px-2 py-0.5 text-[8px] font-bold cursor-pointer hover:bg-pace-purple/20 transition-all">
+                                <Badge variant="info" className="px-2.5 py-0.5 text-[8px] font-bold cursor-pointer hover:bg-pace-purple/20 transition-all">
                                     {widgets?.open_tickets?.value ?? tickets.filter(t => t.status !== 'Resolved' && t.status !== 'Closed').length} Active
                                 </Badge>
                             </Link>
@@ -392,7 +391,7 @@ function DashboardContent() {
                         <div className="space-y-3">
                             {isTxLoading && tickets.length === 0 ? (
                                 [...Array(3)].map((_, i) => (
-                                    <div key={i} className="p-3 border border-pace-border rounded-xl space-y-2">
+                                    <div key={i} className="p-3.5 border border-pace-border rounded-xl space-y-2">
                                         <Skeleton className="h-3 w-3/4" />
                                         <div className="flex justify-between items-center">
                                             <Skeleton className="h-2 w-20" />
@@ -401,13 +400,13 @@ function DashboardContent() {
                                     </div>
                                 ))
                             ) : tickets.length === 0 ? (
-                                <div className="p-6 border border-dashed border-pace-border rounded-xl text-center flex flex-col items-center justify-center gap-1.5">
-                                    <LifeBuoy size={20} className="text-gray-300 mb-1" />
-                                    <p className="text-xs font-semibold text-admin-value">No Support Tickets</p>
+                                <div className="p-10 border border-dashed border-pace-border rounded-xl text-center flex flex-col items-center justify-center gap-1.5">
+                                    <LifeBuoy size={24} className="text-gray-300 mb-1" />
+                                    <p className="text-xs font-semibold text-admin-value">No Pending Support Tickets</p>
                                     <p className="text-[10px] text-gray-400">All customer inquiries are resolved</p>
                                 </div>
                             ) : (
-                                tickets.map((ticket) => {
+                                tickets.slice(0, 5).map((ticket) => {
                                     const priorityVariant = 
                                         ticket.priority?.toLowerCase() === 'high' ? 'error' : 
                                         ticket.priority?.toLowerCase() === 'medium' ? 'warning' : 'info';
@@ -415,69 +414,18 @@ function DashboardContent() {
                                         <Link 
                                             key={ticket.id} 
                                             href="/dashboard/tickets"
-                                            className="block p-3 border border-pace-border rounded-xl hover:bg-pace-bg-subtle hover:border-pace-purple/30 transition-all"
+                                            className="block p-3.5 border border-pace-border rounded-xl hover:bg-pace-bg-subtle hover:border-pace-purple/30 transition-all group"
                                         >
-                                            <p className="text-xs font-semibold text-admin-value truncate">{ticket.subject}</p>
-                                            <div className="flex justify-between items-center mt-2">
-                                                <span className="text-[9px] text-admin-dim font-medium uppercase truncate max-w-[120px]">{ticket.customer || 'Customer'}</span>
-                                                <Badge variant={priorityVariant} className="px-1.5 py-0 rounded-sm text-[7px] font-bold">
-                                                    {ticket.priority || 'Medium'}
+                                            <div className="flex justify-between items-start gap-4">
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-semibold text-admin-value truncate group-hover:text-pace-purple transition-colors">{ticket.subject}</p>
+                                                    <p className="text-[10px] text-admin-dim font-medium mt-0.5">{ticket.customer || 'Customer'}</p>
+                                                </div>
+                                                <Badge variant={priorityVariant} className="px-2 py-0.5 text-[8px] font-bold shrink-0">
+                                                    {ticket.priority || 'Normal'}
                                                 </Badge>
                                             </div>
                                         </Link>
-                                    );
-                                })
-                            )}
-                        </div>
-                    </div>
-
-                    {/* SMS Dispatch */}
-                    <div className="bg-card-bg border border-pace-border rounded-xl p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h4 className="text-sm font-medium text-admin-value">SMS Dispatch</h4>
-                                <p className="text-[10px] text-gray-400 font-medium uppercase mt-0.5 tracking-wider">Recent Logs</p>
-                            </div>
-                            <Link href="/dashboard/sms" className="text-[10px] font-semibold text-pace-purple hover:underline uppercase tracking-widest">
-                                History
-                            </Link>
-                        </div>
-                        <div className="space-y-3">
-                            {isTxLoading && smsLogs.length === 0 ? (
-                                [...Array(3)].map((_, i) => (
-                                    <div key={i} className="p-3 border border-pace-border rounded-xl space-y-2 bg-pace-bg-subtle/30">
-                                        <div className="flex justify-between items-center">
-                                            <Skeleton className="h-3 w-24" />
-                                            <Skeleton className="h-3 w-12 rounded-full" />
-                                        </div>
-                                        <Skeleton className="h-2 w-full" />
-                                    </div>
-                                ))
-                            ) : smsLogs.length === 0 ? (
-                                <div className="p-6 border border-dashed border-pace-border rounded-xl text-center flex flex-col items-center justify-center gap-1.5">
-                                    <MessageSquare size={20} className="text-gray-300 mb-1" />
-                                    <p className="text-xs font-semibold text-admin-value">No SMS Logs</p>
-                                    <p className="text-[10px] text-gray-400">Automated dispatch logs will appear here</p>
-                                </div>
-                            ) : (
-                                smsLogs.slice(0, 3).map((log) => {
-                                    const isSuccess = log.status?.toLowerCase() === 'sent' || log.status?.toLowerCase() === 'delivered';
-                                    const isFailed = log.status?.toLowerCase() === 'failed';
-                                    return (
-                                        <div key={log.id} className="p-3 border border-pace-border rounded-xl bg-pace-bg-subtle/30">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-[10px] font-bold text-admin-value">{log.recipient}</span>
-                                                <span className={cn(
-                                                    "text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full",
-                                                    isSuccess ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400" :
-                                                    isFailed ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400" :
-                                                    "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
-                                                )}>
-                                                    {log.status || 'Sent'}
-                                                </span>
-                                            </div>
-                                            <p className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-2">"{log.message}"</p>
-                                        </div>
                                     );
                                 })
                             )}

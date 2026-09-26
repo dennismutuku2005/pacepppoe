@@ -107,14 +107,6 @@ export const NAVIGATION_SCHEMA = [
         keywords: ['helpdesk', 'issues', 'tasks', 'support']
     },
     {
-        id: 'sms',
-        name: 'SMS Center',
-        href: '/dashboard/sms',
-        icon: MessageSquare,
-        policy: 'view_sms',
-        keywords: ['bulk sms', 'notifications', 'carrier', 'gateways']
-    },
-    {
         id: 'system',
         name: 'System',
         icon: Settings,
