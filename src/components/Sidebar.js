@@ -228,9 +228,8 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, isMobile, navigationO
                 type="danger"
                 icon={LogOut}
                 confirmText="Sign Out"
-                onConfirm={() => {
-                    authService.logout();
-                    window.location.href = '/login';
+                onConfirm={async () => {
+                    await authService.logout();
                 }}
             />
         </>

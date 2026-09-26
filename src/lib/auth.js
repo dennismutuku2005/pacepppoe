@@ -64,6 +64,7 @@ class AuthService {
    * Logout user via backend API and clear local state
    */
   async logout() {
+    this.clearAuth();
     try {
       await apiFetch('/auth/logout.php', { method: 'POST' });
     } catch (err) {
@@ -161,41 +162,50 @@ class AuthService {
   clearAuth() {
     if (typeof window === 'undefined') return;
 
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.userKey);
-    localStorage.removeItem('pace_session_last_active');
-    sessionStorage.clear();
+    try {
+      localStorage.removeItem(this.tokenKey);
+      localStorage.removeItem(this.userKey);
+      localStorage.removeItem('pace_session_last_active');
+      sessionStorage.clear();
+    } catch (e) {
+      console.warn('Storage clear error:', e);
+    }
 
     const isHttps = window.location.protocol === 'https:';
     const domain = window.location.hostname;
-    const domainParts = domain.split('.');
+    const domainParts = domain ? domain.split('.') : [];
     
     // Cookie names to explicitly wipe
     const targetCookies = [this.tokenKey, this.userKey, 'pace_session_last_active', 'pace_auth_token', 'pace_user_data'];
     
     // Also extract every cookie currently present in document.cookie
-    document.cookie.split(';').forEach((cookieStr) => {
-      const eqPos = cookieStr.indexOf('=');
-      const name = eqPos > -1 ? cookieStr.substring(0, eqPos).trim() : cookieStr.trim();
-      if (name && !targetCookies.includes(name)) {
-        targetCookies.push(name);
-      }
-    });
+    try {
+      document.cookie.split(';').forEach((cookieStr) => {
+        const eqPos = cookieStr.indexOf('=');
+        const name = eqPos > -1 ? cookieStr.substring(0, eqPos).trim() : cookieStr.trim();
+        if (name && !targetCookies.includes(name)) {
+          targetCookies.push(name);
+        }
+      });
+    } catch (e) {}
 
-    // Domain variants to ensure subdomains and parent domains are cleared
+    // Generate all domain permutations to wipe subdomain & root domain cookies (e.g. app.pacesystem.co.ke, pacesystem.co.ke)
     const domainsToClear = ['', domain, `.${domain}`];
-    if (domainParts.length > 2) {
-      const rootDomain = domainParts.slice(-2).join('.');
-      domainsToClear.push(rootDomain, `.${rootDomain}`);
+    for (let i = 0; i < domainParts.length; i++) {
+      const d = domainParts.slice(i).join('.');
+      if (d) {
+        domainsToClear.push(d, `.${d}`);
+      }
     }
+    const uniqueDomains = Array.from(new Set(domainsToClear));
 
     targetCookies.forEach((name) => {
-      domainsToClear.forEach((dom) => {
+      uniqueDomains.forEach((dom) => {
         const domAttr = dom ? `;domain=${dom}` : '';
-        // Clear with and without Secure / SameSite across root path
         document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;max-age=0${domAttr}`;
         document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;max-age=0;SameSite=Lax${domAttr}${isHttps ? ';Secure' : ''}`;
         document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;max-age=0;SameSite=None${domAttr}${isHttps ? ';Secure' : ''}`;
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=;max-age=0${domAttr}`;
       });
     });
   }
