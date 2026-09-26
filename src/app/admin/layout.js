@@ -253,7 +253,7 @@ export default function AdminLayout({ children }) {
               >
                 {isSidebarOpen && isMobile ? <X size={20} /> : <Menu size={20} />}
               </button>
-              <div className="text-[11px] font-medium uppercase tracking-widest text-admin-dim">
+              <div className="text-xs font-medium text-admin-dim border-l border-pace-border pl-3">
                 {getPageName()}
               </div>
             </div>

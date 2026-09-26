@@ -217,7 +217,7 @@ export default function DashboardLayout({ children }) {
                             >
                                 {isSidebarOpen && isMobile ? <X size={20} /> : <Menu size={20} />}
                             </button>
-                            <div className="flex items-center gap-2 text-[11px] font-medium text-admin-dim border-l border-pace-border pl-4 uppercase tracking-widest">
+                            <div className="flex items-center gap-2 text-xs font-medium text-admin-dim border-l border-pace-border pl-4">
                                 <span>{getPageName()}</span>
                             </div>
                         </div>
