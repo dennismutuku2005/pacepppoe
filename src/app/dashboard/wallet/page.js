@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { 
     Wallet, ArrowUpRight, ArrowDownLeft, Building, 
     Send, Edit2, History, Smartphone, Search, RefreshCw, 
-    Store, PlusCircle
+    Store, PlusCircle, Eye, Copy, Check
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
@@ -37,6 +37,11 @@ export default function IspWalletDashboard() {
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false)
   const [isEditSettlementOpen, setIsEditSettlementOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Transaction Detail Modal
+  const [selectedTx, setSelectedTx] = useState(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
 
   // Withdraw Form Fields
   const [withdrawAmount, setWithdrawAmount] = useState('')
@@ -172,6 +177,15 @@ export default function IspWalletDashboard() {
   const estimatedWithdrawFee = numericWithdrawAmount > 0 ? calculateWithdrawalFee(numericWithdrawAmount) : 0
   const totalDeductedFromWallet = numericWithdrawAmount > 0 ? numericWithdrawAmount + estimatedWithdrawFee : 0
   const isInsufficientForWithdrawal = totalDeductedFromWallet > wallet.balance
+
+  // Handle Copy reference
+  const handleCopy = (text) => {
+    if (!text || text === '—') return
+    navigator.clipboard.writeText(text)
+    setIsCopied(true)
+    toast.success('Reference code copied to clipboard')
+    setTimeout(() => setIsCopied(false), 2000)
+  }
 
   // Handle Withdraw Submit
   const handleWithdrawSubmit = async (e) => {
@@ -592,12 +606,13 @@ export default function IspWalletDashboard() {
                 <th className="px-4 py-3.5">Date &amp; Time</th>
                 <th className="px-4 py-3.5 text-right">Amount</th>
                 <th className="px-4 py-3.5 text-center">Status</th>
+                <th className="px-4 py-3.5 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-pace-border">
               {filteredHistory.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-16 text-center text-gray-400 text-xs font-normal">
+                  <td colSpan="7" className="py-16 text-center text-gray-400 text-xs font-normal">
                     No payment records found.
                   </td>
                 </tr>
@@ -605,7 +620,14 @@ export default function IspWalletDashboard() {
                 filteredHistory.map((tx, idx) => {
                   const isDeposit = tx.type === 'deposit'
                   return (
-                    <tr key={tx.id || idx} className="hover:bg-pace-bg-subtle/40 transition-colors group">
+                    <tr 
+                      key={tx.id || idx} 
+                      onClick={() => {
+                        setSelectedTx(tx)
+                        setIsDetailOpen(true)
+                      }}
+                      className="hover:bg-pace-bg-subtle/40 transition-colors group cursor-pointer"
+                    >
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className={cn(
@@ -655,6 +677,20 @@ export default function IspWalletDashboard() {
                         >
                           {tx.status || 'Completed'}
                         </Badge>
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedTx(tx)
+                            setIsDetailOpen(true)
+                          }}
+                          className="p-1.5 rounded-lg text-admin-dim hover:text-pace-purple hover:bg-pace-purple/10 transition-colors cursor-pointer"
+                          title="View Transaction Details"
+                        >
+                          <Eye size={14} />
+                        </button>
                       </td>
                     </tr>
                   )
@@ -941,6 +977,156 @@ export default function IspWalletDashboard() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* TRANSACTION AUDIT DETAIL MODAL */}
+      <Modal
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        title="Transaction Details"
+        description="Complete financial audit and ledger record."
+        maxWidth="max-w-lg"
+      >
+        {selectedTx && (
+          <div className="space-y-4 pt-1 font-figtree">
+            {/* Amount & Direction Top Banner */}
+            <div className={cn(
+              "p-4 rounded-2xl border flex items-center justify-between",
+              selectedTx.type === 'deposit' 
+                ? "bg-emerald-500/5 border-emerald-500/20" 
+                : "bg-rose-500/5 border-rose-500/20"
+            )}>
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center border shrink-0",
+                  selectedTx.type === 'deposit' 
+                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+                    : "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                )}>
+                  {selectedTx.type === 'deposit' ? <ArrowUpRight size={20} /> : <ArrowDownLeft size={20} />}
+                </div>
+                <div>
+                  <span className="text-[11px] font-medium text-gray-400 block uppercase tracking-wider">
+                    {selectedTx.type === 'deposit' ? 'Incoming Collection' : (selectedTx.type === 'withdrawal' ? 'Revenue Withdrawal' : 'Operational Expense')}
+                  </span>
+                  <span className={cn(
+                    "text-xl sm:text-2xl font-bold font-mono tracking-tight",
+                    selectedTx.type === 'deposit' ? "text-emerald-600" : "text-rose-600"
+                  )}>
+                    {selectedTx.type === 'deposit' ? '+' : '-'}KES {Number(selectedTx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+
+              <Badge 
+                variant={selectedTx.status === 'completed' || selectedTx.status === 'Success' ? 'success' : (selectedTx.status === 'pending' ? 'warning' : 'neutral')}
+                className="px-3 py-1 text-xs font-semibold capitalize"
+              >
+                {selectedTx.status || 'Completed'}
+              </Badge>
+            </div>
+
+            {/* Summary Grid */}
+            <div className="p-4 bg-pace-bg-subtle border border-pace-border rounded-2xl space-y-3 text-xs">
+              {/* Reference Number with Copy */}
+              <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                <span className="text-gray-400">Reference / Receipt:</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-semibold text-admin-value">{selectedTx.reference || '—'}</span>
+                  {selectedTx.reference && selectedTx.reference !== '—' && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(selectedTx.reference)}
+                      className="p-1 text-admin-dim hover:text-pace-purple hover:bg-pace-purple/10 rounded transition-colors cursor-pointer"
+                      title="Copy reference code"
+                    >
+                      {isCopied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Payment Channel */}
+              <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                <span className="text-gray-400">Payment Channel:</span>
+                <span className="font-medium text-admin-value bg-card-bg border border-pace-border px-2.5 py-0.5 rounded-lg">
+                  {selectedTx.channel || (selectedTx.type === 'deposit' ? 'M-Pesa Collections' : 'Withdrawal')}
+                </span>
+              </div>
+
+              {/* Date & Time */}
+              <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                <span className="text-gray-400">Date &amp; Timestamp:</span>
+                <span className="font-mono text-admin-value font-medium">{selectedTx.created_at || selectedTx.date || '—'}</span>
+              </div>
+
+              {/* Fee Breakdown if applicable */}
+              {selectedTx.transaction_cost > 0 && (
+                <>
+                  <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                    <span className="text-gray-400">Transaction Tariff / Fee:</span>
+                    <span className="font-mono text-amber-600 font-semibold">
+                      KES {Number(selectedTx.transaction_cost).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                    <span className="text-gray-400">Net Disbursed to Destination:</span>
+                    <span className="font-mono text-admin-value font-semibold">
+                      KES {Number(selectedTx.amount - selectedTx.transaction_cost).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* Description / Beneficiary */}
+              <div className="py-1">
+                <span className="text-gray-400 block mb-1">Description:</span>
+                <p className="font-medium text-admin-value bg-card-bg p-2.5 rounded-xl border border-pace-border break-words">
+                  {selectedTx.description}
+                </p>
+              </div>
+
+              {/* Destination specifics if withdrawal */}
+              {(selectedTx.paybill_number || selectedTx.till_number) && (
+                <div className="py-1 border-t border-pace-border/60 pt-2">
+                  <span className="text-gray-400 block mb-1">Destination Target:</span>
+                  <div className="font-mono text-admin-value text-xs bg-card-bg p-2.5 rounded-xl border border-pace-border space-y-1">
+                    {selectedTx.till_number ? (
+                      <div>Buy Goods Till: <strong>{selectedTx.till_number}</strong></div>
+                    ) : (
+                      <>
+                        <div>Paybill: <strong>{selectedTx.paybill_number}</strong></div>
+                        <div>Account: <strong>{selectedTx.account_number}</strong></div>
+                      </>
+                    )}
+                    {selectedTx.phone && <div>Contact Phone: {selectedTx.phone}</div>}
+                  </div>
+                </div>
+              )}
+
+              {/* Response / Provider feedback if available */}
+              {selectedTx.response_description && (
+                <div className="py-1 border-t border-pace-border/60 pt-2">
+                  <span className="text-gray-400 block mb-1">Provider Feedback:</span>
+                  <p className="text-[11px] font-mono text-admin-dim bg-card-bg p-2 rounded-lg border border-pace-border">
+                    {selectedTx.response_description}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-3 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setIsDetailOpen(false)}
+                className="w-full sm:w-auto px-5 py-2.5 bg-pace-bg-subtle hover:bg-pace-purple/10 text-pace-purple border border-pace-border rounded-xl text-xs font-medium transition-all cursor-pointer"
+              >
+                Close Details
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
 
     </div>
