@@ -127,23 +127,67 @@ export default function IspWalletDashboard() {
     })
   }, [wallet.history, activeTab, search])
 
+  const calculateWithdrawalFee = (amt) => {
+    const amount = Number(amt) || 0
+    if (amount <= 0) return 0
+    const tiers = [
+      [1, 49, 2],
+      [50, 100, 3],
+      [101, 500, 8],
+      [501, 1000, 13],
+      [1001, 1500, 18],
+      [1501, 2500, 25],
+      [2501, 3500, 30],
+      [3501, 5000, 39],
+      [5001, 7500, 48],
+      [7501, 10000, 54],
+      [10001, 15000, 63],
+      [15001, 20000, 68],
+      [20001, 25000, 74],
+      [25001, 30000, 79],
+      [30001, 35000, 90],
+      [35001, 40000, 106],
+      [40001, 45000, 110],
+      [45001, 50000, 115],
+      [50001, 70000, 115],
+      [70001, 150000, 115],
+      [150001, 250000, 115],
+      [250001, 500000, 115],
+      [500001, 1000000, 115]
+    ]
+    for (const tier of tiers) {
+      if (amount >= tier[0] && amount <= tier[1]) {
+        return tier[2]
+      }
+    }
+    return 115
+  }
+
   const pd = wallet.payment_details
   const isPaybillConfigured = Boolean(pd.type === 'paybill' && pd.paybill_number && pd.account_number)
   const isTillConfigured = Boolean(pd.type === 'till' && pd.till_number)
   const isConfigured = isPaybillConfigured || isTillConfigured
 
+  const numericWithdrawAmount = Number(withdrawAmount) || 0
+  const estimatedWithdrawFee = numericWithdrawAmount > 0 ? calculateWithdrawalFee(numericWithdrawAmount) : 0
+  const totalDeductedFromWallet = numericWithdrawAmount > 0 ? numericWithdrawAmount + estimatedWithdrawFee : 0
+  const isInsufficientForWithdrawal = totalDeductedFromWallet > wallet.balance
+
   // Handle Withdraw Submit
   const handleWithdrawSubmit = async (e) => {
     e.preventDefault()
     const amount = Number(withdrawAmount)
-    if (!amount || amount <= 0) {
-      toast.error('Enter a valid amount to withdraw.')
+    if (!amount || amount < 100) {
+      toast.error('Minimum withdrawal amount is KES 100.00')
       return
     }
 
-    if (amount > wallet.balance) {
-      toast.error('Insufficient wallet balance.', {
-        description: `You can withdraw up to KES ${wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}.`
+    const fee = calculateWithdrawalFee(amount)
+    const totalRequired = amount + fee
+
+    if (totalRequired > wallet.balance) {
+      toast.error('Insufficient wallet balance to cover payout and transaction fee.', {
+        description: `Total required: KES ${totalRequired.toLocaleString(undefined, { minimumFractionDigits: 2 })} (Amount: KES ${amount.toLocaleString()} + Fee: KES ${fee.toFixed(2)}). Available balance: KES ${wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}.`
       })
       return
     }
@@ -165,6 +209,7 @@ export default function IspWalletDashboard() {
       setIsSubmitting(true)
       const res = await financeService.withdrawWallet({
         amount,
+        withdrawal_type: pd.type,
         type: pd.type,
         paybill_number: pd.paybill_number,
         account_number: pd.account_number,
@@ -174,19 +219,19 @@ export default function IspWalletDashboard() {
       })
 
       if (res && res.status === 'success') {
-        toast.success('Withdrawal processed successfully.', {
-          description: `KES ${amount.toLocaleString()} sent to ${destLabel}.`
+        toast.success('Withdrawal initiated successfully.', {
+          description: `KES ${amount.toLocaleString()} payout to ${destLabel} (Fee: KES ${fee.toFixed(2)}).`
         })
         setIsWithdrawOpen(false)
         setWithdrawAmount('')
         setWithdrawNotes('')
         fetchWalletData(true)
       } else {
-        toast.error('Withdrawal failed', { description: res?.message })
+        toast.error('Withdrawal failed', { description: res?.message || 'Transaction could not be completed' })
       }
     } catch (err) {
       console.error("Error with withdrawal:", err)
-      toast.error('Failed to process withdrawal')
+      toast.error(err?.response?.data?.message || 'Failed to process withdrawal')
     } finally {
       setIsSubmitting(false)
     }
@@ -663,17 +708,95 @@ export default function IspWalletDashboard() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-admin-dim mb-1">Amount (KES) *</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-admin-dim">Amount to Withdraw (KES) *</label>
+              {wallet.balance > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Calculate max possible withdrawal accounting for fee
+                    let maxAmt = Math.max(0, wallet.balance)
+                    const fee = calculateWithdrawalFee(maxAmt)
+                    if (maxAmt - fee >= 100) {
+                      setWithdrawAmount(String(Math.floor(maxAmt - fee)))
+                    } else {
+                      setWithdrawAmount(String(Math.floor(maxAmt)))
+                    }
+                  }}
+                  className="text-[11px] text-pace-purple hover:underline font-medium cursor-pointer"
+                >
+                  Use Max Available
+                </button>
+              )}
+            </div>
             <input
               type="number"
               step="any"
               required
+              min="100"
               value={withdrawAmount}
               onChange={(e) => setWithdrawAmount(e.target.value)}
-              placeholder="e.g. 10000"
+              placeholder="Min. 100 KES (e.g. 5000)"
               className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs font-mono"
             />
           </div>
+
+          {/* Live Fee & Total Deduction Breakdown Card */}
+          {numericWithdrawAmount > 0 && (
+            <div className={cn(
+              "p-3.5 rounded-xl border space-y-2 text-xs transition-all",
+              isInsufficientForWithdrawal 
+                ? "bg-rose-500/5 border-rose-500/20 text-rose-700 dark:text-rose-400" 
+                : "bg-pace-bg-subtle/80 border-pace-border text-admin-dim"
+            )}>
+              <div className="flex items-center justify-between text-[11px] font-medium text-admin-value border-b border-pace-border/60 pb-1.5">
+                <span>Fee &amp; Deduction Summary</span>
+                <span className="text-[10px] text-gray-400 font-mono">M-Pesa Tariff</span>
+              </div>
+
+              <div className="space-y-1.5 pt-0.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-400">Withdrawal Amount:</span>
+                  <span className="font-mono font-medium text-admin-value">
+                    KES {numericWithdrawAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-400">Estimated Transaction Fee:</span>
+                  <span className="font-mono font-medium text-amber-600 dark:text-amber-400">
+                    KES {estimatedWithdrawFee.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs font-semibold pt-1 border-t border-pace-border/60">
+                  <span className="text-admin-value">Total Deducted from Wallet:</span>
+                  <span className={cn("font-mono", isInsufficientForWithdrawal ? "text-rose-600 font-bold" : "text-pace-purple")}>
+                    KES {totalDeductedFromWallet.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-gray-400 pt-0.5">
+                  <span>Remaining Wallet Balance:</span>
+                  <span className="font-mono">
+                    KES {Math.max(0, wallet.balance - totalDeductedFromWallet).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+
+              {isInsufficientForWithdrawal && (
+                <div className="pt-1.5 text-[11px] text-rose-600 font-medium">
+                  ⚠️ Insufficient balance to cover requested amount + fee (KES {totalDeductedFromWallet.toLocaleString(undefined, { minimumFractionDigits: 2 })}).
+                </div>
+              )}
+
+              {numericWithdrawAmount < 100 && (
+                <div className="pt-1.5 text-[11px] text-amber-600 font-medium">
+                  ⚠️ Minimum withdrawal amount is KES 100.00
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-medium text-admin-dim mb-1">Note (Optional)</label>
@@ -695,8 +818,8 @@ export default function IspWalletDashboard() {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !isConfigured}
-              className="flex-1 px-4 py-2 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              disabled={isSubmitting || !isConfigured || isInsufficientForWithdrawal || numericWithdrawAmount < 100}
+              className="flex-1 px-4 py-2 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={12} /> {isSubmitting ? 'Processing...' : 'Confirm Withdrawal'}
             </button>
