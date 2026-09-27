@@ -177,8 +177,8 @@ export default function IspWalletDashboard() {
   const handleWithdrawSubmit = async (e) => {
     e.preventDefault()
     const amount = Number(withdrawAmount)
-    if (!amount || amount < 100) {
-      toast.error('Minimum withdrawal amount is KES 100.00')
+    if (!amount || amount < 10) {
+      toast.error('Minimum withdrawal amount is KES 10.00')
       return
     }
 
@@ -717,7 +717,7 @@ export default function IspWalletDashboard() {
                     // Calculate max possible withdrawal accounting for fee
                     let maxAmt = Math.max(0, wallet.balance)
                     const fee = calculateWithdrawalFee(maxAmt)
-                    if (maxAmt - fee >= 100) {
+                    if (maxAmt - fee >= 10) {
                       setWithdrawAmount(String(Math.floor(maxAmt - fee)))
                     } else {
                       setWithdrawAmount(String(Math.floor(maxAmt)))
@@ -733,10 +733,10 @@ export default function IspWalletDashboard() {
               type="number"
               step="any"
               required
-              min="100"
+              min="10"
               value={withdrawAmount}
               onChange={(e) => setWithdrawAmount(e.target.value)}
-              placeholder="Min. 100 KES (e.g. 5000)"
+              placeholder="Min. 10 KES (e.g. 5000)"
               className="w-full px-3.5 py-2.5 rounded-xl border border-pace-border bg-pace-bg-subtle text-admin-value outline-none focus:border-pace-purple text-xs font-mono"
             />
           </div>
@@ -790,9 +790,9 @@ export default function IspWalletDashboard() {
                 </div>
               )}
 
-              {numericWithdrawAmount < 100 && (
+              {numericWithdrawAmount < 10 && (
                 <div className="pt-1.5 text-[11px] text-amber-600 font-medium">
-                  ⚠️ Minimum withdrawal amount is KES 100.00
+                  ⚠️ Minimum withdrawal amount is KES 10.00
                 </div>
               )}
             </div>
@@ -818,7 +818,7 @@ export default function IspWalletDashboard() {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !isConfigured || isInsufficientForWithdrawal || numericWithdrawAmount < 100}
+              disabled={isSubmitting || !isConfigured || isInsufficientForWithdrawal || numericWithdrawAmount < 10}
               className="flex-1 px-4 py-2 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={12} /> {isSubmitting ? 'Processing...' : 'Confirm Withdrawal'}
