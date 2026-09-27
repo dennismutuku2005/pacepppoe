@@ -112,14 +112,17 @@ export const dashboardService = {
 
     async getRouterStatus() {
         try {
-            const res = await apiFetch('/isp/routers.php');
+            const res = await apiFetch('/isp/routers.php?live=1');
             if (res && res.status === 'success') {
                 return (res.data.routers || []).map(r => ({
+                    id: r.id,
                     name: r.name,
                     ip: r.ip_address,
                     status: r.status === 'online' ? 'Online' : 'Offline',
+                    latency_ms: r.latency_ms !== undefined ? r.latency_ms : null,
                     load: `${r.cpu_usage || 0}%`,
-                    uptime: r.uptime || 'N/A'
+                    uptime: r.uptime || 'N/A',
+                    is_live_ping: Boolean(r.is_live_ping)
                 }));
             }
         } catch (e) {

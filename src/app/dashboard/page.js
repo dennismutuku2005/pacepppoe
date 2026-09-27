@@ -40,6 +40,7 @@ function DashboardContent() {
     const [isWidgetsLoading, setIsWidgetsLoading] = useState(true)
     const [isChartsLoading, setIsChartsLoading] = useState(true)
     const [isTxLoading, setIsTxLoading] = useState(true)
+    const [isPingingRouters, setIsPingingRouters] = useState(false)
     
     const [widgets, setWidgets] = useState(null)
     const [charts, setCharts] = useState([])
@@ -49,6 +50,15 @@ function DashboardContent() {
 
     const [isRevenueBlurred, setIsRevenueBlurred] = useState(true)
     const [filters, setFilters] = useState({ router: 'All Routers', dateRange: 'Today' })
+
+    const handleRefreshRouters = () => {
+        setIsPingingRouters(true)
+        dashboardService.getRouterStatus().then(r => {
+            setRouters(r)
+        }).catch(console.error).finally(() => {
+            setIsPingingRouters(false)
+        })
+    }
 
     const fetchData = () => {
         setIsRefreshing(true)
@@ -243,19 +253,32 @@ function DashboardContent() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Router Table - Matching wispportal exactly */}
+                {/* Router Table - Realtime Live Ping Check */}
                 <div className="lg:col-span-4 bg-card-bg border border-pace-border rounded-xl p-5 flex flex-col order-2 lg:order-1">
                     <div className="flex justify-between items-center mb-5">
                         <div>
-                            <h4 className="text-sm font-medium text-admin-value">Your Mikrotiks</h4>
-                            <p className="text-[10px] text-gray-400 font-medium mt-0.5 uppercase tracking-wider">online/offline</p>
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-medium text-admin-value">Your Mikrotiks</h4>
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-500">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    LIVE
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium mt-0.5 uppercase tracking-wider">Real-time Ping Check</p>
                         </div>
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        <button 
+                            onClick={handleRefreshRouters}
+                            disabled={isPingingRouters}
+                            title="Ping Routers Now"
+                            className="p-1.5 rounded-lg border border-pace-border hover:bg-pace-bg-subtle text-admin-dim hover:text-admin-value transition-all cursor-pointer disabled:opacity-50"
+                        >
+                            <RefreshCw size={13} className={cn(isPingingRouters && "animate-spin text-pace-purple")} />
+                        </button>
                     </div>
 
                     <div className="space-y-2 flex-1">
-                        {isWidgetsLoading && routers.length === 0 ? (
-                            [...Array(5)].map((_, i) => (
+                        {(isWidgetsLoading || isPingingRouters) && routers.length === 0 ? (
+                            [...Array(3)].map((_, i) => (
                                 <div key={i} className="p-2.5 border border-pace-border rounded-xl flex justify-between items-center">
                                     <div className="flex items-center gap-3">
                                         <Skeleton className="w-8 h-8 rounded-lg" />
@@ -267,6 +290,10 @@ function DashboardContent() {
                                     <Skeleton className="h-4 w-12 rounded-full" />
                                 </div>
                             ))
+                        ) : routers.length === 0 ? (
+                            <div className="py-8 text-center text-xs text-admin-dim">
+                                No routers configured yet.
+                            </div>
                         ) : routers.map((device, idx) => (
                             <div key={idx} className="p-2.5 border border-pace-border rounded-xl hover:bg-pace-bg-subtle transition-all group flex justify-between items-center">
                                 <div className="flex items-center gap-3">
@@ -278,12 +305,17 @@ function DashboardContent() {
                                         <p className="text-[9px] font-medium text-admin-dim font-mono">{device.ip}</p>
                                     </div>
                                 </div>
-                                <Badge 
-                                    variant={device.status === 'Online' ? 'success' : 'error'} 
-                                    className="text-[8px] font-semibold tracking-wider px-2 py-0.5 border-none"
-                                >
-                                    {device.status}
-                                </Badge>
+                                <div className="flex items-center gap-1.5">
+                                    {device.latency_ms && device.status === 'Online' && (
+                                        <span className="text-[9px] font-mono text-emerald-500 font-semibold">{device.latency_ms}ms</span>
+                                    )}
+                                    <Badge 
+                                        variant={device.status === 'Online' ? 'success' : 'error'} 
+                                        className="text-[8px] font-semibold tracking-wider px-2 py-0.5 border-none"
+                                    >
+                                        {device.status}
+                                    </Badge>
+                                </div>
                             </div>
                         ))}
                     </div>
