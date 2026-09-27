@@ -38,19 +38,29 @@ function RoutersContent() {
                         toast.error(`${r.name} is OFFLINE: ${res.data?.error || 'Node unreachable'}`)
                     }
                 }
-                setRouters(prev => prev.map(item => item.id === r.id ? { 
-                    ...item, 
-                    status: isOnline ? 'Online' : 'Offline',
-                    latency: isOnline ? latency : null,
-                    pinging: false 
-                } : item))
+                const sys = res.data?.system
+                setRouters(prev => prev.map(item => {
+                    if (item.id !== r.id) return item
+                    const cpuVal = sys ? `${sys.cpuLoad || sys.cpu || 0}%` : item.cpu
+                    const ramVal = sys ? `${sys.memoryUsage || '0%'}` : item.ram
+                    const uptimeVal = sys ? (sys.uptime || item.uptime) : item.uptime
+                    return {
+                        ...item,
+                        status: isOnline ? 'Online' : 'Offline',
+                        latency: isOnline ? latency : null,
+                        cpu: isOnline ? cpuVal : '—',
+                        ram: isOnline ? ramVal : '—',
+                        uptime: isOnline ? uptimeVal : '—',
+                        pinging: false
+                    }
+                }))
             } else {
                 if (showToast) toast.error(res?.message || `Ping failed for ${r.name}`)
-                setRouters(prev => prev.map(item => item.id === r.id ? { ...item, status: 'Offline', latency: null, pinging: false } : item))
+                setRouters(prev => prev.map(item => item.id === r.id ? { ...item, status: 'Offline', latency: null, cpu: '—', ram: '—', uptime: '—', pinging: false } : item))
             }
         } catch (err) {
             if (showToast) toast.error(`Connection test failed for ${r.name}`)
-            setRouters(prev => prev.map(item => item.id === r.id ? { ...item, status: 'Offline', latency: null, pinging: false } : item))
+            setRouters(prev => prev.map(item => item.id === r.id ? { ...item, status: 'Offline', latency: null, cpu: '—', ram: '—', uptime: '—', pinging: false } : item))
         } finally {
             setPingingMap(prev => ({ ...prev, [r.id]: false }))
         }
@@ -236,26 +246,40 @@ function RoutersContent() {
                                             )}
                                         </td>
                                         <td className="px-6 py-3">
-                                            <div className="flex items-center gap-3 w-28">
-                                                <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
-                                                    <div className={cn(
-                                                        "h-full transition-all duration-1000",
-                                                        parseInt(r.cpu) > 70 ? "bg-red-500" : parseInt(r.cpu) > 40 ? "bg-amber-500" : "bg-pace-purple"
-                                                    )} style={{ width: `${parseInt(r.cpu) || 0}%` }} />
+                                            {r.status === 'Online' && r.cpu && r.cpu !== '—' && r.cpu !== '0%' ? (
+                                                <div className="flex items-center gap-3 w-28">
+                                                    <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
+                                                        <div className={cn(
+                                                            "h-full transition-all duration-1000",
+                                                            parseInt(r.cpu) > 70 ? "bg-red-500" : parseInt(r.cpu) > 40 ? "bg-amber-500" : "bg-pace-purple"
+                                                        )} style={{ width: `${parseInt(r.cpu) || 0}%` }} />
+                                                    </div>
+                                                    <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.cpu}</span>
                                                 </div>
-                                                <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.cpu}</span>
-                                            </div>
+                                            ) : r.status === 'Online' ? (
+                                                <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.cpu || '0%'}</span>
+                                            ) : (
+                                                <span className="text-xs font-medium text-admin-dim">—</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-3">
-                                            <div className="flex items-center gap-3 w-28">
-                                                <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
-                                                    <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${parseInt(r.ram) || 0}%` }} />
+                                            {r.status === 'Online' && r.ram && r.ram !== '—' && r.ram !== '0%' ? (
+                                                <div className="flex items-center gap-3 w-28">
+                                                    <div className="flex-1 h-1.5 bg-pace-bg-subtle rounded-full overflow-hidden">
+                                                        <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${parseInt(r.ram) || 0}%` }} />
+                                                    </div>
+                                                    <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.ram}</span>
                                                 </div>
-                                                <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.ram}</span>
-                                            </div>
+                                            ) : r.status === 'Online' ? (
+                                                <span className="text-[10px] font-medium text-admin-value tabular-nums">{r.ram || '0%'}</span>
+                                            ) : (
+                                                <span className="text-xs font-medium text-admin-dim">—</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-3 text-center text-xs font-medium text-admin-value tabular-nums">{r.subscribers}</td>
-                                        <td className="px-6 py-3 text-xs font-medium text-pace-purple tabular-nums">{r.uptime}</td>
+                                        <td className="px-6 py-3 text-xs font-medium text-pace-purple tabular-nums">
+                                            {r.status === 'Online' && r.uptime && r.uptime !== '—' ? r.uptime : '—'}
+                                        </td>
                                         <td className="px-6 py-3 text-right">
                                             <div className="flex justify-end items-center gap-1.5">
                                                 {/* Ping Button */}
