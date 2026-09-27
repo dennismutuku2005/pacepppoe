@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
+import { TablePageSkeleton } from '@/components/Skeleton'
 import { ticketService } from '@/services/isp/tickets'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -225,6 +226,10 @@ function TicketsContent() {
         if (s === 'IN PROGRESS') return 'purple'
         if (s === 'RESOLVED') return 'success'
         return 'neutral'
+    }
+
+    if (isLoading && tickets.length === 0) {
+        return <TablePageSkeleton />
     }
 
     return (
@@ -723,11 +728,7 @@ function TicketsContent() {
 
 export default function TicketsPage() {
     return (
-        <Suspense fallback={
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="w-10 h-10 border-4 border-pace-purple border-t-transparent rounded-full animate-spin" />
-            </div>
-        }>
+        <Suspense fallback={<TablePageSkeleton />}>
             <TicketsContent />
         </Suspense>
     )
