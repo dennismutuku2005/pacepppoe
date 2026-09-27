@@ -259,12 +259,11 @@ function DashboardContent() {
                         <div>
                             <div className="flex items-center gap-2">
                                 <h4 className="text-sm font-medium text-admin-value">Your Mikrotiks</h4>
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-500">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                    LIVE
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-500">
+                                    Live
                                 </span>
                             </div>
-                            <p className="text-[10px] text-gray-400 font-medium mt-0.5 uppercase tracking-wider">Real-time Ping Check</p>
+                            <p className="text-[10px] text-gray-400 font-medium mt-0.5">Real-time ping</p>
                         </div>
                         <button 
                             onClick={handleRefreshRouters}
