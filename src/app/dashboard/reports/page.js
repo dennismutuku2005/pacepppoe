@@ -203,11 +203,11 @@ function ReportsContent() {
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h4 className="text-sm font-semibold text-admin-value">Weekly Revenue Stream</h4>
-                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Daily Collections Breakdown</p>
+                            <p className="text-[10px] text-gray-400 font-medium mt-0.5">Daily collections breakdown</p>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-pace-purple" />
-                            <span className="text-[9px] font-bold text-admin-dim uppercase tracking-widest">Revenue Flow</span>
+                            <span className="text-[10px] font-semibold text-admin-dim">Revenue Flow</span>
                         </div>
                     </div>
                     <div className="h-[320px] w-full">
@@ -236,7 +236,7 @@ function ReportsContent() {
                 <div className="lg:col-span-4 bg-card-bg border border-pace-border rounded-xl p-6 shadow-sm flex flex-col">
                     <div className="mb-4">
                         <h4 className="text-sm font-semibold text-admin-value">Service Distribution</h4>
-                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Subscribers per Plan</p>
+                        <p className="text-[10px] text-gray-400 font-medium mt-0.5">Subscribers per plan</p>
                     </div>
                     {packagePopularity.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
@@ -287,7 +287,7 @@ function ReportsContent() {
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h4 className="text-sm font-semibold text-admin-value">Financial Balance</h4>
-                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Monthly Operating Nexus</p>
+                            <p className="text-[10px] text-gray-400 font-medium mt-0.5">Monthly operating nexus</p>
                         </div>
                     </div>
                     <div className="h-[300px] w-full">
@@ -300,7 +300,7 @@ function ReportsContent() {
                                     formatter={(val, name) => [`KES ${Number(val).toLocaleString()}`, name]}
                                     contentStyle={{ borderRadius: '12px', border: '1px solid #E5E7EB', fontSize: '11px', fontWeight: '600' }}
                                 />
-                                <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', paddingBottom: '20px' }} />
+                                <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: '600', paddingBottom: '20px' }} />
                                 <Bar dataKey="income" fill="#7c3aed" radius={[4, 4, 0, 0]} name="Operating Revenue" />
                                 <Bar dataKey="expenses" fill="#F43F5E" radius={[4, 4, 0, 0]} name="Operating Expenses" />
                             </BarChart>
@@ -312,7 +312,7 @@ function ReportsContent() {
                 <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm flex flex-col">
                     <div className="p-6 border-b border-pace-border">
                         <h4 className="text-sm font-semibold text-admin-value">Significant Operations</h4>
-                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mt-0.5">Latest revenue and expense items</p>
+                        <p className="text-[10px] text-gray-400 font-medium mt-0.5">Latest revenue and expense items</p>
                     </div>
                     <div className="flex-1 overflow-x-auto">
                         <table className="w-full text-left whitespace-nowrap">
