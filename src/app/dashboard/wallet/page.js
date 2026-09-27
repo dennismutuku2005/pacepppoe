@@ -5,7 +5,8 @@ import {
     Wallet, ArrowUpRight, ArrowDownLeft, Building, 
     CreditCard, Send, Edit2, ShieldCheck, History, 
     Landmark, Smartphone, Search, RefreshCw, CheckCircle2,
-    Clock, DollarSign, AlertCircle, PlusCircle, Store, Receipt
+    Clock, DollarSign, AlertCircle, PlusCircle, Store, Receipt,
+    ChevronRight, ArrowRight
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
@@ -367,7 +368,7 @@ export default function IspWalletDashboard() {
                 {isPaybillConfigured ? `Paybill ${pd.paybill_number}` : (isTillConfigured ? `Till ${pd.till_number}` : 'Not Configured')}
               </p>
               <p className="text-[10px] text-admin-dim mt-0.5 truncate font-mono">
-                {isPaybillConfigured ? `A/C: ${pd.account_number}` : (isTillConfigured ? 'Buy Goods Till Payout' : 'Click Edit to setup')}
+                {isPaybillConfigured ? `A/C: ${pd.account_number}` : (isTillConfigured ? 'Buy Goods Till Payout' : 'Click Configure to setup')}
               </p>
             </div>
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-blue-500/10 group-hover:border-blue-500/30 bg-blue-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
@@ -377,249 +378,249 @@ export default function IspWalletDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Column: Settlement Targets */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
+      {/* Top Banner: Settlement Destination & Fast Withdrawal Action */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Destination Card */}
+        <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-pace-purple/10 flex items-center justify-center text-pace-purple shrink-0">
+                {pd.type === 'till' ? <Store size={20} /> : <Building size={20} />}
+              </div>
               <div>
-                <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Settlement Routing</h3>
-                <p className="text-[10px] text-admin-dim mt-0.5">Primary withdrawal destination</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-admin-value">
+                    {pd.type === 'till' ? 'Buy Goods Till Destination' : 'Paybill + Account Destination'}
+                  </h3>
+                  {isConfigured ? (
+                    <span className="text-[9px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="text-[9px] bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                      Pending Setup
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-admin-dim mt-0.5">
+                  Your designated payout route for automated &amp; manual withdrawals
+                </p>
               </div>
-              <button
-                onClick={() => setIsEditSettlementOpen(true)}
-                className="text-xs text-pace-purple hover:underline font-bold flex items-center gap-1 cursor-pointer"
-              >
-                <Edit2 size={12} /> Configure
-              </button>
             </div>
+            <button
+              onClick={() => setIsEditSettlementOpen(true)}
+              className="px-3 py-1.5 bg-pace-bg-subtle text-pace-purple hover:bg-pace-purple/10 border border-pace-border rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+            >
+              <Edit2 size={12} /> Configure
+            </button>
+          </div>
 
-            <div className="space-y-3">
-              {/* Paybill Card */}
-              <div className={cn(
-                "p-4 border rounded-xl space-y-3 transition-all",
-                pd.type === 'paybill' && isPaybillConfigured 
-                  ? "bg-pace-purple/5 border-pace-purple/30" 
-                  : "bg-pace-bg-subtle border-pace-border"
-              )}>
-                <div className="flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-card-bg border border-pace-border flex items-center justify-center text-admin-dim shrink-0 mt-0.5">
-                    <Building size={14} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">Paybill Destination</p>
-                      {pd.type === 'paybill' && isPaybillConfigured && (
-                        <span className="text-[9px] bg-pace-purple text-white px-1.5 py-0.5 rounded font-bold uppercase">Active</span>
-                      )}
-                    </div>
-                    {isPaybillConfigured ? (
-                      <>
-                        <p className="text-xs font-semibold text-admin-value mt-0.5">Paybill: {pd.paybill_number}</p>
-                        <p className="text-[11px] font-mono text-pace-purple font-medium mt-0.5">Account: {pd.account_number}</p>
-                        {pd.account_name && (
-                          <p className="text-[10px] text-gray-400 mt-0.5 truncate">{pd.account_name}</p>
-                        )}
-                      </>
-                    ) : (
-                      <div className="mt-1">
-                        <p className="text-xs text-admin-dim font-medium">No Paybill linked</p>
-                        <button
-                          onClick={() => { setSettlementType('paybill'); setIsEditSettlementOpen(true); }}
-                          className="text-[10px] text-pace-purple font-semibold hover:underline mt-0.5 cursor-pointer flex items-center gap-1"
-                        >
-                          <PlusCircle size={10} /> Link Paybill &amp; Account
-                        </button>
-                      </div>
-                    )}
-                  </div>
+          <div className="p-3.5 bg-pace-bg-subtle border border-pace-border rounded-xl">
+            {isPaybillConfigured ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <p className="text-[10px] text-admin-dim font-bold uppercase">Paybill Shortcode</p>
+                  <p className="font-mono font-bold text-admin-value mt-0.5">{pd.paybill_number}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-admin-dim font-bold uppercase">Account Number</p>
+                  <p className="font-mono font-bold text-pace-purple mt-0.5">{pd.account_number}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-admin-dim font-bold uppercase">Account Name</p>
+                  <p className="font-medium text-admin-value mt-0.5 truncate">{pd.account_name || '—'}</p>
                 </div>
               </div>
-
-              {/* Till Card */}
-              <div className={cn(
-                "p-4 border rounded-xl space-y-3 transition-all",
-                pd.type === 'till' && isTillConfigured 
-                  ? "bg-pace-purple/5 border-pace-purple/30" 
-                  : "bg-pace-bg-subtle border-pace-border"
-              )}>
-                <div className="flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-card-bg border border-pace-border flex items-center justify-center text-admin-dim shrink-0 mt-0.5">
-                    <Store size={14} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] text-admin-dim font-bold uppercase tracking-wider">Buy Goods Till</p>
-                      {pd.type === 'till' && isTillConfigured && (
-                        <span className="text-[9px] bg-pace-purple text-white px-1.5 py-0.5 rounded font-bold uppercase">Active</span>
-                      )}
-                    </div>
-                    {isTillConfigured ? (
-                      <>
-                        <p className="text-xs font-semibold text-admin-value mt-0.5">Till Number: {pd.till_number}</p>
-                        {pd.account_name && (
-                          <p className="text-[10px] text-gray-400 mt-0.5 truncate">{pd.account_name}</p>
-                        )}
-                      </>
-                    ) : (
-                      <div className="mt-1">
-                        <p className="text-xs text-admin-dim font-medium">No Till number linked</p>
-                        <button
-                          onClick={() => { setSettlementType('till'); setIsEditSettlementOpen(true); }}
-                          className="text-[10px] text-pace-purple font-semibold hover:underline mt-0.5 cursor-pointer flex items-center gap-1"
-                        >
-                          <PlusCircle size={10} /> Link Till Number
-                        </button>
-                      </div>
-                    )}
-                  </div>
+            ) : isTillConfigured ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <p className="text-[10px] text-admin-dim font-bold uppercase">Buy Goods Till</p>
+                  <p className="font-mono font-bold text-pace-purple mt-0.5">{pd.till_number}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-admin-dim font-bold uppercase">Business Name</p>
+                  <p className="font-medium text-admin-value mt-0.5 truncate">{pd.account_name || '—'}</p>
                 </div>
               </div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                onClick={() => setIsWithdrawOpen(true)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-semibold text-admin-value hover:border-pace-purple hover:text-pace-purple transition-all cursor-pointer"
-              >
-                <Send size={13} />
-                <span>Initiate Settlement</span>
-              </button>
-            </div>
+            ) : (
+              <div className="flex items-center justify-between py-1 text-xs">
+                <span className="text-amber-600 font-medium">No Paybill or Till number linked yet.</span>
+                <button
+                  onClick={() => setIsEditSettlementOpen(true)}
+                  className="text-pace-purple font-semibold hover:underline flex items-center gap-1 text-xs cursor-pointer"
+                >
+                  <PlusCircle size={12} /> Setup Destination
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Column: Transaction History Table */}
-        <div className="lg:col-span-8 bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Wallet Audit Ledger</h3>
-              <p className="text-[10px] text-admin-dim mt-0.5">Real-time ledger of subscriber collections and withdrawals</p>
+        {/* Quick Settlement Payout Action Card */}
+        <div className="bg-gradient-to-br from-card-bg to-pace-purple/5 border border-pace-border rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-admin-dim uppercase tracking-wider">Quick Disbursement</span>
+              <Badge variant="neutral" className="text-[10px] font-mono">Real-time STK / B2C</Badge>
             </div>
-
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1 bg-pace-bg-subtle border border-pace-border rounded-xl p-1 text-xs">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={cn(
-                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                  activeTab === 'all' ? "bg-card-bg text-admin-value shadow-xs" : "text-admin-dim hover:text-admin-value"
-                )}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setActiveTab('deposit')}
-                className={cn(
-                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                  activeTab === 'deposit' ? "bg-card-bg text-emerald-600 shadow-xs" : "text-admin-dim hover:text-admin-value"
-                )}
-              >
-                Collections
-              </button>
-              <button
-                onClick={() => setActiveTab('withdrawal')}
-                className={cn(
-                  "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                  activeTab === 'withdrawal' ? "bg-card-bg text-rose-600 shadow-xs" : "text-admin-dim hover:text-admin-value"
-                )}
-              >
-                Withdrawals
-              </button>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-bold text-admin-value tabular-nums font-mono">
+                KES {wallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+              <span className="text-xs text-admin-dim">available</span>
             </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Disburse revenue directly to your configured Paybill or Till destination instantly.
+            </p>
           </div>
 
-          {/* Search bar */}
-          <div className="relative group max-w-sm">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
-            <input
-              type="text"
-              placeholder="Search by description, reference code, date..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
-            />
+          <div className="pt-2 flex items-center gap-3">
+            <button
+              onClick={() => setIsWithdrawOpen(true)}
+              className="flex-1 py-2.5 px-4 bg-pace-purple hover:bg-pace-purple/90 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <Send size={13} />
+              <span>Initiate Revenue Withdrawal</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Full-Width Wallet Audit Ledger Table Below */}
+      <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm space-y-4 w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-xs font-bold text-admin-value uppercase tracking-wider">Wallet Audit Ledger</h3>
+            <p className="text-[10px] text-admin-dim mt-0.5">Full chronological ledger of subscriber collections and revenue withdrawals</p>
           </div>
 
-          {/* Ledger List */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left whitespace-nowrap text-xs">
-              <thead>
-                <tr className="bg-pace-bg-subtle/50 border-b border-pace-border text-[10px] font-bold text-admin-dim uppercase tracking-wider">
-                  <th className="px-4 py-3">Event Identity</th>
-                  <th className="px-4 py-3">Channel / Code</th>
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3 text-right">Amount</th>
-                  <th className="px-4 py-3 text-center">Status</th>
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-1 bg-pace-bg-subtle border border-pace-border rounded-xl p-1 text-xs">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={cn(
+                "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                activeTab === 'all' ? "bg-card-bg text-admin-value shadow-xs" : "text-admin-dim hover:text-admin-value"
+              )}
+            >
+              All ({wallet.history?.length || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab('deposit')}
+              className={cn(
+                "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                activeTab === 'deposit' ? "bg-card-bg text-emerald-600 shadow-xs" : "text-admin-dim hover:text-admin-value"
+              )}
+            >
+              Collections
+            </button>
+            <button
+              onClick={() => setActiveTab('withdrawal')}
+              className={cn(
+                "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                activeTab === 'withdrawal' ? "bg-card-bg text-rose-600 shadow-xs" : "text-admin-dim hover:text-admin-value"
+              )}
+            >
+              Withdrawals
+            </button>
+          </div>
+        </div>
+
+        {/* Search bar */}
+        <div className="relative group max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={14} />
+          <input
+            type="text"
+            placeholder="Search by description, receipt code, channel, date..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all"
+          />
+        </div>
+
+        {/* Ledger Table - Full Width */}
+        <div className="overflow-x-auto rounded-xl border border-pace-border">
+          <table className="w-full text-left whitespace-nowrap text-xs">
+            <thead>
+              <tr className="bg-pace-bg-subtle/70 border-b border-pace-border text-[10px] font-bold text-admin-dim uppercase tracking-wider">
+                <th className="px-4 py-3.5">Event Identity &amp; Description</th>
+                <th className="px-4 py-3.5">Channel / Method</th>
+                <th className="px-4 py-3.5">Reference Code</th>
+                <th className="px-4 py-3.5">Date &amp; Time</th>
+                <th className="px-4 py-3.5 text-right">Amount (KES)</th>
+                <th className="px-4 py-3.5 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-pace-border">
+              {filteredHistory.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-16 text-center text-admin-dim text-xs font-medium">
+                    No transactions found matching your criteria.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-pace-border">
-                {filteredHistory.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="py-16 text-center text-admin-dim text-xs font-medium">
-                      No wallet transactions recorded yet.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredHistory.map((tx, idx) => {
-                    const isDeposit = tx.type === 'deposit'
-                    return (
-                      <tr key={tx.id || idx} className="hover:bg-pace-bg-subtle/40 transition-colors group">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "w-7 h-7 rounded-lg flex items-center justify-center border shrink-0",
-                              isDeposit 
-                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/10" 
-                                : "bg-rose-500/10 text-rose-600 border-rose-500/10"
-                            )}>
-                              {isDeposit ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-semibold text-admin-value truncate">{tx.description}</p>
-                              {tx.reference && (
-                                <p className="text-[10px] font-mono text-gray-400 mt-0.5">Ref: {tx.reference}</p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-[10px] font-semibold text-admin-dim uppercase tracking-wider bg-pace-bg-subtle border border-pace-border px-2 py-0.5 rounded-md">
-                            {tx.channel || (isDeposit ? 'M-Pesa' : 'Withdrawal')}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="font-mono text-[11px] text-admin-dim">{tx.date}</span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className={cn(
-                            "font-bold text-xs tabular-nums font-mono",
-                            isDeposit ? "text-emerald-600" : "text-rose-600"
+              ) : (
+                filteredHistory.map((tx, idx) => {
+                  const isDeposit = tx.type === 'deposit'
+                  return (
+                    <tr key={tx.id || idx} className="hover:bg-pace-bg-subtle/40 transition-colors group">
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-8 h-8 rounded-xl flex items-center justify-center border shrink-0",
+                            isDeposit 
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/15" 
+                              : "bg-rose-500/10 text-rose-600 border-rose-500/15"
                           )}>
-                            {isDeposit ? '+' : '-'}KES {Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                          </span>
-                          {tx.transaction_cost > 0 && (
-                            <p className="text-[9px] text-gray-400 font-mono">Fee: KES {Number(tx.transaction_cost).toFixed(2)}</p>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <Badge 
-                            variant={tx.status === 'completed' || tx.status === 'Success' ? 'success' : (tx.status === 'pending' ? 'warning' : 'neutral')} 
-                            className="text-[9px] font-bold uppercase border-none px-2 py-0.5"
-                          >
-                            {tx.status || 'Completed'}
-                          </Badge>
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                            {isDeposit ? <ArrowUpRight size={15} /> : <ArrowDownLeft size={15} />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-admin-value truncate">{tx.description}</p>
+                            <p className="text-[10px] text-admin-dim">{isDeposit ? 'Subscriber Payment Collection' : 'Wallet Settlement Payout'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="text-[10px] font-semibold text-admin-dim uppercase tracking-wider bg-pace-bg-subtle border border-pace-border px-2.5 py-1 rounded-lg">
+                          {tx.channel || (isDeposit ? 'M-Pesa' : 'Withdrawal')}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="font-mono text-xs font-semibold text-admin-value">
+                          {tx.reference || '—'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="font-mono text-[11px] text-admin-dim">
+                          {tx.created_at || tx.date}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <span className={cn(
+                          "font-bold text-xs tabular-nums font-mono block",
+                          isDeposit ? "text-emerald-600" : "text-rose-600"
+                        )}>
+                          {isDeposit ? '+' : '-'}KES {Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                        {tx.transaction_cost > 0 && (
+                          <span className="text-[9px] text-gray-400 font-mono block">Fee: KES {Number(tx.transaction_cost).toFixed(2)}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <Badge 
+                          variant={tx.status === 'completed' || tx.status === 'Success' ? 'success' : (tx.status === 'pending' ? 'warning' : 'neutral')} 
+                          className="text-[9px] font-bold uppercase border-none px-2.5 py-0.5"
+                        >
+                          {tx.status || 'Completed'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-
       </div>
 
       {/* REQUEST WITHDRAWAL MODAL */}
