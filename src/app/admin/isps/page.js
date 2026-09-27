@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { 
   Users, ShieldCheck, AlertCircle, RefreshCw, Eye, EyeOff, Plus, Edit2, Trash2, 
-  Info, Search, X, Loader2, Lock, Key 
+  Info, Search, X, Loader2, Lock, Key, MessageSquare, MessageSquarePlus, Coins, Wallet
 } from 'lucide-react'
 import { ispService } from '@/services/admin/isps'
 import { Skeleton, AdminCardSkeleton } from '@/components/Skeleton'
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 
 export default function AdminISPsPage() {
   const [isps, setIsps] = useState([])
-  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, suspended: 0 })
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, suspended: 0, total_sms_credits: 0 })
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -26,6 +26,13 @@ export default function AdminISPsPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   
+  // Top-Up SMS Credits Modal state
+  const [isTopupModalOpen, setIsTopupModalOpen] = useState(false)
+  const [topupIsp, setTopupIsp] = useState(null)
+  const [topupAmount, setTopupAmount] = useState('100')
+  const [topupMode, setTopupMode] = useState('add') // 'add' or 'set'
+  const [isTopupSaving, setIsTopupSaving] = useState(false)
+
   // Selected items
   const [selectedIsp, setSelectedIsp] = useState(null)
   const [modalMode, setModalMode] = useState('create') // 'create' or 'edit'
@@ -39,6 +46,7 @@ export default function AdminISPsPage() {
     password: '',
     email: '',
     phone: '',
+    sms_credits: 0,
     status: 'active'
   })
 
@@ -121,6 +129,7 @@ export default function AdminISPsPage() {
       password: '',
       email: '',
       phone: '',
+      sms_credits: 0,
       status: 'active'
     })
     setIsCreateEditModalOpen(true)
@@ -145,6 +154,7 @@ export default function AdminISPsPage() {
       password: '', // blank by default on edit
       email: isp.email || '',
       phone: isp.phone || '',
+      sms_credits: Number(isp.sms_credits || 0),
       status: isp.status
     })
     setIsCreateEditModalOpen(true)
@@ -162,6 +172,52 @@ export default function AdminISPsPage() {
     if (e) e.stopPropagation()
     setSelectedIsp(isp)
     setIsDeleteModalOpen(true)
+  }
+
+  // Open Top-up SMS Modal
+  const openTopupModal = (isp, e) => {
+    if (e) e.stopPropagation()
+    setTopupIsp(isp)
+    setTopupAmount('100')
+    setTopupMode('add')
+    setIsTopupModalOpen(true)
+  }
+
+  // Submit Quick Top-up
+  const handleTopupSubmit = async (e) => {
+    e.preventDefault()
+    if (!topupIsp) return
+    const amt = Number(topupAmount)
+    if (isNaN(amt) || amt <= 0) {
+      toast.error('Please enter a valid credit quantity')
+      return
+    }
+
+    setIsTopupSaving(true)
+    try {
+      const res = await ispService.addSmsCredits(topupIsp.id, amt, topupMode)
+      if (res.status === 'success') {
+        const newCredits = res.data?.sms_credits ?? (topupMode === 'set' ? amt : (topupIsp.sms_credits + amt))
+        toast.success(`Successfully updated SMS credits for ${topupIsp.name}`, {
+          description: `New balance: ${newCredits.toLocaleString()} credits`
+        })
+        
+        // Update local state immediately
+        setIsps(prev => prev.map(item => item.id === topupIsp.id ? { ...item, sms_credits: newCredits } : item))
+        if (selectedIsp && selectedIsp.id === topupIsp.id) {
+          setSelectedIsp(prev => ({ ...prev, sms_credits: newCredits }))
+        }
+        setIsTopupModalOpen(false)
+        handleReload()
+      } else {
+        toast.error(res.message || "Failed to update SMS credits")
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error("Network error updating SMS credits")
+    } finally {
+      setIsTopupSaving(false)
+    }
   }
 
   // Submit CRUD (Create/Edit)
@@ -232,15 +288,6 @@ export default function AdminISPsPage() {
       iconBorder: 'border-emerald-500/10 group-hover:border-emerald-500/30'
     },
     { 
-      label: 'Inactive ISPs', 
-      value: stats.inactive, 
-      icon: AlertCircle, 
-      color: 'text-gray-400', 
-      bg: 'bg-gray-500/5',
-      accent: 'bg-gradient-to-b from-gray-400 to-slate-500',
-      iconBorder: 'border-gray-500/10 group-hover:border-gray-500/30'
-    },
-    { 
       label: 'Suspended ISPs', 
       value: stats.suspended, 
       icon: AlertCircle, 
@@ -248,6 +295,15 @@ export default function AdminISPsPage() {
       bg: 'bg-rose-500/5',
       accent: 'bg-gradient-to-b from-rose-500 to-red-600',
       iconBorder: 'border-rose-500/10 group-hover:border-rose-500/30'
+    },
+    { 
+      label: 'SMS Credits Pool', 
+      value: (stats.total_sms_credits || 0).toLocaleString(), 
+      icon: MessageSquare, 
+      color: 'text-blue-500', 
+      bg: 'bg-blue-500/5',
+      accent: 'bg-gradient-to-b from-blue-400 to-indigo-500',
+      iconBorder: 'border-blue-500/10 group-hover:border-blue-500/30'
     },
   ]
 
@@ -257,8 +313,8 @@ export default function AdminISPsPage() {
       {/* Top Header */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-pace-border pb-6">
         <div>
-          <h1 className="text-xl font-medium text-admin-value tracking-tight">ISPs</h1>
-          <p className="text-xs font-medium text-gray-400 mt-1">Manage partner ISP tenant accounts and administrative access.</p>
+          <h1 className="text-xl font-medium text-admin-value tracking-tight">ISPs Management</h1>
+          <p className="text-xs font-medium text-gray-400 mt-1">Manage partner ISP accounts, SMS credit quotas, wallets, and administrative access.</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
           <div className="relative w-full sm:w-64 group">
@@ -279,7 +335,7 @@ export default function AdminISPsPage() {
               title="Refresh List"
             >
               <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
-              <span>Refresh List</span>
+              <span>Refresh</span>
             </button>
 
             <button
@@ -322,31 +378,31 @@ export default function AdminISPsPage() {
       {/* Main Database Table View */}
       <div className="bg-card-bg border border-pace-border rounded-2xl overflow-hidden shadow-sm w-full max-w-full">
         <div className="overflow-x-auto w-full max-w-full">
-          <table className="w-full text-left whitespace-nowrap min-w-[900px]">
+          <table className="w-full text-left whitespace-nowrap min-w-[980px]">
             <thead>
               <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-semibold text-admin-dim text-xs">
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Username</th>
-                <th className="px-6 py-4">Email</th>
-                <th className="px-6 py-4">Phone</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Created</th>
-                <th className="px-6 py-4">Last Login</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-5 py-3.5">ISP Name</th>
+                <th className="px-5 py-3.5">Username</th>
+                <th className="px-5 py-3.5">Contact</th>
+                <th className="px-5 py-3.5 text-center">SMS Credits</th>
+                <th className="px-5 py-3.5 text-right">Wallet Balance</th>
+                <th className="px-5 py-3.5 text-center">Status</th>
+                <th className="px-5 py-3.5">Created</th>
+                <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-pace-border text-xs">
               {isLoading && isps.length === 0 ? (
                 [...Array(5)].map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={8} className="px-6 py-4">
+                    <td colSpan={8} className="px-5 py-4">
                       <Skeleton className="h-5 w-full" />
                     </td>
                   </tr>
                 ))
               ) : isps.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-20 text-center text-admin-dim">
+                  <td colSpan={8} className="px-5 py-20 text-center text-admin-dim">
                     <div className="flex flex-col items-center justify-center">
                       <AlertCircle size={28} className="text-admin-dim opacity-40 mb-3" />
                       <p className="font-medium">No ISP accounts match your filters.</p>
@@ -354,67 +410,116 @@ export default function AdminISPsPage() {
                   </td>
                 </tr>
               ) : (
-                isps.map((isp) => (
-                  <tr 
-                    key={isp.id} 
-                    onClick={(e) => openViewModal(isp, e)}
-                    className="hover:bg-pace-bg-subtle/30 transition-all cursor-pointer group"
-                  >
-                    <td className="px-6 py-4 font-semibold text-admin-value">{isp.name}</td>
-                    <td className="px-6 py-4 font-medium text-admin-value font-mono">{isp.username}</td>
-                    <td className="px-6 py-4 text-admin-value">{isp.email || 'N/A'}</td>
-                    <td className="px-6 py-4 text-admin-value font-mono">{isp.phone || 'N/A'}</td>
-                    <td className="px-6 py-4">
-                      <span className={cn(
-                        "inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider",
-                        isp.status === 'active' 
-                          ? 'bg-emerald-500/10 text-emerald-600' 
-                          : isp.status === 'inactive' 
-                          ? 'bg-gray-500/10 text-gray-600'
-                          : 'bg-rose-500/10 text-rose-600'
-                      )}>
-                        {isp.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-admin-dim">
-                      {new Date(isp.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-admin-dim">
-                      {isp.last_login !== 'Never' ? new Date(isp.last_login).toLocaleString() : 'Never'}
-                    </td>
-                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1.5">
+                isps.map((isp) => {
+                  const credits = Number(isp.sms_credits || 0)
+                  return (
+                    <tr 
+                      key={isp.id} 
+                      onClick={(e) => openViewModal(isp, e)}
+                      className="hover:bg-pace-bg-subtle/30 transition-all cursor-pointer group"
+                    >
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-pace-purple/10 text-pace-purple flex items-center justify-center font-bold text-xs shrink-0">
+                            {(isp.name || 'U').charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-admin-value">{isp.name}</p>
+                            <p className="text-[11px] text-gray-400">ID #{isp.id}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 font-medium text-admin-value font-mono">
+                        @{isp.username}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="space-y-0.5">
+                          <p className="text-admin-value font-mono text-[11px]">{isp.phone || '—'}</p>
+                          <p className="text-gray-400 text-[11px]">{isp.email || 'No email'}</p>
+                        </div>
+                      </td>
+                      
+                      {/* SMS Credits Column with Quick Top-Up Trigger */}
+                      <td className="px-5 py-3.5 text-center" onClick={(e) => e.stopPropagation()}>
                         <button
-                          onClick={(e) => openViewModal(isp, e)}
-                          className="p-1.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-lg hover:border-pace-purple hover:text-pace-purple transition-all cursor-pointer"
-                          title="View Details"
+                          onClick={(e) => openTopupModal(isp, e)}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold font-mono border transition-all cursor-pointer group/cred",
+                            credits > 50 
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20" 
+                              : credits > 0 
+                              ? "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20"
+                              : "bg-rose-500/10 text-rose-600 border-rose-500/20 hover:bg-rose-500/20"
+                          )}
+                          title="Click to top up SMS credits"
                         >
-                          <Info size={14} />
+                          <MessageSquare size={12} className="shrink-0" />
+                          <span>{credits.toLocaleString()}</span>
+                          <Plus size={11} className="opacity-60 group-hover/cred:opacity-100 group-hover/cred:scale-110 transition-transform" />
                         </button>
-                        <button
-                          onClick={(e) => openEditModal(isp, e)}
-                          className="p-1.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-lg hover:border-pace-purple hover:text-pace-purple transition-all cursor-pointer"
-                          title="Edit Profile & Password"
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        <button
-                          onClick={(e) => openDeleteModal(isp, e)}
-                          className="p-1.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-lg hover:border-rose-500 hover:text-rose-500 transition-all cursor-pointer"
-                          title="Delete Profile"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+
+                      {/* Wallet Balance */}
+                      <td className="px-5 py-3.5 text-right font-mono font-semibold text-admin-value">
+                        KES {Number(isp.wallet_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
+
+                      <td className="px-5 py-3.5 text-center">
+                        <span className={cn(
+                          "inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider",
+                          isp.status === 'active' 
+                            ? 'bg-emerald-500/10 text-emerald-600' 
+                            : isp.status === 'inactive' 
+                            ? 'bg-gray-500/10 text-gray-600'
+                            : 'bg-rose-500/10 text-rose-600'
+                        )}>
+                          {isp.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-admin-dim text-[11px] font-mono">
+                        {new Date(isp.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={(e) => openTopupModal(isp, e)}
+                            className="p-1.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-lg hover:border-pace-purple hover:text-pace-purple hover:bg-pace-purple/10 transition-all cursor-pointer"
+                            title="Add / Set SMS Credits"
+                          >
+                            <MessageSquarePlus size={14} />
+                          </button>
+                          <button
+                            onClick={(e) => openViewModal(isp, e)}
+                            className="p-1.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-lg hover:border-pace-purple hover:text-pace-purple transition-all cursor-pointer"
+                            title="View Details"
+                          >
+                            <Info size={14} />
+                          </button>
+                          <button
+                            onClick={(e) => openEditModal(isp, e)}
+                            className="p-1.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-lg hover:border-pace-purple hover:text-pace-purple transition-all cursor-pointer"
+                            title="Edit Profile & Password"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            onClick={(e) => openDeleteModal(isp, e)}
+                            className="p-1.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-lg hover:border-rose-500 hover:text-rose-500 transition-all cursor-pointer"
+                            title="Delete Profile"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
 
               {/* Load More Trigger Row */}
               {hasMore && (
                 <tr ref={observerRef}>
-                  <td colSpan={8} className="px-6 py-4 text-center">
+                  <td colSpan={8} className="px-5 py-4 text-center">
                     <div className="flex items-center justify-center gap-2 text-admin-dim py-2">
                       <Loader2 className="animate-spin text-pace-purple" size={16} />
                       <span>Loading additional records...</span>
@@ -427,17 +532,157 @@ export default function AdminISPsPage() {
         </div>
       </div>
 
+      {/* QUICK TOP-UP SMS CREDITS MODAL */}
+      {isTopupModalOpen && topupIsp && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card-bg border border-pace-border rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden font-figtree">
+            <div className="flex items-center justify-between p-5 border-b border-pace-border bg-pace-bg-subtle/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-pace-purple/10 text-pace-purple flex items-center justify-center">
+                  <MessageSquarePlus size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-admin-value">
+                    Add SMS Credits: {topupIsp.name}
+                  </h3>
+                  <p className="text-[11px] text-admin-dim font-mono">@{topupIsp.username}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsTopupModalOpen(false)}
+                className="p-1.5 text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle rounded-xl transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleTopupSubmit} className="p-5 space-y-4">
+              {/* Current Credits Card */}
+              <div className="p-3.5 bg-pace-bg-subtle border border-pace-border rounded-xl flex items-center justify-between text-xs">
+                <span className="text-gray-400">Current SMS Balance:</span>
+                <span className="font-mono font-bold text-admin-value text-sm flex items-center gap-1.5">
+                  <MessageSquare size={14} className="text-pace-purple" />
+                  {Number(topupIsp.sms_credits || 0).toLocaleString()} credits
+                </span>
+              </div>
+
+              {/* Mode Selector */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-admin-dim">Action Mode</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTopupMode('add')}
+                    className={cn(
+                      "py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer",
+                      topupMode === 'add' 
+                        ? "bg-pace-purple text-white border-pace-purple shadow-sm" 
+                        : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:text-admin-value"
+                    )}
+                  >
+                    <Plus size={13} /> Add to Balance
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTopupMode('set')}
+                    className={cn(
+                      "py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer",
+                      topupMode === 'set' 
+                        ? "bg-pace-purple text-white border-pace-purple shadow-sm" 
+                        : "bg-pace-bg-subtle text-admin-dim border-pace-border hover:text-admin-value"
+                    )}
+                  >
+                    <Coins size={13} /> Set Exact Balance
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Presets */}
+              {topupMode === 'add' && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-admin-dim">Quick Presets</label>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {['50', '100', '250', '500', '1000'].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setTopupAmount(preset)}
+                        className={cn(
+                          "py-1.5 text-xs font-mono font-medium rounded-lg border transition-all cursor-pointer",
+                          topupAmount === preset 
+                            ? "bg-pace-purple/15 text-pace-purple border-pace-purple/40 font-bold" 
+                            : "bg-pace-bg-subtle border-pace-border text-admin-dim hover:text-admin-value"
+                        )}
+                      >
+                        +{preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quantity Input */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-admin-dim">
+                  {topupMode === 'add' ? 'Credits Quantity to Add *' : 'New Exact Balance *'}
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 500"
+                  value={topupAmount}
+                  onChange={(e) => setTopupAmount(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs text-admin-value font-mono font-bold focus:outline-none focus:border-pace-purple transition-all"
+                />
+              </div>
+
+              {/* Calculation Preview */}
+              <div className="p-3 bg-pace-purple/5 border border-pace-purple/15 rounded-xl flex items-center justify-between text-xs">
+                <span className="text-gray-400">New Resulting Balance:</span>
+                <span className="font-mono font-bold text-pace-purple text-sm">
+                  {(topupMode === 'set' 
+                    ? Math.max(0, Number(topupAmount) || 0) 
+                    : (Number(topupIsp.sms_credits || 0) + (Number(topupAmount) || 0))
+                  ).toLocaleString()} credits
+                </span>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-pace-border">
+                <button
+                  type="button"
+                  onClick={() => setIsTopupModalOpen(false)}
+                  className="w-full py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value transition-all cursor-pointer text-center"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isTopupSaving || !topupAmount || Number(topupAmount) <= 0}
+                  className="w-full py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm text-center"
+                >
+                  {isTopupSaving && <Loader2 className="animate-spin" size={12} />}
+                  <span>Confirm Credits</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* CREATE & EDIT MODAL */}
       {isCreateEditModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card-bg border border-pace-border rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-pace-border bg-pace-bg-subtle/50">
+          <div className="bg-card-bg border border-pace-border rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden font-figtree">
+            <div className="flex items-center justify-between p-5 border-b border-pace-border bg-pace-bg-subtle/50">
               <div>
                 <h3 className="text-base font-semibold text-admin-value">
                   {modalMode === 'create' ? 'Create ISP Account' : `Edit ISP: ${form.username}`}
                 </h3>
                 <p className="text-xs text-admin-dim mt-0.5">
-                  {modalMode === 'create' ? 'Register a new ISP operator profile and billing wallet.' : 'Update profile details or assign a new password.'}
+                  {modalMode === 'create' ? 'Register a new ISP operator profile and billing wallet.' : 'Update profile details, SMS credit quota, or password.'}
                 </p>
               </div>
               <button 
@@ -448,7 +693,7 @@ export default function AdminISPsPage() {
               </button>
             </div>
             
-            <form onSubmit={handleSaveSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSaveSubmit} className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-admin-dim">First Name *</label>
@@ -537,21 +782,39 @@ export default function AdminISPsPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-admin-dim">Account Status</label>
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full px-3 py-2 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs text-admin-value focus:outline-none focus:border-pace-purple transition-all cursor-pointer"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="suspended">Suspended</option>
-                </select>
+              {/* SMS Credits Input & Account Status */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-admin-dim flex items-center gap-1">
+                    <MessageSquare size={11} className="text-pace-purple" />
+                    SMS Credits Quota
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value={form.sms_credits}
+                    onChange={(e) => setForm({ ...form, sms_credits: Number(e.target.value) })}
+                    className="w-full px-3 py-2 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs text-admin-value font-mono font-bold focus:outline-none focus:border-pace-purple transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-admin-dim">Account Status</label>
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value })}
+                    className="w-full px-3 py-2 bg-pace-bg-subtle border border-pace-border rounded-xl text-xs text-admin-value focus:outline-none focus:border-pace-purple transition-all cursor-pointer"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
               </div>
 
               {/* Evenly Distributed Footer Buttons */}
-              <div className="grid grid-cols-2 gap-3 pt-5 border-t border-pace-border">
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-pace-border">
                 <button
                   type="button"
                   onClick={() => setIsCreateEditModalOpen(false)}
@@ -576,11 +839,16 @@ export default function AdminISPsPage() {
       {/* VIEW DETAILS MODAL */}
       {isViewModalOpen && selectedIsp && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card-bg border border-pace-border rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-pace-border bg-pace-bg-subtle/50">
-              <div>
-                <h3 className="text-base font-semibold text-admin-value">{selectedIsp.name}</h3>
-                <p className="text-xs text-admin-dim font-mono">@{selectedIsp.username}</p>
+          <div className="bg-card-bg border border-pace-border rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden font-figtree">
+            <div className="flex items-center justify-between p-5 border-b border-pace-border bg-pace-bg-subtle/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-pace-purple/10 text-pace-purple flex items-center justify-center font-bold text-sm">
+                  {(selectedIsp.name || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-admin-value">{selectedIsp.name}</h3>
+                  <p className="text-xs text-admin-dim font-mono">@{selectedIsp.username}</p>
+                </div>
               </div>
               <button 
                 onClick={() => setIsViewModalOpen(false)}
@@ -590,15 +858,35 @@ export default function AdminISPsPage() {
               </button>
             </div>
             
-            <div className="p-6 space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="p-5 space-y-4 text-xs">
+              {/* Financial & Credits Highlight Cards */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-1">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-admin-dim flex items-center gap-1">
+                    <MessageSquare size={12} className="text-blue-500" /> SMS Credits
+                  </span>
+                  <p className="font-mono font-bold text-base text-admin-value">
+                    {Number(selectedIsp.sms_credits || 0).toLocaleString()}
+                  </p>
+                </div>
+                <div className="p-3 bg-pace-bg-subtle border border-pace-border rounded-xl space-y-1">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-admin-dim flex items-center gap-1">
+                    <Wallet size={12} className="text-emerald-500" /> Wallet Balance
+                  </span>
+                  <p className="font-mono font-bold text-base text-emerald-600">
+                    KES {Number(selectedIsp.wallet_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-1">
                 <div className="space-y-1">
                   <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold">Email Address</p>
-                  <p className="font-semibold text-admin-value">{selectedIsp.email || 'N/A'}</p>
+                  <p className="font-medium text-admin-value truncate">{selectedIsp.email || 'N/A'}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold">Phone Number</p>
-                  <p className="font-semibold text-admin-value font-mono">{selectedIsp.phone || 'N/A'}</p>
+                  <p className="font-medium text-admin-value font-mono">{selectedIsp.phone || 'N/A'}</p>
                 </div>
               </div>
 
@@ -614,7 +902,7 @@ export default function AdminISPsPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold">Last Login</p>
-                  <p className="font-medium text-admin-value mt-1">
+                  <p className="font-medium text-admin-value mt-1 font-mono text-[11px]">
                     {selectedIsp.last_login !== 'Never' ? new Date(selectedIsp.last_login).toLocaleString() : 'Never'}
                   </p>
                 </div>
@@ -622,25 +910,34 @@ export default function AdminISPsPage() {
 
               <div className="space-y-1 pt-1">
                 <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold">Profile Created Date</p>
-                <p className="font-medium text-admin-value">
+                <p className="font-medium text-admin-value font-mono text-[11px]">
                   {new Date(selectedIsp.created_at).toLocaleString()}
                 </p>
               </div>
               
-              {/* Evenly Distributed Footer Buttons */}
-              <div className="grid grid-cols-2 gap-3 pt-5 border-t border-pace-border">
+              {/* Footer Buttons */}
+              <div className="grid grid-cols-3 gap-2 pt-4 border-t border-pace-border">
+                <button
+                  onClick={() => {
+                    setIsViewModalOpen(false)
+                    openTopupModal(selectedIsp)
+                  }}
+                  className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-sm text-center flex items-center justify-center gap-1"
+                >
+                  <Plus size={12} /> Top Up SMS
+                </button>
                 <button
                   onClick={() => {
                     setIsViewModalOpen(false)
                     openEditModal(selectedIsp)
                   }}
-                  className="w-full py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all cursor-pointer shadow-sm text-center"
+                  className="w-full py-2 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all cursor-pointer shadow-sm text-center"
                 >
                   Edit ISP
                 </button>
                 <button
                   onClick={() => setIsViewModalOpen(false)}
-                  className="w-full py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value hover:bg-pace-border/30 transition-all cursor-pointer text-center"
+                  className="w-full py-2 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl text-xs font-semibold hover:text-admin-value transition-all cursor-pointer text-center"
                 >
                   Close
                 </button>
@@ -653,7 +950,7 @@ export default function AdminISPsPage() {
       {/* DELETE CONFIRMATION MODAL */}
       {isDeleteModalOpen && selectedIsp && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card-bg border border-pace-border rounded-2xl w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+          <div className="bg-card-bg border border-pace-border rounded-2xl w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden font-figtree">
             <div className="p-6 text-center space-y-4">
               <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
                 <Trash2 size={24} />

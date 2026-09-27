@@ -19,11 +19,13 @@ export const ispService = {
                             username: isp.username,
                             email: isp.email || '',
                             phone: isp.phone || '',
+                            sms_credits: Number(isp.sms_credits || 0),
+                            wallet_balance: Number(isp.wallet_balance || 0),
                             status: isp.status, // keep raw string: 'active', 'inactive', 'suspended'
                             created_at: isp.created_at,
                             last_login: isp.last_login || 'Never'
                         })),
-                        stats: res.data.stats || { total: 0, active: 0, inactive: 0, suspended: 0 },
+                        stats: res.data.stats || { total: 0, active: 0, inactive: 0, suspended: 0, total_sms_credits: 0 },
                         has_more: !!res.data.has_more,
                         total_filtered: res.data.total_filtered || 0
                     }
@@ -56,6 +58,23 @@ export const ispService = {
             });
         } catch (e) {
             console.error("updateISP failed", e);
+            throw e;
+        }
+    },
+
+    async addSmsCredits(id, credits, mode = 'add') {
+        try {
+            return await apiFetch('/admin/isps.php', {
+                method: 'PUT',
+                body: JSON.stringify({
+                    id: Number(id),
+                    action: 'add_sms_credits',
+                    credits: Number(credits),
+                    mode: mode
+                })
+            });
+        } catch (e) {
+            console.error("addSmsCredits failed", e);
             throw e;
         }
     },
