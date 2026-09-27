@@ -29,28 +29,32 @@ function RoutersContent() {
         try {
             const res = await routerService.pingRouter(r.id)
             if (res && res.status === 'success') {
-                const isOnline = res.data?.status === 'online'
-                const latency = res.data?.latency_ms || 12
+                const d = res.data || {}
+                const isOnline = d.status === 'online'
+                const latency = d.latency_ms || 12
                 if (showToast) {
                     if (isOnline) {
                         toast.success(`${r.name} is ONLINE (${latency}ms latency)`)
                     } else {
-                        toast.error(`${r.name} is OFFLINE: ${res.data?.error || 'Node unreachable'}`)
+                        toast.error(`${r.name} is OFFLINE: ${d.error || 'Node unreachable'}`)
                     }
                 }
-                const sys = res.data?.system
+                const sys = d.system || {}
+                const cpuVal = d.cpu || (sys.cpuLoad !== undefined ? `${sys.cpuLoad}%` : (sys.cpu !== undefined ? `${sys.cpu}%` : null))
+                const ramVal = d.ram || sys.memoryUsage || null
+                const uptimeVal = d.uptime || sys.uptime || null
+                const modelVal = d.model || sys.boardName || null
+
                 setRouters(prev => prev.map(item => {
                     if (item.id !== r.id) return item
-                    const cpuVal = sys ? `${sys.cpuLoad || sys.cpu || 0}%` : item.cpu
-                    const ramVal = sys ? `${sys.memoryUsage || '0%'}` : item.ram
-                    const uptimeVal = sys ? (sys.uptime || item.uptime) : item.uptime
                     return {
                         ...item,
                         status: isOnline ? 'Online' : 'Offline',
                         latency: isOnline ? latency : null,
-                        cpu: isOnline ? cpuVal : '—',
-                        ram: isOnline ? ramVal : '—',
-                        uptime: isOnline ? uptimeVal : '—',
+                        cpu: isOnline ? (cpuVal || '0%') : '—',
+                        ram: isOnline ? (ramVal || '0%') : '—',
+                        uptime: isOnline ? (uptimeVal || '—') : '—',
+                        model: (isOnline && modelVal) ? modelVal : item.model,
                         pinging: false
                     }
                 }))
@@ -71,10 +75,16 @@ function RoutersContent() {
         try {
             const res = await routerService.getRouters()
             if (res.status === 'success') {
-                const list = (res.data || []).map(r => ({ ...r, pinging: true }))
+                const list = (res.data || []).map(r => ({
+                    ...r,
+                    cpu: '—',
+                    ram: '—',
+                    uptime: '—',
+                    pinging: true
+                }))
                 setRouters(list)
                 setIsLoading(false)
-                // Ping all routers live on load to verify reachability
+                // Ping all routers live on load to verify reachability and populate real-time telemetry
                 list.forEach(r => {
                     pingSingleRouter(r, false)
                 })
