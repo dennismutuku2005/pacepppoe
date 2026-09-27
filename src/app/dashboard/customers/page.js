@@ -916,7 +916,20 @@ function CustomersContent() {
                                 <input 
                                     type="date"
                                     value={formData.nextPayment}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, nextPayment: e.target.value }))}
+                                    onChange={(e) => {
+                                        const selectedDate = e.target.value;
+                                        const now = new Date();
+                                        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                                        
+                                        setFormData(prev => {
+                                            const isFutureOrToday = selectedDate && selectedDate >= todayStr;
+                                            return {
+                                                ...prev,
+                                                nextPayment: selectedDate,
+                                                ...(isFutureOrToday ? { status: 'enabled' } : {})
+                                            };
+                                        });
+                                    }}
                                     className="w-full px-3 py-2 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-medium text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all"
                                 />
                             </div>
