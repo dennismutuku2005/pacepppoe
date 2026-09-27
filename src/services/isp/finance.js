@@ -248,11 +248,11 @@ export const financeService = {
         }
     },
 
-    withdrawWallet: async ({ amount, channel, notes }) => {
+    withdrawWallet: async (withdrawData) => {
         try {
             return await apiFetch('/isp/wallet.php', {
                 method: 'POST',
-                body: JSON.stringify({ action: 'withdraw', amount, channel, notes })
+                body: JSON.stringify({ action: 'withdraw', ...withdrawData })
             });
         } catch (e) {
             console.error("withdrawWallet failed", e);
