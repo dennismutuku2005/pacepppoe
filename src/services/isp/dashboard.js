@@ -11,7 +11,9 @@ export const dashboardService = {
                     active_users: { value: w.active_subscribers || 0 },
                     monthly_users: { value: w.total_subscribers || 0 },
                     todays_earnings: { value: w.today_revenue || 0 },
-                    sms_balance: { value: w.net_profit || 0 },
+                    wallet_balance: { value: w.wallet_balance !== undefined ? w.wallet_balance : (w.net_profit || 0) },
+                    sms_credits: { value: w.sms_credits || 0 },
+                    sms_balance: { value: w.sms_credits || 0 },
                     open_tickets: { value: w.open_tickets || 0 },
                     system_health: { value: '99.4%' }
                 };
@@ -23,6 +25,8 @@ export const dashboardService = {
             active_users: { value: 0 },
             monthly_users: { value: 0 },
             todays_earnings: { value: 0 },
+            wallet_balance: { value: 0 },
+            sms_credits: { value: 0 },
             sms_balance: { value: 0 },
             open_tickets: { value: 0 },
             system_health: { value: '100%' }

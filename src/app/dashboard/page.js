@@ -29,8 +29,8 @@ const DashboardSkeleton = () => (
                 <Skeleton className="h-10 w-32 rounded-xl" />
             </div>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => <CardSkeleton key={i} />)}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {[...Array(5)].map((_, i) => <CardSkeleton key={i} />)}
         </div>
     </div>
 );
@@ -113,9 +113,9 @@ function DashboardContent() {
             href: '/dashboard/customers' 
         },
         { 
-            label: "Monthly Users", 
+            label: "Total Users", 
             value: (widgets.monthly_users?.value || 0).toLocaleString(), 
-            sub: 'Total unique users', 
+            sub: 'Subscribers pool', 
             icon: Network, 
             color: 'text-blue-500', 
             bg: 'bg-blue-500/5', 
@@ -126,7 +126,7 @@ function DashboardContent() {
         { 
             label: "Today's Revenue", 
             value: `KES ${widgets.todays_earnings.value.toLocaleString()}`, 
-            sub: 'M-Pesa Ledger', 
+            sub: 'M-Pesa Collections', 
             icon: Wallet, 
             color: 'text-emerald-500', 
             bg: 'bg-emerald-500/5', 
@@ -136,14 +136,25 @@ function DashboardContent() {
         },
         { 
             label: "Wallet Balance", 
-            value: `KES ${(widgets.sms_balance?.value || 0).toLocaleString()}`, 
-            sub: 'Settlement Pool', 
+            value: `KES ${(widgets.wallet_balance?.value || widgets.sms_balance?.value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 
+            sub: 'Available Payout', 
             icon: CreditCard, 
             color: 'text-amber-500', 
             bg: 'bg-amber-500/5', 
             iconBorder: 'border-amber-500/10 group-hover:border-amber-500/30',
             accent: 'bg-gradient-to-b from-amber-400 to-orange-500', 
             href: '/dashboard/wallet' 
+        },
+        { 
+            label: "SMS Credits", 
+            value: (widgets.sms_credits?.value || 0).toLocaleString(), 
+            sub: 'Quota Remaining', 
+            icon: MessageSquare, 
+            color: 'text-violet-500', 
+            bg: 'bg-violet-500/5', 
+            iconBorder: 'border-violet-500/10 group-hover:border-violet-500/30',
+            accent: 'bg-gradient-to-b from-violet-500 to-purple-600', 
+            href: '/dashboard/mpesa' 
         },
     ] : []
 
@@ -181,9 +192,9 @@ function DashboardContent() {
             </div>
 
             {/* Top Metrics Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {isWidgetsLoading && !widgets ? (
-                    [...Array(4)].map((_, i) => <CardSkeleton key={i} />)
+                    [...Array(5)].map((_, i) => <CardSkeleton key={i} />)
                 ) : metrics.map((metric, i) => {
                     const CardWrapper = metric.href ? Link : 'div';
                     const wrapperProps = metric.href ? { href: metric.href } : {
