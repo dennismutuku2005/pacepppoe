@@ -6,6 +6,7 @@ import { ResponsiveContainer, AreaChart, Area, LineChart, Line, PieChart, Pie, C
 import { mpesaService } from '@/services/admin/mpesa'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatNairobiDate, parseNairobiDate } from '@/lib/dateUtils'
 
 export default function AdminFinancialAnalyticsPage() {
   const [transactions, setTransactions] = useState([])
@@ -48,13 +49,14 @@ export default function AdminFinancialAnalyticsPage() {
     const datesMap = {}
     
     // Sort transactions chronologically
-    const sorted = [...completedTx].sort((a, b) => new Date(a.transaction_date) - new Date(b.transaction_date))
+    const sorted = [...completedTx].sort((a, b) => {
+      const da = parseNairobiDate(a.transaction_date)?.getTime() || 0;
+      const db = parseNairobiDate(b.transaction_date)?.getTime() || 0;
+      return da - db;
+    });
     
     sorted.forEach((tx) => {
-      const dateStr = new Date(tx.transaction_date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
-      })
+      const dateStr = formatNairobiDate(tx.transaction_date, { month: 'short', day: 'numeric', year: undefined });
       datesMap[dateStr] = (datesMap[dateStr] || 0) + parseFloat(tx.amount || 0)
     })
 

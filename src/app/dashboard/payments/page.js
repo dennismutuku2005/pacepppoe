@@ -12,6 +12,7 @@ import { Modal } from '@/components/Modal'
 import { TablePageSkeleton } from '@/components/Skeleton'
 import { financeService } from '@/services/isp/finance'
 import { toast } from 'sonner'
+import { formatNairobiDateTime } from '@/lib/dateUtils'
 
 function PaymentsContent() {
     const [isLoading, setIsLoading] = useState(true)
@@ -427,7 +428,7 @@ function PaymentsContent() {
                                             </td>
                                             <td className="px-4 py-3.5">
                                                 <span className="font-mono text-[11px] text-gray-400">
-                                                    {t.date}
+                                                    {formatNairobiDateTime(t.date)}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3.5 text-right">
@@ -549,7 +550,7 @@ function PaymentsContent() {
                             {/* Date & Time */}
                             <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
                                 <span className="text-gray-400">Date &amp; Timestamp:</span>
-                                <span className="font-mono text-admin-value font-medium">{selectedTx.date}</span>
+                                <span className="font-mono text-admin-value font-medium">{formatNairobiDateTime(selectedTx.date)}</span>
                             </div>
 
                             {/* Fee Breakdown if applicable */}

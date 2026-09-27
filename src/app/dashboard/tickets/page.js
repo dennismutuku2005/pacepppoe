@@ -12,6 +12,7 @@ import { TablePageSkeleton } from '@/components/Skeleton'
 import { ticketService } from '@/services/isp/tickets'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatNairobiDateTime } from '@/lib/dateUtils'
 
 function TicketsContent() {
     const [tickets, setTickets] = useState([])
@@ -473,12 +474,7 @@ function TicketsContent() {
 
                                         {/* Timestamp */}
                                         <td className="px-6 py-3.5 text-xs font-normal text-admin-dim tabular-nums">
-                                            {t.created_at ? new Date(t.created_at).toLocaleString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            }) : 'N/A'}
+                                            {formatNairobiDateTime(t.created_at)}
                                         </td>
 
                                         {/* Actions */}
@@ -662,7 +658,7 @@ function TicketsContent() {
                                 <div className="p-2.5 bg-card-bg rounded-lg border border-pace-border">
                                     <p className="text-[10px] text-admin-dim font-semibold uppercase tracking-wider mb-0.5">Logged Date</p>
                                     <p className="font-medium text-admin-value">
-                                        {selectedTicket.created_at ? new Date(selectedTicket.created_at).toLocaleString('en-US') : 'N/A'}
+                                        {formatNairobiDateTime(selectedTicket.created_at)}
                                     </p>
                                 </div>
                             </div>

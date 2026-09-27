@@ -6,6 +6,7 @@ import { Modal } from '@/components/Modal'
 import { walletService } from '@/services/admin/wallets'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatNairobiDateTime } from '@/lib/dateUtils'
 
 export default function AdminWalletsPage() {
   const [wallets, setWallets] = useState([])
@@ -114,18 +115,7 @@ export default function AdminWalletsPage() {
   // Format date cleanly
   const formatDate = (dateStr) => {
     if (!dateStr || dateStr === '0000-00-00 00:00:00') return 'Never'
-    try {
-      const date = new Date(dateStr)
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    } catch (e) {
-      return dateStr
-    }
+    return formatNairobiDateTime(dateStr);
   }
 
   return (

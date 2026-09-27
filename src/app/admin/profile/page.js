@@ -8,6 +8,7 @@ import {
 import { profileService } from '@/services/profile'
 import authService from '@/lib/auth'
 import { toast } from 'sonner'
+import { formatNairobiDate, formatNairobiDateTime } from '@/lib/dateUtils'
 
 export default function AdminProfilePage() {
   const [profile, setProfile] = useState(null)
@@ -278,23 +279,14 @@ export default function AdminProfilePage() {
                 <div>
                   <p className="text-xs font-medium text-admin-dim">Registered since</p>
                   <p className="text-xs font-medium text-admin-value mt-1">
-                    {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    }) : 'N/A'}
+                    {formatNairobiDate(profile?.created_at, { month: 'long' })}
                   </p>
                 </div>
                 {profile?.last_login && (
                   <div>
                     <p className="text-xs font-medium text-admin-dim">Last login</p>
                     <p className="text-xs font-medium text-admin-value mt-1">
-                      {new Date(profile.last_login).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {formatNairobiDateTime(profile.last_login)}
                     </p>
                   </div>
                 )}

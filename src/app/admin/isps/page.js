@@ -9,6 +9,7 @@ import { ispService } from '@/services/admin/isps'
 import { Skeleton, AdminCardSkeleton } from '@/components/Skeleton'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatNairobiDate, formatNairobiDateTime } from '@/lib/dateUtils'
 
 export default function AdminISPsPage() {
   const [isps, setIsps] = useState([])
@@ -477,7 +478,7 @@ export default function AdminISPsPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-admin-dim text-[11px] font-mono">
-                        {new Date(isp.created_at).toLocaleDateString()}
+                        {formatNairobiDate(isp.created_at)}
                       </td>
                       <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
@@ -903,7 +904,7 @@ export default function AdminISPsPage() {
                 <div className="space-y-1">
                   <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold">Last Login</p>
                   <p className="font-medium text-admin-value mt-1 font-mono text-[11px]">
-                    {selectedIsp.last_login !== 'Never' ? new Date(selectedIsp.last_login).toLocaleString() : 'Never'}
+                    {selectedIsp.last_login && selectedIsp.last_login !== 'Never' ? formatNairobiDateTime(selectedIsp.last_login) : 'Never'}
                   </p>
                 </div>
               </div>
@@ -911,7 +912,7 @@ export default function AdminISPsPage() {
               <div className="space-y-1 pt-1">
                 <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold">Profile Created Date</p>
                 <p className="font-medium text-admin-value font-mono text-[11px]">
-                  {new Date(selectedIsp.created_at).toLocaleString()}
+                  {formatNairobiDateTime(selectedIsp.created_at)}
                 </p>
               </div>
               

@@ -11,6 +11,7 @@ import authService from '@/lib/auth'
 import { profileService } from '@/services/profile'
 import { toast } from 'sonner'
 import { Badge } from '@/components/Badge'
+import { formatNairobiDate } from '@/lib/dateUtils'
 
 function ProfileContent() {
     const [profile, setProfile] = useState(null)
@@ -261,11 +262,7 @@ function ProfileContent() {
                             <div className="flex justify-between py-2">
                                 <span className="text-admin-dim font-medium">Member Since</span>
                                 <span className="font-semibold text-admin-value">
-                                    {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric'
-                                    }) : 'N/A'}
+                                    {formatNairobiDate(profile?.created_at)}
                                 </span>
                             </div>
                         </div>

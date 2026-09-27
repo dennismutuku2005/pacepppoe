@@ -9,6 +9,7 @@ import { Modal } from '@/components/Modal'
 import { logService } from '@/services/isp/logs'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatNairobiDateTime, formatNairobiDate, formatNairobiTime } from '@/lib/dateUtils'
 
 const BATCH_SIZE = 50
 
@@ -264,14 +265,7 @@ function LogsContent() {
 
                                         {/* Timestamp */}
                                         <td className="px-6 py-3.5 text-xs font-normal text-admin-dim tabular-nums">
-                                            {log.created_at ? new Date(log.created_at).toLocaleString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                                second: '2-digit'
-                                            }) : 'N/A'}
+                                            {formatNairobiDateTime(log.created_at, { second: '2-digit' })}
                                         </td>
 
                                         {/* Inspect Button */}
@@ -350,14 +344,10 @@ function LogsContent() {
                                 <div className="p-2.5 bg-card-bg rounded-lg border border-pace-border">
                                     <p className="text-[10px] text-admin-dim font-semibold uppercase tracking-wider mb-0.5">Recorded At</p>
                                     <p className="font-medium text-admin-value">
-                                        {selectedLog.created_at ? new Date(selectedLog.created_at).toLocaleDateString('en-US', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric'
-                                        }) : 'N/A'}
+                                        {formatNairobiDate(selectedLog.created_at)}
                                     </p>
                                     <p className="text-[10px] font-mono text-admin-dim mt-0.5">
-                                        {selectedLog.created_at ? new Date(selectedLog.created_at).toLocaleTimeString('en-US') : ''}
+                                        {formatNairobiTime(selectedLog.created_at, { second: '2-digit' })}
                                     </p>
                                 </div>
                             </div>

@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/Skeleton'
 import { logService } from '@/services/admin/logs'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatNairobiDateTime } from '@/lib/dateUtils'
 
 const BATCH_SIZE = 40
 
@@ -375,13 +376,7 @@ export default function AdminAuditLogsPage() {
                       {logItem.ip_address || '127.0.0.1'}
                     </td>
                     <td className="px-6 py-4 text-xs font-medium text-admin-dim">
-                      {new Date(logItem.created_at).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit'
-                      })}
+                      {formatNairobiDateTime(logItem.created_at, { second: '2-digit' })}
                     </td>
                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <button
@@ -479,7 +474,7 @@ export default function AdminAuditLogsPage() {
                 <div className="rounded-xl border border-pace-border bg-pace-bg-subtle p-3">
                   <p className="text-[10px] uppercase tracking-wider text-admin-dim font-bold mb-1">Recorded At</p>
                   <p className="text-xs font-medium text-admin-value">
-                    {new Date(selectedLog.created_at).toLocaleString('en-US')}
+                    {formatNairobiDateTime(selectedLog.created_at, { second: '2-digit' })}
                   </p>
                 </div>
               </div>

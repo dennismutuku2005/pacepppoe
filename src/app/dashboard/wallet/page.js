@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { financeService } from '@/services/isp/finance'
 import { AdminCardSkeleton } from '@/components/Skeleton'
+import { formatNairobiDateTime } from '@/lib/dateUtils'
 
 export default function IspWalletDashboard() {
   const [isLoading, setIsLoading] = useState(true)
@@ -656,7 +657,7 @@ export default function IspWalletDashboard() {
                       </td>
                       <td className="px-4 py-3.5">
                         <span className="font-mono text-[11px] text-gray-400">
-                          {tx.created_at || tx.date}
+                          {formatNairobiDateTime(tx.created_at || tx.date)}
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-right">
@@ -1057,7 +1058,7 @@ export default function IspWalletDashboard() {
               {/* Date & Time */}
               <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
                 <span className="text-gray-400">Date &amp; Timestamp:</span>
-                <span className="font-mono text-admin-value font-medium">{selectedTx.created_at || selectedTx.date || '—'}</span>
+                <span className="font-mono text-admin-value font-medium">{formatNairobiDateTime(selectedTx.created_at || selectedTx.date)}</span>
               </div>
 
               {/* Fee Breakdown if applicable */}

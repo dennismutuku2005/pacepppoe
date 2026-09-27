@@ -9,6 +9,7 @@ import { mpesaService } from '@/services/admin/mpesa'
 import { ispService } from '@/services/admin/isps'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatNairobiDateTime } from '@/lib/dateUtils'
 
 export default function AdminMpesaTransactionsPage() {
   const [transactions, setTransactions] = useState([])
@@ -290,13 +291,7 @@ export default function AdminMpesaTransactionsPage() {
                       KES {txItem.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 text-xs font-medium text-admin-dim">
-                      {new Date(txItem.transaction_date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {formatNairobiDateTime(txItem.transaction_date)}
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={getStatusBadgeVariant(txItem.status)} className="text-[9px] font-bold border-none px-2 py-0.5 uppercase tracking-wider">
@@ -338,7 +333,7 @@ export default function AdminMpesaTransactionsPage() {
                 { label: 'Account Code Ref', value: selectedTx.account_reference },
                 { label: 'ISP Scope Name', value: selectedTx.isp_name },
                 { label: 'Transacted Amount', value: `KES ${selectedTx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` },
-                { label: 'Date Logged', value: new Date(selectedTx.transaction_date).toLocaleString('en-US') },
+                { label: 'Date Logged', value: formatNairobiDateTime(selectedTx.transaction_date) },
                 { label: 'M-Pesa Status', value: selectedTx.status.toUpperCase() }
               ].map((item) => (
                 <div key={item.label} className="rounded-xl border border-pace-border bg-pace-bg-subtle p-3">

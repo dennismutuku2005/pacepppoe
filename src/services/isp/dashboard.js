@@ -1,5 +1,6 @@
 import { apiFetch } from '@/lib/api';
 import { routerService } from './routers';
+import { formatNairobiTime } from '@/lib/dateUtils';
 
 export const dashboardService = {
     // ─── Sectional Parallel Fetchers ─────────────────────────────────────────
@@ -69,8 +70,7 @@ export const dashboardService = {
             const res = await apiFetch('/isp/dashboard.php?section=transactions');
             if (res && res.status === 'success') {
                 return (res.data || []).map((p, index) => {
-                    const date = new Date(p.transaction_date);
-                    const timeAgo = isNaN(date.getTime()) ? 'Recently' : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const timeAgo = formatNairobiTime(p.transaction_date);
                     return {
                         id: p.receipt_number || `TX-${index}`,
                         user_phone: p.phone_number || '0712345678',

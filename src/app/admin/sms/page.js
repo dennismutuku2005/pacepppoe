@@ -9,6 +9,7 @@ import { smsService } from '@/services/admin/sms'
 import { ispService } from '@/services/admin/isps'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { formatNairobiDateTime } from '@/lib/dateUtils'
 
 export default function AdminSmsLogsPage() {
   const [smsLogs, setSmsLogs] = useState([])
@@ -252,19 +253,7 @@ export default function AdminSmsLogsPage() {
   }
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A'
-    try {
-      const date = new Date(dateStr)
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    } catch (e) {
-      return dateStr
-    }
+    return formatNairobiDateTime(dateStr);
   }
 
   return (
