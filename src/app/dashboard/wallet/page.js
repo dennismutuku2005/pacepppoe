@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { 
     Wallet, ArrowUpRight, ArrowDownLeft, Building, 
     Send, Edit2, History, Smartphone, Search, RefreshCw, 
-    Store, PlusCircle, ArrowRight
+    Store, PlusCircle
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
@@ -479,7 +479,6 @@ export default function IspWalletDashboard() {
             >
               <Send size={13} />
               <span>Withdraw Funds</span>
-              <ArrowRight size={13} />
             </button>
           </div>
         </div>
