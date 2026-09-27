@@ -1,4 +1,5 @@
 import { apiFetch } from '@/lib/api';
+import { routerService } from './routers';
 
 export const dashboardService = {
     // ─── Sectional Parallel Fetchers ─────────────────────────────────────────
@@ -112,18 +113,35 @@ export const dashboardService = {
 
     async getRouterStatus() {
         try {
-            const res = await apiFetch('/isp/routers.php?live=1');
+            const res = await routerService.getRouters();
             if (res && res.status === 'success') {
-                return (res.data.routers || []).map(r => ({
-                    id: r.id,
-                    name: r.name,
-                    ip: r.ip_address,
-                    status: r.status === 'online' ? 'Online' : 'Offline',
-                    latency_ms: r.latency_ms !== undefined ? r.latency_ms : null,
-                    load: `${r.cpu_usage || 0}%`,
-                    uptime: r.uptime || 'N/A',
-                    is_live_ping: Boolean(r.is_live_ping)
-                }));
+                const list = res.data || [];
+                const pingPromises = list.map(async (r) => {
+                    try {
+                        const pingRes = await routerService.pingRouter(r.id);
+                        const isOnline = pingRes?.status === 'success' && pingRes?.data?.status === 'online';
+                        return {
+                            id: r.id,
+                            name: r.name,
+                            ip: r.ip,
+                            status: isOnline ? 'Online' : 'Offline',
+                            latency_ms: isOnline ? (pingRes.data?.latency_ms || 12) : null,
+                            load: r.cpu || '0%',
+                            uptime: r.uptime || 'N/A'
+                        };
+                    } catch (e) {
+                        return {
+                            id: r.id,
+                            name: r.name,
+                            ip: r.ip,
+                            status: r.status === 'Online' ? 'Online' : 'Offline',
+                            latency_ms: null,
+                            load: r.cpu || '0%',
+                            uptime: r.uptime || 'N/A'
+                        };
+                    }
+                });
+                return await Promise.all(pingPromises);
             }
         } catch (e) {
             console.error("getRouterStatus failed", e);

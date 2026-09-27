@@ -15,6 +15,7 @@ import { Badge } from '@/components/Badge'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { GlobalFilters } from '@/components/GlobalFilters'
 import { dashboardService } from '@/services/isp/dashboard'
+import { routerService } from '@/services/isp/routers'
 import authService from '@/lib/auth'
 
 const DashboardSkeleton = () => (
@@ -40,6 +41,7 @@ function DashboardContent() {
     const [isWidgetsLoading, setIsWidgetsLoading] = useState(true)
     const [isChartsLoading, setIsChartsLoading] = useState(true)
     const [isTxLoading, setIsTxLoading] = useState(true)
+    const [isRoutersLoading, setIsRoutersLoading] = useState(true)
     const [isPingingRouters, setIsPingingRouters] = useState(false)
     
     const [widgets, setWidgets] = useState(null)
@@ -53,10 +55,34 @@ function DashboardContent() {
 
     const handleRefreshRouters = () => {
         setIsPingingRouters(true)
-        dashboardService.getRouterStatus().then(r => {
-            setRouters(r)
-        }).catch(console.error).finally(() => {
-            setIsPingingRouters(false)
+        if (routers.length === 0) {
+            routerService.getRouters().then(res => {
+                if (res && res.status === 'success') {
+                    const list = res.data || []
+                    setRouters(list)
+                    list.forEach(r => pingSingleRouter(r))
+                }
+            }).catch(console.error).finally(() => setIsPingingRouters(false))
+        } else {
+            routers.forEach(r => pingSingleRouter(r))
+            setTimeout(() => setIsPingingRouters(false), 1200)
+        }
+    }
+
+    const pingSingleRouter = (r) => {
+        routerService.pingRouter(r.id).then(pingRes => {
+            if (pingRes && pingRes.status === 'success') {
+                const isOnline = pingRes.data?.status === 'online'
+                const latency = pingRes.data?.latency_ms || 12
+                setRouters(prev => prev.map(item => item.id === r.id ? {
+                    ...item,
+                    status: isOnline ? 'Online' : 'Offline',
+                    latency_ms: isOnline ? latency : null
+                } : item))
+            }
+        }).catch(err => {
+            console.warn(`Router ${r.id} ping failed:`, err)
+            setRouters(prev => prev.map(item => item.id === r.id ? { ...item, status: 'Offline', latency_ms: null } : item))
         })
     }
 
@@ -65,6 +91,7 @@ function DashboardContent() {
         setIsWidgetsLoading(true)
         setIsChartsLoading(true)
         setIsTxLoading(true)
+        setIsRoutersLoading(true)
 
         // 1. Fetch widgets in parallel (instant top metric cards)
         dashboardService.getWidgets().then(w => {
@@ -93,11 +120,20 @@ function DashboardContent() {
             setIsTxLoading(false)
         })
 
-        // 4. Fetch router telemetry in parallel
-        dashboardService.getRouterStatus().then(r => {
-            setRouters(r)
+        // 4. Fetch router list immediately and ping in background (exact same as /dashboard/routers)
+        routerService.getRouters().then(res => {
+            if (res && res.status === 'success') {
+                const list = res.data || []
+                setRouters(list)
+                setIsRoutersLoading(false)
+                // Ping each router live
+                list.forEach(r => pingSingleRouter(r))
+            } else {
+                setIsRoutersLoading(false)
+            }
         }).catch(err => {
             console.error("Router status fetch error:", err)
+            setIsRoutersLoading(false)
         })
 
         // 5. Fetch recent tickets in parallel
@@ -276,7 +312,7 @@ function DashboardContent() {
                     </div>
 
                     <div className="space-y-2 flex-1">
-                        {(isWidgetsLoading || isPingingRouters) && routers.length === 0 ? (
+                        {isRoutersLoading ? (
                             [...Array(3)].map((_, i) => (
                                 <div key={i} className="p-2.5 border border-pace-border rounded-xl flex justify-between items-center">
                                     <div className="flex items-center gap-3">
