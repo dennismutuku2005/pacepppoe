@@ -162,7 +162,7 @@ function CustomersContent() {
                 password: c.password || '',
                 status: c.status || 'enabled',
                 accountNumber: c.accountNumber || '',
-                activationFee: c.totalSpent ? String(c.totalSpent) : '',
+                activationFee: '',
                 nextPayment: c.nextPayment ? c.nextPayment.split(' ')[0] : defaultNextPay,
                 lat: c.lat ? String(c.lat) : '',
                 lng: c.lng ? String(c.lng) : ''
@@ -891,24 +891,26 @@ function CustomersContent() {
                             </div>
                         </div>
 
-                        {/* Activation Fee, Expiry Date & Connection Status */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div className="space-y-1">
-                                <label className="text-[11px] font-semibold text-admin-dim">Activation Fee (KES)</label>
-                                <input 
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={formData.activationFee}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
-                                            setFormData(prev => ({ ...prev, activationFee: val }));
-                                        }
-                                    }}
-                                    placeholder="0.00"
-                                    className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-mono font-medium text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all"
-                                />
-                            </div>
+                        {/* Expiry Date, Connection Status & (Optional on Create) Activation Fee */}
+                        <div className={`grid grid-cols-1 ${!currentCustomer ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3`}>
+                            {!currentCustomer && (
+                                <div className="space-y-1">
+                                    <label className="text-[11px] font-semibold text-admin-dim">Activation Fee (KES)</label>
+                                    <input 
+                                        type="text"
+                                        inputMode="decimal"
+                                        value={formData.activationFee}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                                                setFormData(prev => ({ ...prev, activationFee: val }));
+                                            }
+                                        }}
+                                        placeholder="0.00"
+                                        className="w-full px-3.5 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-xs font-mono font-medium text-admin-value outline-none focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30 transition-all"
+                                    />
+                                </div>
+                            )}
                             <div className="space-y-1">
                                 <label className="text-[11px] font-semibold text-admin-dim">Next Expiry Date</label>
                                 <input 
