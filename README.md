@@ -1,10 +1,30 @@
-<p align="center">
-  <img src="public/logoc.png" alt="PaceWisp Logo" width="300" />
+<div align="center">
+
+<img src="public/logoc.png" alt="PaceWisp Logo" width="280" />
+
+# PaceWisp
+### Advanced PPPoE & ISP Orchestration Hub
+
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-v4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![MikroTik](https://img.shields.io/badge/MikroTik-RouterOS-EE3124?style=for-the-badge)](https://mikrotik.com/)
+[![M-Pesa](https://img.shields.io/badge/M--Pesa-Integrated-00A859?style=for-the-badge)](https://www.safaricom.co.ke/)
+
+---
+
+**PaceWisp** is a specialized ISP management orchestration hub designed to streamline PPPoE subscriber lifecycles, MikroTik network infrastructure, automated M-Pesa billing, and operational workflows within a single high-performance portal.
+
+---
+
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the dashboard.
+
+---
+
+<p>
+  <b>Engineered for High-Performance Internet Service Providers</b><br>
+  Built with ❤️ by DrnniS Muuo
 </p>
 
-# PaceWisp | Advanced PPPoE Management
-PaceWisp is a specialized ISP management orchestration hub designed to streamline PPPoE subscriber lifecycles and MikroTik network infrastructure. 
-The system provides a high-fidelity interface for real-time bandwidth tiering, automated M-Pesa payment reconciliation, and operational expense tracking. 
-Engineered for modern WISPs, it features a robust SMS notification engine for automated client communication and expiration alerts. 
-With integrated health monitoring for network nodes and a centralized support ticketing system, it ensures maximum uptime and subscriber satisfaction. 
-This portal is built for visual excellence and administrative efficiency, centralizing all critical ISP operations within a single, secure sovereignty hub.
+</div>
