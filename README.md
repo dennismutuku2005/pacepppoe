@@ -15,13 +15,6 @@
 
 **PaceWisp** is a specialized ISP management orchestration hub designed to streamline PPPoE subscriber lifecycles, MikroTik network infrastructure, automated M-Pesa billing, and operational workflows within a single high-performance portal.
 
----
-
-
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the dashboard.
-
----
-
 <p>
   <b>Engineered for High-Performance Internet Service Providers</b><br>
   Built with ❤️ by DrnniS Muuo
