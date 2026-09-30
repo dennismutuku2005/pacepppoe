@@ -21,7 +21,9 @@ import {
   Calendar,
   Layers,
   ArrowUpRight,
-  Info
+  Info,
+  HelpCircle,
+  Radio
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
@@ -40,7 +42,9 @@ export default function AdminMpesaLogsPage() {
     mikrotik_connected: 0,
     mikrotik_failed: 0,
     mikrotik_pending: 0,
-    unmatched_count: 0
+    unmatched_count: 0,
+    no_isp_count: 0,
+    no_isp_volume: 0
   })
   const [ispsList, setIspsList] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -49,7 +53,7 @@ export default function AdminMpesaLogsPage() {
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all')
   const [mikrotikFilter, setMikrotikFilter] = useState('all')
-  const [ispFilter, setIspFilter] = useState(0)
+  const [ispFilter, setIspFilter] = useState('all')
 
   // Inspection Modal states
   const [selectedTx, setSelectedTx] = useState(null)
@@ -66,7 +70,7 @@ export default function AdminMpesaLogsPage() {
         mikrotik_status: mikrotikFilter,
         isp_id: ispFilter,
         page: 1,
-        limit: 150
+        limit: 200
       })
       if (res && res.status === 'success') {
         setTransactions(res.data || [])
@@ -166,36 +170,38 @@ export default function AdminMpesaLogsPage() {
     {
       label: 'Total M-Pesa Inflow',
       value: `KES ${stats.total_volume.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
-      subValue: 'Cumulative collections',
+      subValue: `${stats.total_count} total callbacks`,
       icon: Coins,
       color: 'text-emerald-500',
       accent: 'bg-gradient-to-b from-emerald-400 to-teal-500'
     },
     {
-      label: 'Logged Transactions',
-      value: stats.total_count,
-      subValue: 'All callback events',
-      icon: Smartphone,
-      color: 'text-pace-purple',
-      accent: 'bg-gradient-to-b from-pace-purple to-indigo-500'
+      label: 'Direct / Without ISP',
+      value: stats.no_isp_count,
+      subValue: `KES ${stats.no_isp_volume.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+      icon: Radio,
+      color: 'text-amber-500',
+      accent: 'bg-gradient-to-b from-amber-400 to-orange-500',
+      badge: stats.no_isp_count > 0 ? 'Unassigned / Direct' : 'None',
+      badgeVariant: 'warning'
     },
     {
-      label: 'MikroTik Connected',
+      label: 'MikroTik Synchronized',
       value: stats.mikrotik_connected,
-      subValue: 'Direct router sync',
+      subValue: 'Enabled on port 8728',
       icon: CheckCircle,
       color: 'text-blue-500',
       accent: 'bg-gradient-to-b from-blue-400 to-indigo-600'
     },
     {
-      label: 'Router Sync Failed',
+      label: 'Router Sync Failures',
       value: stats.mikrotik_failed,
       subValue: 'Auto-retried by cron',
       icon: AlertCircle,
       color: 'text-rose-500',
       accent: 'bg-gradient-to-b from-rose-500 to-red-600',
-      badge: stats.mikrotik_failed > 0 ? 'Cron Handles' : 'Healthy',
-      badgeVariant: stats.mikrotik_failed > 0 ? 'warning' : 'success'
+      badge: stats.mikrotik_failed > 0 ? 'Cron Handles' : '0 Errors',
+      badgeVariant: stats.mikrotik_failed > 0 ? 'error' : 'success'
     }
   ]
 
@@ -206,13 +212,13 @@ export default function AdminMpesaLogsPage() {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-pace-border pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-medium text-admin-value tracking-tight">M-Pesa Transaction Logs</h1>
+            <h1 className="text-xl font-medium text-admin-value tracking-tight">M-Pesa Real-Time Transaction Logs</h1>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pace-purple/10 text-pace-purple border border-pace-purple/20">
               Gateway Audit
             </span>
           </div>
           <p className="text-xs font-medium text-gray-400 mt-1">
-            Real-time audit log of all incoming M-Pesa payments, subscriber balance adjustments, and MikroTik router activations.
+            Complete real-time ledger of all payment events — including transactions with an assigned ISP, direct payments, and unmatched account references.
           </p>
         </div>
 
@@ -282,13 +288,28 @@ export default function AdminMpesaLogsPage() {
       {/* Filter Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">MikroTik Sync Status</label>
+          <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">ISP Operator Scope</label>
+          <select
+            value={ispFilter}
+            onChange={(e) => setIspFilter(e.target.value)}
+            className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-card-bg text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
+          >
+            <option value="all">All Inflow (With ISP & Without ISP)</option>
+            <option value="none">⚡ Only Without ISP (Direct / Unassigned)</option>
+            {ispsList.map(isp => (
+              <option key={isp.id} value={isp.id}>🏢 ISP: {isp.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">MikroTik Sync Status (Port 8728)</label>
           <select
             value={mikrotikFilter}
             onChange={(e) => setMikrotikFilter(e.target.value)}
             className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-card-bg text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
           >
-            <option value="all">All Router Statuses</option>
+            <option value="all">All Router States</option>
             <option value="connected">Connected (Synchronized)</option>
             <option value="failed">Failed (Pending Cron Retry)</option>
             <option value="pending">Pending</option>
@@ -309,20 +330,6 @@ export default function AdminMpesaLogsPage() {
             <option value="refunded">Refunded</option>
           </select>
         </div>
-
-        <div>
-          <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">ISP Operator Filter</label>
-          <select
-            value={ispFilter}
-            onChange={(e) => setIspFilter(Number(e.target.value))}
-            className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-card-bg text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
-          >
-            <option value={0}>All ISP Operators</option>
-            {ispsList.map(isp => (
-              <option key={isp.id} value={isp.id}>{isp.name}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {/* Main Database Table Card */}
@@ -333,12 +340,12 @@ export default function AdminMpesaLogsPage() {
               <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
                 <th className="px-6 py-4">Receipt Code</th>
                 <th className="px-6 py-4">Account Ref</th>
-                <th className="px-6 py-4">Subscriber</th>
+                <th className="px-6 py-4">Subscriber Linkage</th>
                 <th className="px-6 py-4">Sender Phone</th>
                 <th className="px-6 py-4">Amount</th>
                 <th className="px-6 py-4">MikroTik Router</th>
+                <th className="px-6 py-4">ISP Owner / Operator</th>
                 <th className="px-6 py-4">Date Logged</th>
-                <th className="px-6 py-4">ISP Owner</th>
                 <th className="px-6 py-4 text-right">Inspect</th>
               </tr>
             </thead>
@@ -352,8 +359,8 @@ export default function AdminMpesaLogsPage() {
                     <td className="px-6 py-4"><div className="h-4 w-24 bg-pace-bg-subtle rounded-md" /></td>
                     <td className="px-6 py-4"><div className="h-4 w-16 bg-pace-bg-subtle rounded-md" /></td>
                     <td className="px-6 py-4"><div className="h-5 w-24 bg-pace-bg-subtle rounded-full" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-24 bg-pace-bg-subtle rounded-md" /></td>
                     <td className="px-6 py-4"><div className="h-4 w-28 bg-pace-bg-subtle rounded-md" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-20 bg-pace-bg-subtle rounded-md" /></td>
                     <td className="px-6 py-4 text-right"><div className="h-8 w-14 bg-pace-bg-subtle rounded-md ml-auto" /></td>
                   </tr>
                 ))
@@ -371,7 +378,7 @@ export default function AdminMpesaLogsPage() {
                     </td>
 
                     <td className="px-6 py-4 font-mono font-bold text-admin-value text-xs">
-                      {txItem.account_reference || '<NONE>'}
+                      {txItem.account_reference || '<EMPTY>'}
                     </td>
 
                     <td className="px-6 py-4 text-xs">
@@ -399,12 +406,18 @@ export default function AdminMpesaLogsPage() {
                       {getMikrotikBadge(txItem.mikrotik_status)}
                     </td>
 
-                    <td className="px-6 py-4 text-xs font-medium text-admin-dim">
-                      {formatNairobiDateTime(txItem.transaction_date)}
+                    <td className="px-6 py-4 text-xs">
+                      {txItem.has_isp ? (
+                        <span className="font-semibold text-admin-value">{txItem.isp_name}</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
+                          Direct / No ISP
+                        </span>
+                      )}
                     </td>
 
                     <td className="px-6 py-4 text-xs font-medium text-admin-dim">
-                      {txItem.isp_name}
+                      {formatNairobiDateTime(txItem.transaction_date)}
                     </td>
 
                     <td className="px-6 py-4 text-right">
@@ -466,7 +479,7 @@ export default function AdminMpesaLogsPage() {
               </div>
 
               <div className="rounded-xl border border-pace-border bg-pace-bg-subtle p-3">
-                <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold mb-1">ISP Operator</p>
+                <p className="text-[9px] uppercase tracking-wider text-admin-dim font-bold mb-1">ISP Operator Scope</p>
                 <p className="text-xs font-semibold text-admin-value">{selectedTx.isp_name}</p>
               </div>
             </div>
@@ -476,7 +489,7 @@ export default function AdminMpesaLogsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-admin-value">
                   <Network size={14} className="text-pace-purple" />
-                  <span>MikroTik Router & Subscriber State</span>
+                  <span>MikroTik Router & Subscriber State (Port 8728)</span>
                 </div>
                 {getMikrotikBadge(selectedTx.mikrotik_status)}
               </div>
@@ -508,7 +521,7 @@ export default function AdminMpesaLogsPage() {
                 </div>
 
                 <div className="col-span-2">
-                  <p className="text-[9px] uppercase text-admin-dim font-bold">Target Router</p>
+                  <p className="text-[9px] uppercase text-admin-dim font-bold">Target Router (Port 8728)</p>
                   <p className="font-medium text-admin-value">
                     {selectedTx.router_name ? `${selectedTx.router_name} (${selectedTx.router_ip})` : 'N/A'}
                   </p>

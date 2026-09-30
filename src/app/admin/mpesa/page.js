@@ -74,7 +74,12 @@ export default function AdminMpesaTransactionsPage() {
         tx.account_reference.toLowerCase().includes(search.toLowerCase())
       
       const matchesStatus = statusFilter === 'all' ? true : tx.status.toLowerCase() === statusFilter.toLowerCase()
-      const matchesIsp = ispFilter === 'all' ? true : tx.isp_name.toLowerCase() === ispFilter.toLowerCase()
+      const matchesIsp = 
+        ispFilter === 'all' 
+          ? true 
+          : ispFilter === 'none'
+          ? (!tx.isp_id || tx.isp_name?.toLowerCase().includes('direct') || tx.isp_name?.toLowerCase().includes('no isp'))
+          : tx.isp_name?.toLowerCase() === ispFilter.toLowerCase()
 
       return matchesSearch && matchesStatus && matchesIsp
     })
@@ -223,9 +228,10 @@ export default function AdminMpesaTransactionsPage() {
             onChange={(e) => setIspFilter(e.target.value)}
             className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-card-bg text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
           >
-            <option value="all">All Operators</option>
+            <option value="all">All Inflow (With & Without ISP)</option>
+            <option value="none">⚡ Only Without ISP (Direct / Unassigned)</option>
             {ispsList.map(isp => (
-              <option key={isp.id} value={isp.name}>{isp.name}</option>
+              <option key={isp.id} value={isp.name}>🏢 ISP: {isp.name}</option>
             ))}
           </select>
         </div>
