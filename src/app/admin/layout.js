@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, X, LogOut, LayoutDashboard, Network, Users, Wallet, FileText, Activity, AlertCircle, CreditCard, LifeBuoy, MessageSquare, User, TrendingUp, Smartphone } from 'lucide-react'
+import { Menu, X, LogOut, LayoutDashboard, Network, Users, Wallet, FileText, Activity, AlertCircle, AlertTriangle, CreditCard, LifeBuoy, MessageSquare, User, TrendingUp, Smartphone } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
 import { Modal } from '@/components/Modal'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -18,6 +18,8 @@ const ADMIN_NAVIGATION = [
   { id: 'routers', name: 'Routers', href: '/admin/routers', icon: Network },
   { id: 'wallets', name: 'ISP Wallets', href: '/admin/wallets', icon: Wallet },
   { id: 'mpesa', name: 'M-Pesa Txns', href: '/admin/mpesa', icon: Smartphone },
+  { id: 'mpesa-logs', name: 'M-Pesa Logs', href: '/admin/mpesa-logs', icon: Activity },
+  { id: 'wrong-accounts', name: 'Wrong Accounts', href: '/admin/wrong-accounts', icon: AlertTriangle },
   { id: 'analytics', name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
   { id: 'tickets', name: 'Support Tickets', href: '/admin/tickets', icon: LifeBuoy },
   { id: 'sms', name: 'SMS Center', href: '/admin/sms', icon: MessageSquare },
