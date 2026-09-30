@@ -17,7 +17,7 @@
 
 <p>
   <b>Engineered for High-Performance Internet Service Providers</b><br>
-  Built with ❤️ by DrnniS Muuo
+  Built by DenniS Muuo
 </p>
 
 </div>

@@ -28,6 +28,7 @@ import {
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
 import { AdminCardSkeleton } from '@/components/Skeleton'
+import { IspAutocomplete } from '@/components/IspAutocomplete'
 import { mpesaService } from '@/services/admin/mpesa'
 import { ispService } from '@/services/admin/isps'
 import { toast } from 'sonner'
@@ -288,26 +289,54 @@ export default function AdminMpesaLogsPage() {
       {/* Filter Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">ISP Operator Scope</label>
-          <select
-            value={ispFilter}
-            onChange={(e) => setIspFilter(e.target.value)}
-            className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-card-bg text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
-          >
-            <option value="all">All Inflow (With ISP & Without ISP)</option>
-            <option value="none">⚡ Only Without ISP (Direct / Unassigned)</option>
-            {ispsList.map(isp => (
-              <option key={isp.id} value={isp.id}>🏢 ISP: {isp.name}</option>
-            ))}
-          </select>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">ISP Operator Scope</label>
+            <div className="flex items-center gap-1 text-[10px]">
+              <button
+                type="button"
+                onClick={() => setIspFilter('all')}
+                className={cn(
+                  "px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer",
+                  ispFilter === 'all'
+                    ? "bg-pace-purple text-white"
+                    : "text-admin-dim hover:text-admin-value bg-pace-bg-subtle"
+                )}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => setIspFilter('none')}
+                className={cn(
+                  "px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer",
+                  ispFilter === 'none'
+                    ? "bg-amber-600 text-white"
+                    : "text-admin-dim hover:text-admin-value bg-pace-bg-subtle"
+                )}
+              >
+                No ISP
+              </button>
+            </div>
+          </div>
+          <IspAutocomplete
+            value={ispFilter !== 'all' && ispFilter !== 'none' ? ispFilter : ''}
+            onChange={(selected) => {
+              if (selected && selected.id) {
+                setIspFilter(selected.id)
+              } else {
+                setIspFilter('all')
+              }
+            }}
+            placeholder="Type ISP name or username to filter..."
+          />
         </div>
 
         <div>
-          <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">MikroTik Sync Status (Port 8728)</label>
+          <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold block mb-1.5">MikroTik Sync Status (Port 8728)</label>
           <select
             value={mikrotikFilter}
             onChange={(e) => setMikrotikFilter(e.target.value)}
-            className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-card-bg text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
+            className="w-full px-3 py-2 rounded-xl border border-pace-border bg-card-bg text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
           >
             <option value="all">All Router States</option>
             <option value="connected">Connected (Synchronized)</option>
@@ -318,11 +347,11 @@ export default function AdminMpesaLogsPage() {
         </div>
 
         <div>
-          <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold">Payment Result</label>
+          <label className="text-[10px] uppercase tracking-wider text-admin-dim font-bold block mb-1.5">Payment Result</label>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full mt-1.5 px-3 py-2 rounded-xl border border-pace-border bg-card-bg text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
+            className="w-full px-3 py-2 rounded-xl border border-pace-border bg-card-bg text-xs font-semibold text-admin-value outline-none focus:border-pace-purple cursor-pointer transition-all"
           >
             <option value="all">All Payment Statuses</option>
             <option value="completed">Completed</option>
