@@ -413,7 +413,7 @@ function DashboardContent() {
                 <div className="lg:col-span-5 bg-card-bg border border-pace-border rounded-xl p-6">
                     <div className="flex justify-between items-center mb-6">
                         <div>
-                            <h4 className="text-sm font-medium text-admin-value">Recent Activity</h4>
+                            <h4 className="text-sm font-medium text-admin-value">Recent Payments</h4>
                             <p className="text-[10px] text-gray-400 font-medium mt-0.5">Live collection stream</p>
                         </div>
                         <Link href="/dashboard/mpesa" className="p-2 bg-pace-bg-subtle rounded-lg text-admin-dim hover:text-pace-purple transition-all">
@@ -435,20 +435,28 @@ function DashboardContent() {
                                     <Skeleton className="h-3 w-12" />
                                 </div>
                             ))
-                        ) : transactions.map((tx) => (
-                            <div key={tx.id} className="flex items-center justify-between group">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-pace-bg-subtle flex items-center justify-center text-admin-dim group-hover:bg-pace-purple/5 group-hover:text-pace-purple transition-colors">
-                                        <Smartphone size={15} />
+                        ) : transactions.map((tx) => {
+                            const isHash = (str) => typeof str === 'string' && (str.length > 20 || /^[a-f0-9]{32,64}$/i.test(str));
+                            const displayName = tx.customer_name 
+                                || (!isHash(tx.user_phone) ? tx.user_phone : null)
+                                || (!isHash(tx.subscriber_phone) ? tx.subscriber_phone : null)
+                                || (tx.account_reference ? `Acc: ${tx.account_reference}` : 'M-Pesa Customer');
+
+                            return (
+                                <div key={tx.id} className="flex items-center justify-between group">
+                                    <div className="flex items-center gap-3 min-w-0 pr-2">
+                                        <div className="w-9 h-9 rounded-xl bg-pace-bg-subtle flex items-center justify-center text-admin-dim group-hover:bg-pace-purple/5 group-hover:text-pace-purple transition-colors shrink-0">
+                                            <Smartphone size={15} />
+                                        </div>
+                                        <div className="min-w-0 truncate">
+                                            <p className="text-xs font-semibold text-admin-value truncate" title={displayName}>{displayName}</p>
+                                            <p className="text-[10px] text-admin-dim font-medium mt-0.5">{tx.mpesa_code} • {tx.time_ago}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-xs font-semibold text-admin-value">{tx.user_phone}</p>
-                                        <p className="text-[10px] text-admin-dim font-medium mt-0.5">{tx.mpesa_code} • {tx.time_ago}</p>
-                                    </div>
+                                    <p className="text-xs font-bold text-green-600 shrink-0">KES {tx.amount.toLocaleString()}</p>
                                 </div>
-                                <p className="text-xs font-bold text-green-600">KES {tx.amount.toLocaleString()}</p>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 

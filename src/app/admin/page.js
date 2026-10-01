@@ -277,20 +277,28 @@ export default function AdminHomePage() {
                 <p className="text-[10px] text-gray-400 mt-1">Payments will appear here in realtime</p>
               </div>
             ) : (
-              transactions.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-pace-bg-subtle flex items-center justify-center text-admin-dim group-hover:bg-pace-purple/5 group-hover:text-pace-purple transition-colors">
-                      <Smartphone size={15} />
+              transactions.map((tx) => {
+                const isHash = (str) => typeof str === 'string' && (str.length > 20 || /^[a-f0-9]{32,64}$/i.test(str));
+                const displayName = tx.customer_name 
+                  || (!isHash(tx.user_phone) ? tx.user_phone : null)
+                  || (!isHash(tx.subscriber_phone) ? tx.subscriber_phone : null)
+                  || (tx.account_reference ? `Acc: ${tx.account_reference}` : 'M-Pesa Customer');
+
+                return (
+                  <div key={tx.id} className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3 min-w-0 pr-2">
+                      <div className="w-9 h-9 rounded-xl bg-pace-bg-subtle flex items-center justify-center text-admin-dim group-hover:bg-pace-purple/5 group-hover:text-pace-purple transition-colors shrink-0">
+                        <Smartphone size={15} />
+                      </div>
+                      <div className="min-w-0 truncate">
+                        <p className="text-xs font-semibold text-admin-value truncate" title={displayName}>{displayName}</p>
+                        <p className="text-[10px] text-admin-dim font-medium mt-0.5">{tx.mpesa_code} • {tx.time_ago}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-semibold text-admin-value">{tx.user_phone}</p>
-                      <p className="text-[10px] text-admin-dim font-medium mt-0.5">{tx.mpesa_code} • {tx.time_ago}</p>
-                    </div>
+                    <p className="text-xs font-bold text-green-600 shrink-0">KES {tx.amount?.toLocaleString()}</p>
                   </div>
-                  <p className="text-xs font-bold text-green-600">KES {tx.amount?.toLocaleString()}</p>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

@@ -71,13 +71,22 @@ export const dashboardService = {
             if (res && res.status === 'success') {
                 return (res.data || []).map((p, index) => {
                     const timeAgo = formatNairobiTime(p.transaction_date);
+                    const isHash = (str) => typeof str === 'string' && (str.length > 20 || /^[a-f0-9]{32,64}$/i.test(str));
+                    const rawPhone = p.subscriber_phone || p.phone_number || '';
+                    const cleanPhone = !isHash(rawPhone) ? rawPhone : (p.subscriber_phone || '');
+                    const customerName = p.customer || p.customer_name || p.customer_username || p.username || '';
+                    const displayName = customerName || cleanPhone || (p.account_reference ? `Acc: ${p.account_reference}` : 'M-Pesa Customer');
+
                     return {
                         id: p.receipt_number || `TX-${index}`,
-                        user_phone: p.phone_number || '0712345678',
+                        customer_name: displayName,
+                        user_phone: cleanPhone || displayName,
+                        subscriber_phone: p.subscriber_phone || '',
+                        account_reference: p.account_reference || '',
                         plan_name: p.plan || 'Standard',
                         time_ago: timeAgo,
                         amount: parseFloat(p.amount || 0),
-                        mpesa_code: p.receipt_number
+                        mpesa_code: p.receipt_number || 'N/A'
                     };
                 });
             }
