@@ -135,7 +135,7 @@ function TicketsContent() {
             } else {
                 const res = await ticketService.createTicket(payload)
                 if (res && res.status === 'success') {
-                    toast.success('Support incident logged successfully')
+                    toast.success('Support ticket created successfully')
                     setIsCreateOrEditOpen(false)
                     loadTickets()
                 } else {
@@ -522,8 +522,8 @@ function TicketsContent() {
             <Modal
                 isOpen={isCreateOrEditOpen}
                 onClose={() => setIsCreateOrEditOpen(false)}
-                title={editingTicket ? `Edit Ticket #${editingTicket.id}` : 'Log New Support Ticket'}
-                description={editingTicket ? 'Update incident parameters, subscriber assignment, and status.' : 'Register a new support incident or subscriber issue.'}
+                title={editingTicket ? `Edit Ticket #${editingTicket.id}` : 'Create New Support Ticket'}
+                description={editingTicket ? 'Update incident parameters, subscriber assignment, and status.' : 'Create a new support ticket or subscriber issue.'}
                 maxWidth="max-w-lg"
             >
                 <form onSubmit={handleSubmit} className="space-y-4 font-figtree">
