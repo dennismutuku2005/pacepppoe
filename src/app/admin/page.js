@@ -5,18 +5,25 @@ import Link from 'next/link'
 import { 
   Network, Users, Wallet, Smartphone, ArrowUpRight, 
   LifeBuoy, ServerCog, RefreshCw, Activity, Layers, 
-  PieChart as PieIcon, TrendingUp, BarChart2, CheckCircle2, 
-  AlertTriangle, CreditCard, ArrowRight, ShieldCheck, 
+  TrendingUp, BarChart2, CheckCircle2, 
+  CreditCard, ArrowRight, ShieldCheck, 
   CheckCircle, XCircle, Clock
 } from 'lucide-react'
 import { 
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, 
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts'
 import { dashboardService } from '@/services/admin/dashboard'
 import { Skeleton, AdminCardSkeleton } from '@/components/Skeleton'
 import { Badge } from '@/components/Badge'
 import { cn } from '@/lib/utils'
+
+// Helper to safely extract primitive number whether backend returns number or object
+const toNum = (val) => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'object' && 'value' in val) return Number(val.value) || 0;
+  return Number(val) || 0;
+};
 
 export default function AdminHomePage() {
   const [isWidgetsLoading, setIsWidgetsLoading] = useState(true)
@@ -130,11 +137,23 @@ export default function AdminHomePage() {
     fetchTransactions()
   }, [])
 
+  // Safely calculated values
+  const activeSubs = toNum(widgets?.active_subscribers ?? widgets?.active_users)
+  const totalSubs = toNum(widgets?.total_subscribers ?? widgets?.monthly_users)
+  const routersOnline = toNum(widgets?.routers_online)
+  const routersOffline = toNum(widgets?.routers_offline)
+  const routersTotal = toNum(widgets?.routers_total)
+  const todaysRevenue = toNum(widgets?.todays_revenue ?? widgets?.todays_earnings)
+  const todayTxCount = toNum(widgets?.today_transactions_count)
+  const ispTenants = toNum(widgets?.isp_tenants ?? widgets?.total_isps)
+  const walletBalance = toNum(widgets?.total_wallets_balance)
+  const openTickets = toNum(widgets?.open_tickets)
+
   const cards = widgets ? [
     { 
       label: 'Active Subscribers', 
-      value: (widgets.active_users?.value ?? 0).toLocaleString(), 
-      sub: `${widgets.monthly_users?.value ?? 0} Total Pool`,
+      value: activeSubs.toLocaleString(), 
+      sub: `${totalSubs.toLocaleString()} Total Pool`,
       icon: Users, 
       color: 'text-pace-purple', 
       bg: 'bg-pace-purple/5',
@@ -144,8 +163,8 @@ export default function AdminHomePage() {
     },
     { 
       label: 'NAS Routers', 
-      value: `${widgets.routers_online ?? 0} / ${widgets.routers_total ?? 0}`, 
-      sub: `${widgets.routers_offline ?? 0} Offline`,
+      value: `${routersOnline} / ${routersTotal}`, 
+      sub: `${routersOffline} Offline`,
       icon: ServerCog, 
       color: 'text-blue-500', 
       bg: 'bg-blue-500/5',
@@ -155,8 +174,8 @@ export default function AdminHomePage() {
     },
     { 
       label: "Today's Revenue", 
-      value: `KES ${(widgets.todays_earnings?.value ?? 0).toLocaleString()}`, 
-      sub: `${widgets.today_transactions_count ?? 0} Collections`,
+      value: `KES ${todaysRevenue.toLocaleString()}`, 
+      sub: `${todayTxCount} Collections`,
       icon: Wallet, 
       color: 'text-emerald-500', 
       bg: 'bg-emerald-500/5',
@@ -166,7 +185,7 @@ export default function AdminHomePage() {
     },
     { 
       label: 'Registered ISPs', 
-      value: (widgets.isp_tenants?.value ?? 0).toLocaleString(), 
+      value: ispTenants.toLocaleString(), 
       sub: 'Tenant Accounts',
       icon: Layers, 
       color: 'text-orange-500', 
@@ -177,7 +196,7 @@ export default function AdminHomePage() {
     },
     { 
       label: 'Total ISP Wallets', 
-      value: `KES ${(widgets.total_wallets_balance?.value ?? 0).toLocaleString()}`, 
+      value: `KES ${walletBalance.toLocaleString()}`, 
       sub: 'Combined Balances',
       icon: CreditCard, 
       color: 'text-indigo-500', 
@@ -190,17 +209,23 @@ export default function AdminHomePage() {
   ] : []
 
   // Dynamic Pie Distributions
-  const routerPieData = analytics?.router_distribution?.filter(d => d.value > 0) || [
-    { name: 'Online', value: widgets?.routers_online || 0, color: '#10B981' },
-    { name: 'Offline', value: widgets?.routers_offline || 0, color: '#F43F5E' }
-  ]
+  const routerPieData = (analytics?.router_distribution && Array.isArray(analytics.router_distribution) && analytics.router_distribution.length > 0)
+    ? analytics.router_distribution.filter(d => toNum(d.value) > 0)
+    : [
+        { name: 'Online', value: routersOnline, color: '#10B981' },
+        { name: 'Offline', value: routersOffline, color: '#F43F5E' }
+      ].filter(d => d.value > 0);
 
-  const subscriberPieData = analytics?.subscriber_distribution?.filter(d => d.value > 0) || [
-    { name: 'Active', value: widgets?.active_users?.value || 0, color: '#4B1D8F' },
-    { name: 'Disabled', value: Math.max(0, (widgets?.monthly_users?.value || 0) - (widgets?.active_users?.value || 0)), color: '#F59E0B' }
-  ]
+  const subscriberPieData = (analytics?.subscriber_distribution && Array.isArray(analytics.subscriber_distribution) && analytics.subscriber_distribution.length > 0)
+    ? analytics.subscriber_distribution.filter(d => toNum(d.value) > 0)
+    : [
+        { name: 'Active', value: activeSubs, color: '#4B1D8F' },
+        { name: 'Disabled', value: Math.max(0, totalSubs - activeSubs), color: '#F59E0B' }
+      ].filter(d => d.value > 0);
 
-  const ticketPieData = analytics?.ticket_distribution?.filter(d => d.value > 0) || []
+  const ticketPieData = (analytics?.ticket_distribution && Array.isArray(analytics.ticket_distribution))
+    ? analytics.ticket_distribution.filter(d => toNum(d.value) > 0)
+    : [];
 
   return (
     <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-12">
@@ -285,7 +310,7 @@ export default function AdminHomePage() {
       {/* Row 1: Dual Main Analytics Charts (Revenue Trend + 6-Month Fiscal Bar Chart) */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* 7-Day Revenue Velocity (Area Chart) */}
-        <div className="xl:col-span-7 bg-card-bg border border-pace-border rounded-2xl p-5 sm:p-6 shadow-sm">
+        <div className="xl:col-span-7 bg-card-bg border border-pace-border rounded-2xl p-5 sm:p-6 shadow-sm min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>
               <div className="flex items-center gap-2">
@@ -300,11 +325,16 @@ export default function AdminHomePage() {
             </div>
           </div>
           
-          <div className="h-[260px] w-full">
+          <div className="h-[260px] w-full min-w-0 relative">
             {isChartLoading && charts.length === 0 ? (
               <Skeleton className="w-full h-full rounded-xl" />
+            ) : charts.length === 0 ? (
+              <div className="h-full w-full flex flex-col items-center justify-center text-admin-dim text-xs">
+                <TrendingUp size={24} className="opacity-40 mb-1" />
+                <span>No revenue data recorded in the last 7 days</span>
+              </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <AreaChart data={charts} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="adminRevenueGrad" x1="0" y1="0" x2="0" y2="1">
@@ -327,7 +357,7 @@ export default function AdminHomePage() {
         </div>
 
         {/* 6-Month Fiscal Performance (Bar Chart) */}
-        <div className="xl:col-span-5 bg-card-bg border border-pace-border rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+        <div className="xl:col-span-5 bg-card-bg border border-pace-border rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>
               <div className="flex items-center gap-2">
@@ -348,16 +378,16 @@ export default function AdminHomePage() {
             </div>
           </div>
 
-          <div className="h-[260px] w-full">
+          <div className="h-[260px] w-full min-w-0 relative">
             {isFiscalLoading && incomeExpenses.length === 0 ? (
               <Skeleton className="w-full h-full rounded-xl" />
             ) : incomeExpenses.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-admin-dim text-xs">
+              <div className="h-full w-full flex flex-col items-center justify-center text-admin-dim text-xs">
                 <BarChart2 size={24} className="opacity-40 mb-1" />
                 <span>No historical fiscal data recorded yet</span>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <BarChart data={incomeExpenses} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} dy={10} />
@@ -378,7 +408,7 @@ export default function AdminHomePage() {
       {/* Row 2: Visual Distribution Doughnut / Pie Charts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Pie Chart 1: Router Fleet Health */}
-        <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+        <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm flex flex-col justify-between min-w-0">
           <div className="flex items-center justify-between mb-2">
             <div>
               <h3 className="text-sm font-semibold text-admin-value flex items-center gap-1.5">
@@ -391,13 +421,13 @@ export default function AdminHomePage() {
             </Link>
           </div>
 
-          <div className="h-[180px] w-full relative flex items-center justify-center">
+          <div className="h-[180px] w-full min-w-0 relative flex items-center justify-center">
             {isAnalyticsLoading && !analytics ? (
               <Skeleton className="w-28 h-28 rounded-full" />
-            ) : routerPieData.reduce((a, b) => a + b.value, 0) === 0 ? (
+            ) : routerPieData.reduce((a, b) => a + Number(b.value || 0), 0) === 0 ? (
               <div className="text-center text-xs text-admin-dim">No routers configured</div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <PieChart>
                   <Pie
                     data={routerPieData}
@@ -409,7 +439,7 @@ export default function AdminHomePage() {
                     dataKey="value"
                   >
                     {routerPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`router-cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -424,17 +454,17 @@ export default function AdminHomePage() {
           <div className="flex items-center justify-center gap-4 pt-2 border-t border-pace-border/60">
             <div className="flex items-center gap-1.5 text-xs font-medium text-admin-value">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span>Online ({widgets?.routers_online ?? 0})</span>
+              <span>Online ({routersOnline})</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs font-medium text-admin-value">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-              <span>Offline ({widgets?.routers_offline ?? 0})</span>
+              <span>Offline ({routersOffline})</span>
             </div>
           </div>
         </div>
 
         {/* Pie Chart 2: Subscriber Status Ratio */}
-        <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+        <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm flex flex-col justify-between min-w-0">
           <div className="flex items-center justify-between mb-2">
             <div>
               <h3 className="text-sm font-semibold text-admin-value flex items-center gap-1.5">
@@ -447,13 +477,13 @@ export default function AdminHomePage() {
             </Link>
           </div>
 
-          <div className="h-[180px] w-full relative flex items-center justify-center">
+          <div className="h-[180px] w-full min-w-0 relative flex items-center justify-center">
             {isAnalyticsLoading && !analytics ? (
               <Skeleton className="w-28 h-28 rounded-full" />
-            ) : subscriberPieData.reduce((a, b) => a + b.value, 0) === 0 ? (
+            ) : subscriberPieData.reduce((a, b) => a + Number(b.value || 0), 0) === 0 ? (
               <div className="text-center text-xs text-admin-dim">No subscribers provisioned</div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <PieChart>
                   <Pie
                     data={subscriberPieData}
@@ -465,7 +495,7 @@ export default function AdminHomePage() {
                     dataKey="value"
                   >
                     {subscriberPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`sub-cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -480,17 +510,17 @@ export default function AdminHomePage() {
           <div className="flex items-center justify-center gap-4 pt-2 border-t border-pace-border/60">
             <div className="flex items-center gap-1.5 text-xs font-medium text-admin-value">
               <span className="w-2.5 h-2.5 rounded-full bg-pace-purple" />
-              <span>Active ({widgets?.active_users?.value ?? 0})</span>
+              <span>Active ({activeSubs})</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs font-medium text-admin-value">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-              <span>Disabled ({Math.max(0, (widgets?.monthly_users?.value ?? 0) - (widgets?.active_users?.value ?? 0))})</span>
+              <span>Disabled ({Math.max(0, totalSubs - activeSubs)})</span>
             </div>
           </div>
         </div>
 
         {/* Pie Chart 3: Global Incident Resolution */}
-        <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+        <div className="bg-card-bg border border-pace-border rounded-2xl p-5 shadow-sm flex flex-col justify-between min-w-0">
           <div className="flex items-center justify-between mb-2">
             <div>
               <h3 className="text-sm font-semibold text-admin-value flex items-center gap-1.5">
@@ -503,7 +533,7 @@ export default function AdminHomePage() {
             </Link>
           </div>
 
-          <div className="h-[180px] w-full relative flex items-center justify-center">
+          <div className="h-[180px] w-full min-w-0 relative flex items-center justify-center">
             {isAnalyticsLoading && !analytics ? (
               <Skeleton className="w-28 h-28 rounded-full" />
             ) : ticketPieData.length === 0 ? (
@@ -512,7 +542,7 @@ export default function AdminHomePage() {
                 <span>All support tickets resolved</span>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <PieChart>
                   <Pie
                     data={ticketPieData}
@@ -524,7 +554,7 @@ export default function AdminHomePage() {
                     dataKey="value"
                   >
                     {ticketPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`ticket-cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -537,8 +567,8 @@ export default function AdminHomePage() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2 border-t border-pace-border/60 text-[11px] font-medium text-admin-value">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Open ({widgets?.open_tickets ?? 0})</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Progress</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Open ({openTickets})</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> In Progress</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Resolved</span>
           </div>
         </div>
@@ -547,7 +577,7 @@ export default function AdminHomePage() {
       {/* Row 3: Top ISPs Leaderboard + Live Transactions Stream */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Top ISP Tenants Leaderboard */}
-        <div className="xl:col-span-7 bg-card-bg border border-pace-border rounded-2xl p-5 sm:p-6 shadow-sm">
+        <div className="xl:col-span-7 bg-card-bg border border-pace-border rounded-2xl p-5 sm:p-6 shadow-sm min-w-0">
           <div className="flex items-center justify-between mb-5">
             <div>
               <div className="flex items-center gap-2">
@@ -583,7 +613,7 @@ export default function AdminHomePage() {
                 ) : (!analytics?.top_isps || analytics.top_isps.length === 0) ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-admin-dim">
-                      No ISP tenants registered yet. Click "Manage ISPs" to onboard new providers.
+                      No ISP tenants registered yet. Click &quot;Manage ISPs&quot; to onboard new providers.
                     </td>
                   </tr>
                 ) : (
@@ -607,11 +637,11 @@ export default function AdminHomePage() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="font-semibold text-admin-value tabular-nums font-mono">
-                          {isp.subscribers_count.toLocaleString()}
+                          {Number(isp.subscribers_count || 0).toLocaleString()}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right font-mono font-medium text-admin-value">
-                        KES {Number(isp.wallet_balance).toLocaleString()}
+                        KES {Number(isp.wallet_balance || 0).toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link
@@ -631,7 +661,7 @@ export default function AdminHomePage() {
         </div>
 
         {/* Live Transactions Stream */}
-        <div className="xl:col-span-5 bg-card-bg border border-pace-border rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+        <div className="xl:col-span-5 bg-card-bg border border-pace-border rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-center justify-between mb-5">
               <div>
@@ -703,5 +733,3 @@ export default function AdminHomePage() {
     </div>
   )
 }
-
-

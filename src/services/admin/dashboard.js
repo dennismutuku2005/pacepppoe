@@ -6,19 +6,9 @@ export const dashboardService = {
         try {
             const res = await apiFetch('/admin/dashboard.php?section=widgets');
             if (res && res.status === 'success') {
-                const w = res.data || {};
                 return {
                     status: 'success',
-                    data: {
-                        active_users: { value: w.active_subscribers || 0 },
-                        monthly_users: { value: w.total_subscribers || 0 },
-                        todays_earnings: { value: w.todays_revenue ?? w.total_revenue ?? 0 },
-                        sms_balance: { value: w.net_profit || 0 },
-                        isp_tenants: { value: w.isp_tenants || 0 },
-                        open_tickets: { value: w.open_tickets || 0 },
-                        total_wallets_balance: { value: w.total_wallets_balance || 0 },
-                        today_transactions_count: { value: w.today_transactions_count || 0 }
-                    }
+                    data: res.data || {}
                 };
             }
             return { status: 'error', data: null };
