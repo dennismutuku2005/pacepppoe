@@ -163,7 +163,7 @@ function ReportsContent() {
                 ) : financialMetrics.map((m, i) => (
                     <div 
                         key={i} 
-                        className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0"
+                        className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-3.5 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0"
                     >
                         {/* Left accent color strip */}
                         <div className={cn("absolute left-0 top-0 bottom-0 w-1", m.accent)} />
@@ -171,12 +171,12 @@ function ReportsContent() {
                         <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={m.label}>
+                                    <p className="text-[11px] sm:text-xs font-medium text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={m.label}>
                                         {m.label}
                                     </p>
                                     {m.trend !== undefined && (
                                         <span className={cn(
-                                            "inline-flex items-center text-[10px] font-bold px-1.5 py-0.2 rounded-full",
+                                            "inline-flex items-center text-[10px] font-semibold px-1.5 py-0.2 rounded-full",
                                             m.trend >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
                                         )}>
                                             {m.trend >= 0 ? <ArrowUpRight size={10} className="mr-0.5" /> : <ArrowDownLeft size={10} className="mr-0.5" />}
@@ -184,13 +184,13 @@ function ReportsContent() {
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                                <p className="text-sm sm:text-base font-medium text-admin-value mt-1 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate tabular-nums">
                                     {m.value}
                                 </p>
                                 {m.sub && <p className="text-[10px] text-admin-dim mt-0.5 truncate">{m.sub}</p>}
                             </div>
-                            <div className={cn("w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", m.iconBorder, m.bg)}>
-                                <m.icon className={cn(m.color, "w-4 h-4")} />
+                            <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", m.iconBorder, m.bg)}>
+                                <m.icon className={cn(m.color, "w-3.5 h-3.5 sm:w-4 sm:h-4")} />
                             </div>
                         </div>
                     </div>

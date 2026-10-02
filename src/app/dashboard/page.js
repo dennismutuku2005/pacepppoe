@@ -252,7 +252,7 @@ function DashboardContent() {
                             key={i}
                             {...wrapperProps}
                             className={cn(
-                                "relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0",
+                                "relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-3.5 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0",
                                 (metric.href || metric.isRevenue) && "cursor-pointer"
                             )}
                         >
@@ -261,11 +261,11 @@ function DashboardContent() {
                             
                             <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
-                                    <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={metric.label}>
+                                    <p className="text-[11px] sm:text-xs font-medium text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={metric.label}>
                                         {metric.label}
                                     </p>
                                     <p className={cn(
-                                        "text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate",
+                                        "text-sm sm:text-base font-medium text-admin-value mt-1 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate tabular-nums",
                                         metric.isRevenue && isRevenueBlurred && "blur-md select-none"
                                     )}>
                                         {metric.value}
@@ -279,8 +279,8 @@ function DashboardContent() {
                                         )}
                                     </div>
                                 </div>
-                                <div className={cn("w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", metric.iconBorder, metric.bg)}>
-                                    <metric.icon className={cn(metric.color, "w-4 h-4")} />
+                                <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", metric.iconBorder, metric.bg)}>
+                                    <metric.icon className={cn(metric.color, "w-3.5 h-3.5 sm:w-4 sm:h-4")} />
                                 </div>
                             </div>
                         </CardWrapper>

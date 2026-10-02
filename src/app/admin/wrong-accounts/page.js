@@ -277,14 +277,14 @@ export default function AdminWrongAccountsPage() {
           cards.map((card) => (
             <div
               key={card.label}
-              className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0"
+              className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-3.5 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0"
             >
               <div className={cn("absolute left-0 top-0 bottom-0 w-1", card.accent)} />
               
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate">
+                    <p className="text-[11px] sm:text-xs font-medium text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate">
                       {card.label}
                     </p>
                     {card.badge && (
@@ -293,15 +293,15 @@ export default function AdminWrongAccountsPage() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 tracking-tight group-hover:scale-[1.02] transition-transform origin-left duration-300">
+                  <p className="text-sm sm:text-base font-medium text-admin-value mt-1 tracking-tight group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate tabular-nums">
                     {card.value}
                   </p>
-                  <p className="text-[11px] font-medium text-admin-dim/80 mt-1">
+                  <p className="text-[10px] font-medium text-admin-dim/80 mt-0.5 truncate">
                     {card.subValue}
                   </p>
                 </div>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border border-pace-border/5 bg-pace-bg-subtle shrink-0">
-                  <card.icon className={cn(card.color, "w-4 h-4 sm:w-4.5 sm:h-4.5")} />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center border border-pace-border/5 bg-pace-bg-subtle shrink-0">
+                  <card.icon className={cn(card.color, "w-3.5 h-3.5 sm:w-4 sm:h-4")} />
                 </div>
               </div>
             </div>

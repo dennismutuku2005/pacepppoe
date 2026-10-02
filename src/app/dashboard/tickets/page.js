@@ -318,7 +318,7 @@ function TicketsContent() {
                             key={i}
                             onClick={() => setStatusFilter(metric.filter)}
                             className={cn(
-                                "relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border rounded-2xl p-4 sm:p-5 shadow-sm transition-all duration-300 min-w-0 cursor-pointer",
+                                "relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border rounded-2xl p-3.5 sm:p-5 shadow-sm transition-all duration-300 min-w-0 cursor-pointer",
                                 isActive 
                                     ? "border-pace-purple ring-1 ring-pace-purple/30 shadow-md" 
                                     : "border-pace-border hover:border-pace-purple/30 hover:shadow-md"
@@ -329,18 +329,18 @@ function TicketsContent() {
                             
                             <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
-                                    <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={metric.label}>
+                                    <p className="text-[11px] sm:text-xs font-medium text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={metric.label}>
                                         {metric.label}
                                     </p>
-                                    <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1.5 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate">
+                                    <p className="text-sm sm:text-base font-medium text-admin-value mt-1 group-hover:scale-[1.02] transition-transform origin-left duration-300 truncate tabular-nums">
                                         {isLoading ? '...' : metric.value}
                                     </p>
                                     <div className="flex items-center gap-2 mt-0.5">
                                         <p className="text-[10px] text-admin-dim truncate">{metric.sub}</p>
                                     </div>
                                 </div>
-                                <div className={cn("w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", metric.iconBorder, metric.bg)}>
-                                    <metric.icon className={cn(metric.color, "w-4 h-4")} />
+                                <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", metric.iconBorder, metric.bg)}>
+                                    <metric.icon className={cn(metric.color, "w-3.5 h-3.5 sm:w-4 sm:h-4")} />
                                 </div>
                             </div>
                         </div>
@@ -523,7 +523,7 @@ function TicketsContent() {
                 isOpen={isCreateOrEditOpen}
                 onClose={() => setIsCreateOrEditOpen(false)}
                 title={editingTicket ? `Edit Ticket #${editingTicket.id}` : 'Create New Support Ticket'}
-                description={editingTicket ? 'Update incident parameters, subscriber assignment, and status.' : 'Create a new support ticket or subscriber issue.'}
+                description={editingTicket ? 'Update incident parameters, subscriber assignment and status.' : 'Create a new support ticket or subscriber issue.'}
                 maxWidth="max-w-lg"
             >
                 <form onSubmit={handleSubmit} className="space-y-4 font-figtree">

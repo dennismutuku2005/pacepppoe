@@ -217,56 +217,56 @@ export default function AdminAuditLogsPage() {
 
       {/* Metric Highlights Banner */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-xs">
+        <div className="bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-3.5 sm:p-5 relative overflow-hidden shadow-xs">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-pace-purple to-indigo-500" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-admin-dim">Total Audit Records</p>
-              <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1">{totalLogs.toLocaleString()}</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-medium text-admin-dim truncate">Total Audit Records</p>
+              <p className="text-sm sm:text-base font-medium text-admin-value mt-1 truncate tabular-nums">{totalLogs.toLocaleString()}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-pace-purple/10 flex items-center justify-center text-pace-purple">
-              <FileText size={18} />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-pace-purple/10 flex items-center justify-center text-pace-purple shrink-0">
+              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-xs">
+        <div className="bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-3.5 sm:p-5 relative overflow-hidden shadow-xs">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-500" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-admin-dim">Today's Operations</p>
-              <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1">{todayLogs.toLocaleString()}</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-medium text-admin-dim truncate">Today's Operations</p>
+              <p className="text-sm sm:text-base font-medium text-admin-value mt-1 truncate tabular-nums">{todayLogs.toLocaleString()}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-              <Clock size={18} />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-xs">
+        <div className="bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-3.5 sm:p-5 relative overflow-hidden shadow-xs">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 to-indigo-600" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-admin-dim">Loaded in Memory</p>
-              <p className="text-xl sm:text-2xl font-bold text-admin-value mt-1">{logs.length.toLocaleString()}</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-medium text-admin-dim truncate">Loaded in Memory</p>
+              <p className="text-sm sm:text-base font-medium text-admin-value mt-1 truncate tabular-nums">{logs.length.toLocaleString()}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
-              <Layers size={18} />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
+              <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-xs">
+        <div className="bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-3.5 sm:p-5 relative overflow-hidden shadow-xs">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-orange-500" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-admin-dim">Active Filter Scope</p>
-              <p className="text-sm font-bold text-admin-value mt-1 truncate capitalize">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-medium text-admin-dim truncate">Active Filter Scope</p>
+              <p className="text-sm font-medium text-admin-value mt-1 truncate capitalize">
                 {selectedRole === 'all' ? 'All Roles' : `${selectedRole} only`}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-              <Filter size={18} />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+              <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
         </div>

@@ -172,7 +172,7 @@ export default function AdminHomePage() {
             key={card.label} 
             onClick={() => card.isWallet && setIsWalletBlurred(!isWalletBlurred)}
             className={cn(
-              "relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-4 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0",
+              "relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-3.5 sm:p-5 shadow-sm hover:border-pace-purple/30 hover:shadow-md transition-all duration-300 min-w-0",
               card.isWallet ? "col-span-2 md:col-span-1 cursor-pointer select-none" : ""
             )}
           >
@@ -181,25 +181,25 @@ export default function AdminHomePage() {
             
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={card.label}>
+                <p className="text-[11px] sm:text-xs font-medium text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={card.label}>
                   {card.label}
                 </p>
-                <div className="relative mt-1.5">
+                <div className="relative mt-1">
                   <p className={cn(
-                    "text-base sm:text-2xl font-bold text-admin-value group-hover:scale-[1.02] transition-all origin-left duration-300",
+                    "text-sm sm:text-base font-medium text-admin-value group-hover:scale-[1.02] transition-all origin-left duration-300 truncate tabular-nums",
                     card.isWallet && isWalletBlurred && "blur-md"
                   )}>
                     {card.value}
                   </p>
                   {card.isWallet && (
-                    <span className="text-[10px] text-pace-purple font-semibold mt-1 block">
+                    <span className="text-[9px] text-pace-purple font-medium mt-0.5 block">
                       {isWalletBlurred ? "Reveal" : "Hide"}
                     </span>
                   )}
                 </div>
               </div>
-              <div className={cn("w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", card.iconBorder, card.bg)}>
-                <card.icon className={cn(card.color, "w-3.5 h-3.5 sm:w-4.5 sm:h-4.5")} />
+              <div className={cn("w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 group-hover:scale-105", card.iconBorder, card.bg)}>
+                <card.icon className={cn(card.color, "w-3.5 h-3.5 sm:w-4 sm:h-4")} />
               </div>
             </div>
           </div>

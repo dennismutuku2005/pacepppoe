@@ -141,25 +141,25 @@ export default function AdminFinancialAnalyticsPage() {
           { label: 'Completed Transactions', value: totals.transactionCount, icon: AreaIcon, color: 'text-pace-purple', bg: 'bg-pace-purple/10', accent: 'bg-gradient-to-b from-pace-purple to-indigo-500', isCurrency: false },
           { label: 'Average Paybill Ticket', value: totals.averageTicket, icon: DollarSign, color: 'text-blue-500', bg: 'bg-blue-500/10', accent: 'bg-gradient-to-b from-blue-400 to-indigo-600', isCurrency: true }
         ].map((card) => (
-          <div key={card.label} className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-5 shadow-xs hover:border-pace-purple/30 hover:shadow-sm transition-all duration-300 min-w-0">
+          <div key={card.label} className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/70 border border-pace-border rounded-2xl p-3.5 sm:p-5 shadow-xs hover:border-pace-purple/30 hover:shadow-sm transition-all duration-300 min-w-0">
             {/* Left accent color strip */}
             <div className={cn("absolute left-0 top-0 bottom-0 w-1", card.accent)} />
             
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-medium text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={card.label}>
+                <p className="text-[11px] sm:text-xs font-medium text-admin-dim group-hover:text-admin-value transition-colors duration-300 truncate" title={card.label}>
                   {card.label}
                 </p>
                 {isLoading ? (
-                  <div className="h-7 w-28 bg-pace-bg-subtle rounded-md animate-pulse mt-2" />
+                  <div className="h-6 w-24 bg-pace-bg-subtle rounded-md animate-pulse mt-1" />
                 ) : (
-                  <p className="text-xl sm:text-2xl font-bold text-admin-value mt-2 tracking-tight group-hover:scale-[1.01] transition-transform origin-left duration-300">
+                  <p className="text-sm sm:text-base font-medium text-admin-value mt-1 tracking-tight group-hover:scale-[1.01] transition-transform origin-left duration-300 truncate tabular-nums">
                     {card.isCurrency ? formatCurrency(card.value) : card.value}
                   </p>
                 )}
               </div>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-pace-border/5 bg-pace-bg-subtle shrink-0">
-                <card.icon className={cn(card.color, "w-4 h-4")} />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center border border-pace-border/5 bg-pace-bg-subtle shrink-0">
+                <card.icon className={cn(card.color, "w-3.5 h-3.5 sm:w-4 sm:h-4")} />
               </div>
             </div>
           </div>
