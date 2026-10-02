@@ -66,10 +66,33 @@ export const dashboardService = {
     async getIncomeVsExpenses() {
         try {
             const res = await apiFetch('/admin/dashboard.php?section=income_vs_expenses');
-            return res;
+            if (res && res.status === 'success') {
+                return {
+                    status: 'success',
+                    data: Array.isArray(res.data) ? res.data : []
+                };
+            }
+            return { status: 'error', data: [] };
         } catch (e) {
             console.error("Admin getIncomeVsExpenses failed", e);
             return { status: 'error', data: [] };
+        }
+    },
+
+    // ── 5. Distributions and Top ISPs Analytics ──
+    async getAnalytics() {
+        try {
+            const res = await apiFetch('/admin/dashboard.php?section=analytics');
+            if (res && res.status === 'success') {
+                return {
+                    status: 'success',
+                    data: res.data || {}
+                };
+            }
+            return { status: 'error', data: {} };
+        } catch (e) {
+            console.error("Admin getAnalytics failed", e);
+            return { status: 'error', data: {} };
         }
     },
 
