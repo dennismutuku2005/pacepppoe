@@ -25,6 +25,36 @@ export default function AdminRoutersPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoadingNextResources, setIsLoadingNextResources] = useState(false)
   const [isResourcesConfirmed, setIsResourcesConfirmed] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  // Modal Form States
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    ip_address: '',
+    public_ip: '165.22.171.98',
+    api_port: '',
+    winbox_port: '',
+    username: 'admin',
+    password: '',
+    model: 'MikroTik',
+    ownerSearch: '',
+    isp_id: ''
+  })
+
+  const [editForm, setEditForm] = useState({
+    id: null,
+    name: '',
+    ip_address: '',
+    public_ip: '165.22.171.98',
+    api_port: '',
+    winbox_port: '',
+    username: '',
+    password: '',
+    model: 'MikroTik',
+    status: 'online',
+    ownerSearch: '',
+    isp_id: ''
+  })
 
   // Live Telemetry & Quick Action states
   const [pingingMap, setPingingMap] = useState({})

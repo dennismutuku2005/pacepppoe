@@ -152,26 +152,26 @@ export default function AdminWalletsPage() {
       </div>
 
       {/* Single Card: Total in Wallets */}
-      <div className="max-w-md">
-        <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/80 border border-pace-border rounded-2xl p-5 shadow-sm min-w-0 transition-all duration-300">
+      <div className="max-w-sm">
+        <div className="relative overflow-hidden group bg-gradient-to-br from-card-bg to-card-bg-subtle/80 border border-pace-border rounded-2xl p-3.5 sm:p-5 shadow-sm min-w-0 transition-all duration-300">
           {/* Accent vertical left strip */}
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-pace-purple to-indigo-500" />
           
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold text-admin-dim">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-medium text-admin-dim truncate">
                 Total in ISP Wallets
               </p>
               {isLoading ? (
-                <div className="h-8 w-32 bg-pace-bg-subtle rounded-md animate-pulse mt-2" />
+                <div className="h-5 w-28 bg-pace-bg-subtle rounded-md animate-pulse mt-1" />
               ) : (
-                <p className="text-2xl sm:text-3xl font-bold text-admin-value mt-2">
+                <p className="text-sm sm:text-base font-medium text-admin-value mt-1 tabular-nums truncate">
                   {formatCurrency(totalBalance)}
                 </p>
               )}
             </div>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center border border-pace-purple/10 bg-pace-purple/5 shrink-0">
-              <Coins className="text-pace-purple w-5 h-5" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center border border-pace-purple/10 bg-pace-purple/5 shrink-0 group-hover:scale-105 transition-all">
+              <Coins className="text-pace-purple w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
         </div>
