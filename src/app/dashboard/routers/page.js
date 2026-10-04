@@ -174,25 +174,25 @@ function RoutersContent() {
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree text-sm">
+        <div className="space-y-6 animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 font-figtree text-sm w-full min-w-0 max-w-full">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pace-border pb-6">
                 <div>
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Routers</h1>
-                    <p className="text-xs font-medium text-gray-400 mt-1">Manage and monitor your assigned edge router infrastructure</p>
+                    <p className="text-xs font-medium text-gray-400 mt-0.5">Edge Router Management</p>
                 </div>
                 <HeaderActions>
                     <ReloadButton
                         onClick={fetchRouters}
                         isLoading={isLoading}
-                        label="Refresh Routers"
+                        label="Refresh"
                         title="Refresh routers"
                     />
                 </HeaderActions>
             </div>
 
             {/* Controls */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 w-full">
                 <div className="relative w-full sm:w-80 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-dim group-focus-within:text-pace-purple transition-colors" size={16} />
                     <input
@@ -206,9 +206,9 @@ function RoutersContent() {
             </div>
 
             {/* List View Only */}
-            <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left whitespace-nowrap">
+            <div className="bg-card-bg border border-pace-border rounded-xl overflow-hidden shadow-sm w-full max-w-full min-w-0">
+                <div className="overflow-x-auto w-full max-w-full">
+                    <table className="w-full text-left whitespace-nowrap min-w-[700px]">
                         <thead>
                             <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
                                 <th className="px-6 py-3">Router Name</th>

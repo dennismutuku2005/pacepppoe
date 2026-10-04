@@ -382,13 +382,13 @@ export default function AdminRoutersPage() {
   }
 
   return (
-    <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10">
+    <div className="space-y-6 font-figtree animate-in fade-in duration-700 max-w-[1600px] mx-auto pb-10 w-full min-w-0 max-w-full">
       
       {/* Top Header */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-pace-border pb-6">
         <div>
           <h1 className="text-xl font-medium text-admin-value tracking-tight">Router Infrastructure</h1>
-          <p className="text-xs font-medium text-gray-400 mt-1">Manage edge routers with automated (+1) IP/port pools and OpenVPN tunnel keys.</p>
+          <p className="text-xs font-medium text-gray-400 mt-0.5">Edge Router Management</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
           <div className="relative w-full sm:w-64 group">
@@ -409,7 +409,7 @@ export default function AdminRoutersPage() {
               title="Refresh List"
             >
               <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
-              <span>Refresh List</span>
+              <span>Refresh</span>
             </button>
 
             <button
@@ -423,7 +423,7 @@ export default function AdminRoutersPage() {
       </div>
 
       {/* Main Database Table Card */}
-      <div className="bg-card-bg border border-pace-border rounded-2xl overflow-hidden shadow-sm w-full max-w-full">
+      <div className="bg-card-bg border border-pace-border rounded-2xl overflow-hidden shadow-sm w-full max-w-full min-w-0">
         <div className="overflow-x-auto w-full max-w-full">
           <table className="w-full text-left whitespace-nowrap min-w-[1050px]">
             <thead>
