@@ -122,7 +122,7 @@ function PackagesContent() {
             }
         } catch (err) {
             console.error("Save plan error:", err)
-            toast.error('Network Error', { description: 'Failed to communicate with backend server.' })
+            toast.error('Network Error', { description: err?.message || 'Failed to communicate with backend server.' })
         } finally {
             setIsSaving(false)
         }
