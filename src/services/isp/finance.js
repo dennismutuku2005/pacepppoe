@@ -270,5 +270,39 @@ export const financeService = {
             console.error("updateSettlement failed", e);
             throw e;
         }
+    },
+
+    // ── M-Pesa Payment Claim & Linking 
+    inspectPayment: async (codeOrMessage) => {
+        try {
+            return await apiFetch(`/isp/claim_payment.php?action=inspect&code=${encodeURIComponent(codeOrMessage)}`);
+        } catch (e) {
+            console.error("inspectPayment failed", e);
+            throw e;
+        }
+    },
+
+    searchSubscribersForClaim: async (query) => {
+        try {
+            return await apiFetch(`/isp/claim_payment.php?action=search_subscribers&q=${encodeURIComponent(query)}`);
+        } catch (e) {
+            console.error("searchSubscribersForClaim failed", e);
+            throw e;
+        }
+    },
+
+    claimPayment: async ({ code, subscriberId }) => {
+        try {
+            return await apiFetch('/isp/claim_payment.php', {
+                method: 'POST',
+                body: JSON.stringify({
+                    code,
+                    subscriber_id: subscriberId
+                })
+            });
+        } catch (e) {
+            console.error("claimPayment failed", e);
+            throw e;
+        }
     }
 };

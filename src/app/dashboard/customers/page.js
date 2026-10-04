@@ -9,6 +9,7 @@ import { routerService } from '@/services/isp/routers'
 import { planService } from '@/services/isp/plans'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
+import { ClaimPaymentModal } from '@/components/ClaimPaymentModal'
 import { cn } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -32,6 +33,9 @@ function CustomersContent() {
     const [filterPlan, setFilterPlan] = useState('')
     const [filterStatus, setFilterStatus] = useState('ALL')
     
+    // Claim Payment Modal
+    const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
+
     // Subscriber Add/Edit Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [currentCustomer, setCurrentCustomer] = useState(null)
@@ -392,6 +396,14 @@ function CustomersContent() {
                     <p className="text-xs font-medium text-gray-400 mt-1">PPPoE subscriber provisioning, authentication secrets, and QoS profiles.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                        onClick={() => setIsClaimModalOpen(true)}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all text-xs font-semibold cursor-pointer shadow-xs active:scale-95"
+                        title="Claim unallocated payment made with wrong account number"
+                    >
+                        <ShieldCheck size={14} />
+                        <span>Claim M-Pesa Payment</span>
+                    </button>
                     <button
                         onClick={fetchInitialData}
                         disabled={isLoading}
@@ -1067,6 +1079,13 @@ function CustomersContent() {
                     </div>
                 </form>
             </Modal>
+
+            {/* Wrong Account M-Pesa Claim Modal */}
+            <ClaimPaymentModal
+                isOpen={isClaimModalOpen}
+                onClose={() => setIsClaimModalOpen(false)}
+                onSuccess={() => fetchInitialData()}
+            />
         </div>
     )
 }
