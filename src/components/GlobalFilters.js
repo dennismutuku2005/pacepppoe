@@ -35,7 +35,7 @@ export function GlobalFilters({ onFilterChange, defaultDateRange = 'Today', show
     }, [])
 
     return (
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto font-figtree">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto font-figtree">
             {/* Router Filter */}
             {showRouterFilter && (
                 <div className="relative w-full sm:w-auto">

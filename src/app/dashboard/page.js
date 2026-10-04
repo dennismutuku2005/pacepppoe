@@ -224,14 +224,14 @@ function DashboardContent() {
                             title="Refresh dashboard"
                         >
                             <RefreshCw size={14} className={cn(isRefreshing && "animate-spin")} />
-                            <span>Refresh Data</span>
+                            <span>Refresh</span>
                         </button>
                         <Link
                             href="/dashboard/customers"
                             className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-semibold shadow-sm active:scale-95"
                         >
                             <Plus size={15} />
-                            <span>Provision Subscriber</span>
+                            <span>Add Subscriber</span>
                         </Link>
                     </div>
                 </div>
