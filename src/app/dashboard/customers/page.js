@@ -10,6 +10,7 @@ import { planService } from '@/services/isp/plans'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
 import { ClaimPaymentModal } from '@/components/ClaimPaymentModal'
+import { HeaderActions, ReloadButton, CustomLoader } from '@/components/Loader'
 import { cn } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -395,32 +396,29 @@ function CustomersContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Subscriber Management</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">PPPoE subscriber provisioning, authentication secrets, and QoS profiles.</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                <HeaderActions>
                     <button
                         onClick={() => setIsClaimModalOpen(true)}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all text-xs font-semibold cursor-pointer shadow-xs active:scale-95"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all text-xs font-semibold cursor-pointer shadow-xs active:scale-[0.98]"
                         title="Claim unallocated payment made with wrong account number"
                     >
                         <ShieldCheck size={14} />
                         <span>Claim M-Pesa Payment</span>
                     </button>
-                    <button
+                    <ReloadButton
                         onClick={fetchInitialData}
-                        disabled={isLoading}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 text-xs font-semibold cursor-pointer"
-                        title="Refresh list"
-                    >
-                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
-                        <span>Refresh List</span>
-                    </button>
+                        isLoading={isLoading}
+                        label="Refresh List"
+                        title="Refresh subscribers"
+                    />
                     <button 
                         onClick={() => handleOpenModal()}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 shadow-sm transition-all active:scale-95 cursor-pointer"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
                     >
                         <UserPlus size={15} />
                         <span>Add Subscriber</span>
                     </button>
-                </div>
+                </HeaderActions>
             </div>
 
             {/* Top Metrics Cards - Dashboard Theme */}
@@ -1066,8 +1064,8 @@ function CustomersContent() {
                         >
                             {isSaving ? (
                                 <>
-                                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    <span>Creating...</span>
+                                    <CustomLoader size="xs" color="white" />
+                                    <span>{currentCustomer ? 'Saving...' : 'Creating...'}</span>
                                 </>
                             ) : (
                                 <>

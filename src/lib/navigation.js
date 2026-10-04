@@ -65,28 +65,28 @@ export const NAVIGATION_SCHEMA = [
         icon: CreditCard,
         children: [
             {
-                name: 'Transactions',
+                name: 'Payments',
                 href: '/dashboard/payments',
                 policy: 'view_payments',
-                keywords: ['revenue', 'sales', 'earnings', 'payments', 'money']
+                keywords: ['payments', 'transactions', 'revenue', 'sales', 'earnings', 'money', 'mpesa', 'ledger', 'claim']
             },
             {
-                name: 'Accounts',
+                name: 'M-Pesa Accounts',
                 href: '/dashboard/mpesa',
                 policy: 'view_mpesa',
-                keywords: ['accounts', 'wallet', 'subscriber balance', 'payments']
+                keywords: ['accounts', 'mpesa', 'wallet', 'subscriber balance', 'collections']
             },
             {
                 name: 'Financial Reports',
                 href: '/dashboard/reports',
                 policy: 'view_reports',
-                keywords: ['analytics', 'profits', 'summary', 'reports']
+                keywords: ['analytics', 'profits', 'summary', 'reports', 'charts']
             },
             {
                 name: 'Expenses',
                 href: '/dashboard/expenses',
                 policy: 'manage_expenses',
-                keywords: ['payouts', 'operational cost', 'bills', 'outgoing']
+                keywords: ['payouts', 'operational cost', 'bills', 'outgoing', 'expenses']
             }
         ]
     },

@@ -8,6 +8,7 @@ import { planService } from '@/services/isp/plans'
 import { routerService } from '@/services/isp/routers'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
+import { HeaderActions, ReloadButton, CustomLoader } from '@/components/Loader'
 import { cn } from '@/lib/utils'
 
 function PackagesContent() {
@@ -212,26 +213,23 @@ function PackagesContent() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pace-border pb-6">
                 <div>
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Service Plans</h1>
-                    <p className="text-xs font-medium text-gray-400 mt-1">QoS Queuing Profiles & Subscription Pricing</p>
+                    <p className="text-xs font-medium text-gray-400 mt-1">PPPOE Profiles & Subscription Pricing</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-                    <button
+                <HeaderActions>
+                    <ReloadButton
                         onClick={handleRefresh}
-                        disabled={isRefreshing}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-semibold disabled:opacity-50 cursor-pointer"
+                        isLoading={isRefreshing}
+                        label="Refresh Plans"
                         title="Refresh plans"
-                    >
-                        <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
-                        <span>Refresh Plans</span>
-                    </button>
+                    />
                     <button 
                         onClick={() => handleOpenModal()}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-semibold shadow-sm active:scale-95 cursor-pointer"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-semibold shadow-sm active:scale-[0.98] cursor-pointer"
                     >
                         <Plus size={15} />
                         <span>Create Plan</span>
                     </button>
-                </div>
+                </HeaderActions>
             </div>
 
             {/* Metrics Row */}

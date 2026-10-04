@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
+import { HeaderActions, ReloadButton, CustomLoader } from '@/components/Loader'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { financeService } from '@/services/isp/finance'
@@ -336,23 +337,20 @@ export default function IspWalletDashboard() {
             Subscriber collections, payment destination settings, and withdrawal history.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-          <button
+        <HeaderActions>
+          <ReloadButton
             onClick={() => fetchWalletData(true)}
-            disabled={isRefreshing}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all text-xs font-medium disabled:opacity-50 cursor-pointer"
+            isLoading={isRefreshing}
+            label="Refresh"
             title="Refresh balance"
-          >
-            <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
-            <span>Refresh</span>
-          </button>
+          />
           <button
             onClick={() => setIsWithdrawOpen(true)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-medium hover:bg-pace-purple/90 transition-all cursor-pointer active:scale-95 shadow-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:bg-pace-purple/90 transition-all cursor-pointer active:scale-[0.98] shadow-sm"
           >
             <Send size={14} /> <span>Withdraw Funds</span>
           </button>
-        </div>
+        </HeaderActions>
       </div>
 
       {/* Top 4 Metrics Cards */}

@@ -8,6 +8,7 @@ import { Skeleton, CardSkeleton, TableRowSkeleton, TablePageSkeleton } from '@/c
 import { routerService } from '@/services/isp/routers'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
+import { HeaderActions, ReloadButton, CustomLoader } from '@/components/Loader'
 import { cn } from '@/lib/utils'
 
 function RoutersContent() {
@@ -174,17 +175,14 @@ function RoutersContent() {
                     <h1 className="text-xl font-medium text-admin-value tracking-tight">Routers</h1>
                     <p className="text-xs font-medium text-gray-400 mt-1">Manage and monitor your assigned edge router infrastructure</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-                    <button
+                <HeaderActions>
+                    <ReloadButton
                         onClick={fetchRouters}
-                        disabled={isLoading}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 text-xs font-semibold cursor-pointer"
+                        isLoading={isLoading}
+                        label="Refresh Routers"
                         title="Refresh routers"
-                    >
-                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
-                        <span>Refresh Routers</span>
-                    </button>
-                </div>
+                    />
+                </HeaderActions>
             </div>
 
             {/* Controls */}

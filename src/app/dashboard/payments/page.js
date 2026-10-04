@@ -11,6 +11,7 @@ import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
 import { ClaimPaymentModal } from '@/components/ClaimPaymentModal'
 import { TablePageSkeleton } from '@/components/Skeleton'
+import { ReloadButton, HeaderActions, CustomLoader } from '@/components/Loader'
 import { financeService } from '@/services/isp/finance'
 import { toast } from 'sonner'
 import { formatNairobiDateTime } from '@/lib/dateUtils'
@@ -226,38 +227,35 @@ function PaymentsContent() {
                         <div className="w-9 h-9 rounded-xl bg-pace-purple/10 flex items-center justify-center">
                             <CreditCard size={18} className="text-pace-purple" />
                         </div>
-                        Financial Transactions
+                        Payments & Transactions
                     </h1>
                     <p className="text-xs font-normal text-gray-400 mt-1">
-                        Unified ledger showing all incoming collections and outgoing disbursements. Click any transaction for full audit details.
+                        Unified ledger showing all incoming collections and disbursements. Click any transaction for audit details.
                     </p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+                <HeaderActions>
                     <button
                         onClick={() => setIsClaimModalOpen(true)}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all text-xs font-semibold cursor-pointer shadow-xs active:scale-95"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all text-xs font-semibold cursor-pointer shadow-xs active:scale-[0.98]"
                         title="Claim payment made with wrong or missing account number"
                     >
                         <ShieldCheck size={14} />
                         <span>Claim M-Pesa Payment</span>
                     </button>
-                    <button
+                    <ReloadButton
                         onClick={() => fetchLedger(true)}
-                        disabled={isRefreshing}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 text-xs font-medium cursor-pointer"
+                        isLoading={isRefreshing}
+                        label="Refresh"
                         title="Refresh transactions"
-                    >
-                        <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
-                        <span>Refresh</span>
-                    </button>
+                    />
                     <button 
                         onClick={exportCSV}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-medium shadow-sm active:scale-95 cursor-pointer"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-semibold shadow-sm active:scale-[0.98] cursor-pointer"
                     >
                         <Download size={14} />
                         <span>Export CSV</span>
                     </button>
-                </div>
+                </HeaderActions>
             </div>
 
             {/* Metrics Cards */}

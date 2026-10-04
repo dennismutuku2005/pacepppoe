@@ -7,6 +7,7 @@ import { TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { financeService } from '@/services/isp/finance'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
+import { HeaderActions, ReloadButton, CustomLoader } from '@/components/Loader'
 import { cn } from '@/lib/utils'
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -165,24 +166,21 @@ function ExpensesContent() {
                     <h1 className="text-xl font-semibold text-admin-value tracking-tight">Operational Ledger</h1>
                     <p className="text-xs text-gray-500 mt-1">Live infrastructure costs, power, bandwidth, and overhead tracking</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-                    <button
+                <HeaderActions>
+                    <ReloadButton
                         onClick={fetchExpenses}
-                        disabled={isLoading}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-pace-bg-subtle text-admin-dim border border-pace-border rounded-xl hover:bg-pace-purple/5 hover:text-pace-purple transition-all disabled:opacity-50 text-xs font-semibold cursor-pointer"
+                        isLoading={isLoading}
+                        label="Refresh Ledger"
                         title="Refresh ledger"
-                    >
-                        <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
-                        <span>Refresh Ledger</span>
-                    </button>
+                    />
                     <button 
                         onClick={() => handleOpenModal()}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-semibold shadow-sm active:scale-95 cursor-pointer"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-pace-purple text-white rounded-xl hover:bg-pace-purple/90 transition-all text-xs font-semibold shadow-sm active:scale-[0.98] cursor-pointer"
                     >
                         <Plus size={15} />
                         <span>Log Expense</span>
                     </button>
-                </div>
+                </HeaderActions>
             </div>
 
             {/* Analytics Dashboard */}
