@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react'
-import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin, Users, CheckCircle2, AlertCircle, ShieldCheck, User, Server, KeyRound, Lock } from 'lucide-react'
+import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin, Users, CheckCircle2, AlertCircle, ShieldCheck, User, Server, KeyRound, Lock, Coins } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, CardSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { customerService } from '@/services/isp/customers'
@@ -402,7 +402,7 @@ function CustomersContent() {
                         className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all text-xs font-semibold cursor-pointer shadow-xs active:scale-[0.98]"
                         title="Claim unallocated payment made with wrong account number"
                     >
-                        <ShieldCheck size={14} />
+                        <Coins size={14} />
                         <span>Claim M-Pesa Payment</span>
                     </button>
                     <ReloadButton
