@@ -8,6 +8,7 @@ import { planService } from '@/services/isp/plans'
 import { routerService } from '@/services/isp/routers'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { HeaderActions, ReloadButton, CustomLoader } from '@/components/Loader'
 import { cn } from '@/lib/utils'
 
@@ -20,6 +21,8 @@ function PackagesContent() {
     const [search, setSearch] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [currentPackage, setCurrentPackage] = useState(null)
+    const [deleteTarget, setDeleteTarget] = useState(null)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [formData, setFormData] = useState({ 
         name: '', 
         price: '', 
@@ -128,29 +131,35 @@ function PackagesContent() {
         }
     }
 
-    const handleDelete = async (id, name, subscribersCount) => {
-        if (subscribersCount > 0) {
+    const promptDelete = (p) => {
+        if ((p.subscribers || 0) > 0) {
             toast.error('Decommission Denied', {
-                description: `Cannot delete plan "${name}". There are ${subscribersCount} active subscribers currently on this tier.`
+                description: `Cannot delete plan "${p.name}". There are ${p.subscribers} active subscribers currently on this tier.`
             })
             return
         }
+        setDeleteTarget(p)
+    }
 
-        if (!window.confirm(`Are you sure you want to delete plan "${name}"?`)) return
-
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return
+        setIsDeleting(true)
         try {
-            const res = await planService.deletePlan(id)
+            const res = await planService.deletePlan(deleteTarget.id)
             if (res?.status === 'success') {
                 toast.success('Plan Deleted', {
-                    description: `${name} has been removed from the service matrix.`
+                    description: `Service plan "${deleteTarget.name}" has been removed from the service matrix.`
                 })
+                setDeleteTarget(null)
                 await fetchData()
             } else {
                 toast.error('Delete Failed', { description: res?.message || 'Could not delete plan.' })
             }
         } catch (err) {
             console.error("Delete plan error:", err)
-            toast.error('Delete Failed', { description: 'Failed to delete service plan.' })
+            toast.error('Delete Failed', { description: err?.message || 'Failed to delete service plan.' })
+        } finally {
+            setIsDeleting(false)
         }
     }
 
@@ -344,8 +353,8 @@ function PackagesContent() {
                                                         <Edit3 size={14} />
                                                     </button>
                                                     <button 
-                                                        onClick={() => handleDelete(p.id, p.name, p.subscribers)}
-                                                        className="p-1.5 text-admin-dim hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                                        onClick={() => promptDelete(p)}
+                                                        className="p-1.5 text-admin-dim hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
                                                         title="Delete Plan"
                                                     >
                                                         <Trash2 size={14} />
@@ -444,6 +453,20 @@ function PackagesContent() {
                     </div>
                 </form>
             </Modal>
+
+            {/* Custom Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleConfirmDelete}
+                isLoading={isDeleting}
+                title="Delete Service Plan"
+                description={`Are you sure you want to permanently remove this service plan? This profile will also be decommissioned from the MikroTik router.`}
+                itemName={deleteTarget ? `${deleteTarget.name} (${deleteTarget.bandwidth || 'QoS'}) — KES ${Number(deleteTarget.price || 0).toLocaleString()}` : null}
+                confirmText="Delete Plan"
+                cancelText="Cancel"
+                type="danger"
+            />
         </div>
     )
 }

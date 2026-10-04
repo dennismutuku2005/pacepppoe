@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Plus, Search, Power, Settings, RefreshCw, Cpu, HardDrive, Users, Edit, Trash2, ShieldCheck, AlertCircle, Eye, EyeOff, Download, ExternalLink, FileText, Sparkles, Lock, Key, Shield, CheckCircle2, ChevronDown, Activity, Loader2, Radio, Server, Clock, Zap } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Modal } from '@/components/Modal'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { IspAutocomplete } from '@/components/IspAutocomplete'
 import { routerService } from '@/services/admin/routers'
 import { ispService } from '@/services/admin/isps'
@@ -18,6 +19,7 @@ export default function AdminRoutersPage() {
   
   // Modal states
   const [selectedRouter, setSelectedRouter] = useState(null)
+  const [rebootTarget, setRebootTarget] = useState(null)
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -174,11 +176,14 @@ export default function AdminRoutersPage() {
   }
 
   // Reboot router handler
-  const handleReboot = async (routerItem, e) => {
+  const promptReboot = (routerItem, e) => {
     if (e) e.stopPropagation()
-    if (!window.confirm(`Are you sure you want to reboot MikroTik node '${routerItem.name}'? All active PPPoE subscriber tunnels will temporarily restart.`)) {
-      return
-    }
+    setRebootTarget(routerItem)
+  }
+
+  const handleConfirmReboot = async () => {
+    if (!rebootTarget) return
+    const routerItem = rebootTarget
     setRebootingRouterId(routerItem.id)
     try {
       const res = await routerService.rebootRouter(routerItem.id)
@@ -187,6 +192,7 @@ export default function AdminRoutersPage() {
         if (selectedRouter?.id === routerItem.id) {
           setIsInfoOpen(false)
         }
+        setRebootTarget(null)
       } else {
         toast.error(res?.message || `Failed to reboot ${routerItem.name}`)
       }
@@ -570,7 +576,7 @@ export default function AdminRoutersPage() {
 
                         {/* Reboot Quick Action */}
                         <button
-                          onClick={(e) => handleReboot(routerItem, e)}
+                          onClick={(e) => promptReboot(routerItem, e)}
                           disabled={rebootingRouterId === routerItem.id}
                           title="Remote Reboot MikroTik"
                           className="p-1.5 hover:bg-amber-500/10 rounded-lg text-admin-dim hover:text-amber-600 transition-all cursor-pointer disabled:opacity-50"
@@ -1251,6 +1257,19 @@ export default function AdminRoutersPage() {
         confirmText="De-authorize"
         onConfirm={handleDeleteSubmit}
         loading={isSaving}
+      />
+
+      {/* REBOOT CONFIRM MODAL */}
+      <ConfirmModal
+        isOpen={!!rebootTarget}
+        onClose={() => setRebootTarget(null)}
+        onConfirm={handleConfirmReboot}
+        isLoading={rebootingRouterId === rebootTarget?.id}
+        type="reboot"
+        title="Reboot MikroTik Node"
+        description="Are you sure you want to reboot this router? All active PPPoE subscriber tunnels connected to this node will temporarily restart."
+        itemName={rebootTarget ? `${rebootTarget.name} (${rebootTarget.ip || 'No IP'})` : null}
+        confirmText="Reboot Node"
       />
       
     </div>

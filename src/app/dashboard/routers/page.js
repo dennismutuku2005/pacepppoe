@@ -8,6 +8,7 @@ import { Skeleton, CardSkeleton, TableRowSkeleton, TablePageSkeleton } from '@/c
 import { routerService } from '@/services/isp/routers'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { HeaderActions, ReloadButton, CustomLoader } from '@/components/Loader'
 import { cn } from '@/lib/utils'
 
@@ -23,6 +24,7 @@ function RoutersContent() {
     const [isLoadingSystemInfo, setIsLoadingSystemInfo] = useState(false)
 
     const [pingingMap, setPingingMap] = useState({})
+    const [rebootTarget, setRebootTarget] = useState(null)
     const [rebootingRouterId, setRebootingRouterId] = useState(null)
 
     const pingSingleRouter = async (r, showToast = false) => {
@@ -135,11 +137,14 @@ function RoutersContent() {
         }
     }
 
-    const handleReboot = async (r, e) => {
+    const promptReboot = (r, e) => {
         if (e) e.stopPropagation()
-        if (!window.confirm(`Are you sure you want to reboot MikroTik node '${r.name}'? Active subscriber tunnels will temporarily disconnect.`)) {
-            return
-        }
+        setRebootTarget(r)
+    }
+
+    const handleConfirmReboot = async () => {
+        if (!rebootTarget) return
+        const r = rebootTarget
         setRebootingRouterId(r.id)
         try {
             const res = await routerService.rebootRouter(r.id)
@@ -148,6 +153,7 @@ function RoutersContent() {
                 if (selectedRouter?.id === r.id) {
                     setIsSystemInfoOpen(false)
                 }
+                setRebootTarget(null)
             } else {
                 toast.error(res?.message || `Failed to reboot ${r.name}`)
             }
@@ -306,7 +312,7 @@ function RoutersContent() {
 
                                                 {/* Emergency Reboot */}
                                                 <button 
-                                                    onClick={(e) => handleReboot(r, e)}
+                                                    onClick={(e) => promptReboot(r, e)}
                                                     disabled={rebootingRouterId === r.id}
                                                     className="p-2 text-admin-dim hover:text-rose-600 hover:bg-rose-500/10 rounded-xl transition-all cursor-pointer disabled:opacity-50"
                                                     title="Remote Reboot Router"
@@ -366,7 +372,7 @@ function RoutersContent() {
                                     <span>{pingingMap[selectedRouter.id] ? "Pinging..." : "Ping"}</span>
                                 </button>
                                 <button
-                                    onClick={() => handleReboot(selectedRouter)}
+                                    onClick={(e) => promptReboot(selectedRouter, e)}
                                     disabled={rebootingRouterId === selectedRouter.id}
                                     className="px-2.5 py-1 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1"
                                 >
@@ -448,6 +454,19 @@ function RoutersContent() {
                     </div>
                 )}
             </Modal>
+
+            {/* Custom Confirm Reboot Modal */}
+            <ConfirmModal
+                isOpen={!!rebootTarget}
+                onClose={() => setRebootTarget(null)}
+                onConfirm={handleConfirmReboot}
+                isLoading={rebootingRouterId === rebootTarget?.id}
+                type="reboot"
+                title="Reboot MikroTik Node"
+                description="Are you sure you want to reboot this router? Active subscriber PPPoE sessions connected to this node will temporarily drop during reboot."
+                itemName={rebootTarget ? `${rebootTarget.name} (${rebootTarget.ip || 'No IP'})` : null}
+                confirmText="Reboot Node"
+            />
         </div>
     )
 }

@@ -7,6 +7,7 @@ import { TableRowSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { financeService } from '@/services/isp/finance'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { HeaderActions, ReloadButton, CustomLoader } from '@/components/Loader'
 import { cn } from '@/lib/utils'
 import { 
@@ -29,6 +30,8 @@ function ExpensesContent() {
     const [search, setSearch] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [deleteTarget, setDeleteTarget] = useState(null)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [formData, setFormData] = useState({ 
         description: '', amount: '', category: 'Bandwidth'
     })
@@ -132,20 +135,28 @@ function ExpensesContent() {
         }
     }
 
-    const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this expense record?')) return
+    const promptDelete = (expense) => {
+        setDeleteTarget(expense)
+    }
+
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return
+        setIsDeleting(true)
 
         try {
-            const res = await financeService.deleteExpense(id)
+            const res = await financeService.deleteExpense(deleteTarget.id)
             if (res && res.status === 'success') {
                 toast.success('Record Removed', { description: 'Expense deleted from ledger.' })
-                setExpenses(prev => prev.filter(ex => ex.id !== id))
+                setExpenses(prev => prev.filter(ex => ex.id !== deleteTarget.id))
+                setDeleteTarget(null)
             } else {
                 toast.error('Failed to delete expense', { description: res?.message })
             }
         } catch (err) {
             console.error("Error deleting expense:", err)
             toast.error('Failed to delete expense')
+        } finally {
+            setIsDeleting(false)
         }
     }
 
@@ -164,7 +175,7 @@ function ExpensesContent() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pace-border pb-6">
                 <div>
                     <h1 className="text-xl font-semibold text-admin-value tracking-tight">Operational Ledger</h1>
-                    <p className="text-xs text-gray-500 mt-1">Live infrastructure costs, power, bandwidth, and overhead tracking</p>
+                    <p className="text-xs text-gray-500 mt-1">Live infrastructure costs, power, bandwidth and overhead tracking</p>
                 </div>
                 <HeaderActions>
                     <ReloadButton
@@ -318,8 +329,8 @@ function ExpensesContent() {
                                         </td>
                                         <td className="px-6 py-3 text-center">
                                             <button 
-                                                onClick={() => handleDelete(ex.id)}
-                                                className="p-1.5 text-admin-dim hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                                onClick={() => promptDelete(ex)}
+                                                className="p-1.5 text-admin-dim hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                                                 title="Delete expense"
                                             >
                                                 <Trash2 size={14} />
@@ -396,6 +407,19 @@ function ExpensesContent() {
                     </div>
                 </form>
             </Modal>
+
+            {/* Custom Confirm Delete Modal */}
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleConfirmDelete}
+                isLoading={isDeleting}
+                type="danger"
+                title="Delete Expense Record"
+                description="Are you sure you want to delete this expense record? This will adjust your ledger and financial balance calculations."
+                itemName={deleteTarget ? `${deleteTarget.title} (KES ${Number(deleteTarget.amount || 0).toLocaleString()})` : null}
+                confirmText="Delete Record"
+            />
         </div>
     )
 }

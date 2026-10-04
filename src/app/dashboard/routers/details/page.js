@@ -8,6 +8,7 @@ import {
     Activity, Loader2, Globe, Layers, Network, List, ArrowUpRight, ArrowDownRight, Radio, Server
 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { routerService } from '@/services/isp/routers'
 import { toast } from 'sonner'
 import { 
@@ -108,21 +109,21 @@ function RouterDetailsContent() {
         fetchNodeData()
     }, [id])
 
+    const [isRebootModalOpen, setIsRebootModalOpen] = useState(false)
+
     const handlePing = async () => {
         if (!node) return
         await runPing(node, true)
     }
 
-    const handleReboot = async () => {
+    const handleConfirmReboot = async () => {
         if (!node) return
-        if (!window.confirm(`Are you sure you want to reboot '${node.name}'? Active subscriber tunnels will temporarily restart.`)) {
-            return
-        }
         setIsRebooting(true)
         try {
             const res = await routerService.rebootRouter(node.id)
             if (res && res.status === 'success') {
                 toast.success(res.message || `Reboot command sent to ${node.name}`)
+                setIsRebootModalOpen(false)
                 setTimeout(() => runPing(node, false), 5000)
             } else {
                 toast.error(res?.message || "Failed to reboot router")
@@ -217,7 +218,7 @@ function RouterDetailsContent() {
                                 <span>{isPinging ? "Pinging Node..." : "Ping / Sync Node"}</span>
                             </button>
                             <button 
-                                onClick={handleReboot}
+                                onClick={() => setIsRebootModalOpen(true)}
                                 disabled={isRebooting}
                                 className="w-full sm:w-auto px-4 py-2.5 bg-red-500/90 text-white rounded-xl shadow-lg hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs font-semibold cursor-pointer disabled:opacity-50"
                             >
@@ -358,6 +359,19 @@ function RouterDetailsContent() {
                     </div>
                 </div>
             </div>
+
+            {/* Custom Confirm Reboot Modal */}
+            <ConfirmModal
+                isOpen={isRebootModalOpen}
+                onClose={() => setIsRebootModalOpen(false)}
+                onConfirm={handleConfirmReboot}
+                isLoading={isRebooting}
+                type="reboot"
+                title="Reboot MikroTik Node"
+                description="Are you sure you want to reboot this router? Active subscriber PPPoE sessions connected to this node will temporarily drop during reboot."
+                itemName={node ? `${node.name} (${node.ip || 'No IP'})` : null}
+                confirmText="Reboot Node"
+            />
         </div>
     )
 }

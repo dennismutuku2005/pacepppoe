@@ -9,6 +9,7 @@ import { routerService } from '@/services/isp/routers'
 import { planService } from '@/services/isp/plans'
 import { toast } from 'sonner'
 import { Modal } from '@/components/Modal'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { ClaimPaymentModal } from '@/components/ClaimPaymentModal'
 import { HeaderActions, ReloadButton, CustomLoader } from '@/components/Loader'
 import { cn } from '@/lib/utils'
@@ -40,6 +41,8 @@ function CustomersContent() {
     // Subscriber Add/Edit Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [currentCustomer, setCurrentCustomer] = useState(null)
+    const [deleteTarget, setDeleteTarget] = useState(null)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [accountLength, setAccountLength] = useState(6) // 4, 5, or 6
     const [isGeneratingAccount, setIsGeneratingAccount] = useState(false)
     const [accountCheckStatus, setAccountCheckStatus] = useState('idle') // 'idle' | 'checking' | 'available' | 'taken'
@@ -305,23 +308,31 @@ function CustomersContent() {
         }
     }
 
-    const handleDelete = async (id, name) => {
-        if (!window.confirm(`Are you sure you want to delete subscriber ${name}?`)) return;
+    const promptDelete = (c) => {
+        setDeleteTarget(c);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
+        setIsDeleting(true);
         try {
-            const res = await customerService.deleteCustomer(id);
+            const res = await customerService.deleteCustomer(deleteTarget.id);
             if (res?.status === 'success') {
                 toast.success('Subscriber Deleted', {
-                    description: `Subscriber ${name} has been removed.`
+                    description: `Subscriber ${deleteTarget.name || deleteTarget.username} has been removed.`
                 });
+                setDeleteTarget(null);
                 await fetchInitialData();
             } else {
                 toast.error('Delete Failed', { description: res?.message || 'Could not delete subscriber.' });
             }
         } catch (err) {
             console.error("Delete customer error:", err);
-            toast.error('Delete Failed', { description: 'Failed to contact backend.' });
+            toast.error('Delete Failed', { description: err?.message || 'Failed to contact backend.' });
+        } finally {
+            setIsDeleting(false);
         }
-    }
+    };
 
     const handleToggleStatus = async (id, currentStatus) => {
         const newStatus = currentStatus === 'enabled' ? 'disabled' : 'enabled';
@@ -709,7 +720,7 @@ function CustomersContent() {
                                                         <Edit2 size={14} />
                                                     </button>
                                                     <button 
-                                                        onClick={() => handleDelete(c.id, fullName)}
+                                                        onClick={() => promptDelete(c)}
                                                         className="p-1.5 text-admin-dim hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
                                                         title="Delete Subscriber"
                                                     >
@@ -1083,6 +1094,19 @@ function CustomersContent() {
                 isOpen={isClaimModalOpen}
                 onClose={() => setIsClaimModalOpen(false)}
                 onSuccess={() => fetchInitialData()}
+            />
+
+            {/* Custom Confirm Delete Modal */}
+            <ConfirmModal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleConfirmDelete}
+                isLoading={isDeleting}
+                type="danger"
+                title="Delete Subscriber Account"
+                description="Are you sure you want to permanently delete this subscriber? This will remove their credentials from MikroTik PPPoE secrets and terminate their internet profile."
+                itemName={deleteTarget ? `${deleteTarget.name || deleteTarget.username} (${deleteTarget.account_number || deleteTarget.username})` : null}
+                confirmText="Delete Subscriber"
             />
         </div>
     )
