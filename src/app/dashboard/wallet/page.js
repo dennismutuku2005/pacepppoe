@@ -210,7 +210,7 @@ export default function IspWalletDashboard() {
 
     if (!isConfigured) {
       toast.error('Payment destination not configured', {
-        description: 'Please set up your Paybill or Till number first.'
+        description: 'Please set up your Paybill or Till Store Number first.'
       })
       setIsWithdrawOpen(false)
       setIsEditSettlementOpen(true)
@@ -218,7 +218,7 @@ export default function IspWalletDashboard() {
     }
 
     const destLabel = pd.type === 'till' 
-      ? `Till: ${pd.till_number}` 
+      ? `Till Store: ${pd.till_number}` 
       : `Paybill: ${pd.paybill_number} (Account: ${pd.account_number})`
 
     try {
@@ -267,7 +267,7 @@ export default function IspWalletDashboard() {
       }
     } else {
       if (!tillNumber.trim()) {
-        toast.error('Buy Goods Till number is required')
+        toast.error('Buy Goods Till Store Number is required')
         return
       }
     }
@@ -424,7 +424,7 @@ export default function IspWalletDashboard() {
                 {isPaybillConfigured ? `Paybill ${pd.paybill_number}` : (isTillConfigured ? `Till ${pd.till_number}` : 'Not set up')}
               </p>
               <p className="text-[10px] text-gray-400 mt-0.5 truncate font-mono">
-                {isPaybillConfigured ? `Account: ${pd.account_number}` : (isTillConfigured ? 'Buy Goods Till' : 'Click to configure')}
+                {isPaybillConfigured ? `Account: ${pd.account_number}` : (isTillConfigured ? 'Till Connected' : 'Click to configure')}
               </p>
             </div>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center border border-blue-500/10 group-hover:border-blue-500/30 bg-blue-500/5 transition-all duration-300 shrink-0 group-hover:scale-105">
@@ -446,7 +446,7 @@ export default function IspWalletDashboard() {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-semibold text-admin-value">
-                    {pd.type === 'till' ? 'Buy Goods Till Destination' : 'Paybill & Account Destination'}
+                    {pd.type === 'till' ? 'Till Connected' : 'Paybill Connected'}
                   </h3>
                   {isConfigured ? (
                     <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-md font-medium">
@@ -459,7 +459,7 @@ export default function IspWalletDashboard() {
                   )}
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Payout destination for receiving your wallet withdrawals
+                  {pd.type === 'till' ? 'Till Store Number' : 'Paybill & Account'}
                 </p>
               </div>
             </div>
@@ -490,7 +490,7 @@ export default function IspWalletDashboard() {
             ) : isTillConfigured ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
-                  <p className="text-[11px] text-gray-400 font-medium">Till Number</p>
+                  <p className="text-[11px] text-gray-400 font-medium">Till Store Number</p>
                   <p className="font-mono font-semibold text-pace-purple mt-0.5">{pd.till_number}</p>
                 </div>
                 <div>
@@ -500,12 +500,12 @@ export default function IspWalletDashboard() {
               </div>
             ) : (
               <div className="flex items-center justify-between py-1 text-xs">
-                <span className="text-amber-600 font-medium">No Paybill or Till destination configured yet.</span>
+                <span className="text-amber-600 font-medium">No destination configured yet.</span>
                 <button
                   onClick={() => setIsEditSettlementOpen(true)}
                   className="text-pace-purple font-medium hover:underline flex items-center gap-1 text-xs cursor-pointer"
                 >
-                  <PlusCircle size={12} /> Set up Destination
+                  <PlusCircle size={12} /> Set up
                 </button>
               </div>
             )}
@@ -526,7 +526,7 @@ export default function IspWalletDashboard() {
               <span className="text-xs text-gray-400">available</span>
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              Send your earnings directly to your configured Paybill or Till number.
+              Instant transfer to your configured settlement account.
             </p>
           </div>
 
@@ -705,7 +705,7 @@ export default function IspWalletDashboard() {
         isOpen={isWithdrawOpen}
         onClose={() => setIsWithdrawOpen(false)}
         title="Withdraw Funds"
-        description="Transfer available balance to your configured Paybill or Buy Goods Till."
+        description="Transfer available balance to your settlement account."
         maxWidth="max-w-md"
       >
         <form onSubmit={handleWithdrawSubmit} className="space-y-4 pt-2 font-figtree">
@@ -721,7 +721,7 @@ export default function IspWalletDashboard() {
             {pd.type === 'till' && isTillConfigured ? (
               <div className="flex items-center gap-2 text-admin-value font-medium">
                 <Store size={14} className="text-pace-purple" />
-                <span>Buy Goods Till: <strong>{pd.till_number}</strong> {pd.account_name ? `(${pd.account_name})` : ''}</span>
+                <span>Till Store: <strong>{pd.till_number}</strong> {pd.account_name ? `(${pd.account_name})` : ''}</span>
               </div>
             ) : (isPaybillConfigured ? (
               <div className="flex items-center gap-2 text-admin-value font-medium">
@@ -867,7 +867,7 @@ export default function IspWalletDashboard() {
         isOpen={isEditSettlementOpen}
         onClose={() => setIsEditSettlementOpen(false)}
         title="Configure Payment Destination"
-        description="Choose Paybill & Account Number or Buy Goods Till number for receiving your withdrawals."
+        description="Set up your Paybill or Till Store Number for receiving payouts."
         maxWidth="max-w-md"
       >
         <form onSubmit={handleSettlementSubmit} className="space-y-4 pt-2 font-figtree">
@@ -928,7 +928,7 @@ export default function IspWalletDashboard() {
             </div>
           ) : (
             <div>
-              <label className="block text-xs font-medium text-admin-dim mb-1">Buy Goods Till Number *</label>
+              <label className="block text-xs font-medium text-admin-dim mb-1">Buy Goods Till Store Number *</label>
               <input
                 required
                 value={tillNumber}
@@ -1091,7 +1091,7 @@ export default function IspWalletDashboard() {
                   <span className="text-gray-400 block mb-1">Destination Target:</span>
                   <div className="font-mono text-admin-value text-xs bg-card-bg p-2.5 rounded-xl border border-pace-border space-y-1">
                     {selectedTx.till_number ? (
-                      <div>Buy Goods Till: <strong>{selectedTx.till_number}</strong></div>
+                      <div>Till Store: <strong>{selectedTx.till_number}</strong></div>
                     ) : (
                       <>
                         <div>Paybill: <strong>{selectedTx.paybill_number}</strong></div>

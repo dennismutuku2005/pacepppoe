@@ -595,7 +595,7 @@ function PaymentsContent() {
                                     <span className="text-gray-400 block mb-1">Destination Target:</span>
                                     <div className="font-mono text-admin-value text-xs bg-card-bg p-2.5 rounded-xl border border-pace-border space-y-1">
                                         {selectedTx.tillNumber ? (
-                                            <div>Buy Goods Till: <strong>{selectedTx.tillNumber}</strong></div>
+                                            <div>Till Store: <strong>{selectedTx.tillNumber}</strong></div>
                                         ) : (
                                             <>
                                                 <div>Paybill: <strong>{selectedTx.paybillNumber}</strong></div>
