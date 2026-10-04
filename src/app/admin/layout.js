@@ -214,7 +214,7 @@ export default function AdminLayout({ children }) {
 
   return (
     <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
-      <div className="min-h-screen bg-background flex font-figtree text-[13px] text-foreground transition-colors duration-300">
+      <div className="min-h-screen bg-background flex font-figtree text-[13px] text-foreground transition-colors duration-300 w-full max-w-full overflow-x-hidden">
         <Modal
           isOpen={showLogoutModal}
           onClose={() => setShowLogoutModal(false)}
@@ -242,12 +242,12 @@ export default function AdminLayout({ children }) {
 
         <main
           className={cn(
-            'flex-1 min-h-screen flex flex-col transition-all duration-300 w-full',
+            'flex-1 min-h-screen flex flex-col transition-all duration-300 w-full min-w-0 max-w-full overflow-x-hidden',
             isSidebarOpen ? 'md:ml-60' : 'md:ml-16',
             'max-md:ml-0'
           )}
         >
-          <header className="h-16 bg-card-bg/80 backdrop-blur-md border-b border-pace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30">
+          <header className="h-16 bg-card-bg/80 backdrop-blur-md border-b border-pace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 w-full max-w-full">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -270,7 +270,7 @@ export default function AdminLayout({ children }) {
             </div>
           </header>
 
-          <div className="p-3 sm:p-6 flex-1 overflow-x-hidden">
+          <div className="p-3 sm:p-6 flex-1 min-w-0 max-w-full overflow-x-hidden">
             {children}
           </div>
         </main>

@@ -175,7 +175,7 @@ export default function DashboardLayout({ children }) {
 
     return (
         <ProtectedRoute allowedRoles={['isp']}>
-            <div className="min-h-screen bg-background flex font-figtree text-[13px] text-foreground transition-colors duration-300">
+            <div className="min-h-screen bg-background flex font-figtree text-[13px] text-foreground transition-colors duration-300 w-full max-w-full overflow-x-hidden">
                 {/* Standardized Logout Modal */}
                 <Modal
                     isOpen={showLogoutModal}
@@ -203,12 +203,12 @@ export default function DashboardLayout({ children }) {
 
                 {/* Main Content Area */}
                 <main className={cn(
-                    "flex-1 min-h-screen flex flex-col transition-all duration-300 w-full",
+                    "flex-1 min-h-screen flex flex-col transition-all duration-300 w-full min-w-0 max-w-full overflow-x-hidden",
                     isSidebarOpen ? "md:ml-60" : "md:ml-16",
                     "max-md:ml-0"
                 )}>
                     {/* Header */}
-                    <header className="h-16 bg-card-bg/80 backdrop-blur-md border-b border-pace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 transition-colors duration-300">
+                    <header className="h-16 bg-card-bg/80 backdrop-blur-md border-b border-pace-border flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 transition-colors duration-300 w-full max-w-full">
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -245,7 +245,7 @@ export default function DashboardLayout({ children }) {
                     </header>
 
                     {/* Page Content */}
-                    <div className="p-3 sm:p-6 flex-1 overflow-x-hidden">
+                    <div className="p-3 sm:p-6 flex-1 min-w-0 max-w-full overflow-x-hidden">
                         {children}
                     </div>
                 </main>
