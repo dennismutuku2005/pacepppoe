@@ -57,6 +57,16 @@ export const customerService = {
         }
     },
 
+    checkAccountNumber: async (accountNumber, excludeId = null) => {
+        try {
+            const excludeParam = excludeId ? `&exclude_id=${excludeId}` : '';
+            return await apiFetch(`/isp/subscribers.php?action=check_account&account_number=${encodeURIComponent(accountNumber)}${excludeParam}`);
+        } catch (e) {
+            console.error("checkAccountNumber failed", e);
+            throw e;
+        }
+    },
+
     createCustomer: async (customerData) => {
         try {
             return await apiFetch('/isp/subscribers.php', {

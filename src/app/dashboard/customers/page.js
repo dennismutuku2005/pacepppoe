@@ -37,6 +37,8 @@ function CustomersContent() {
     const [currentCustomer, setCurrentCustomer] = useState(null)
     const [accountLength, setAccountLength] = useState(6) // 4, 5, or 6
     const [isGeneratingAccount, setIsGeneratingAccount] = useState(false)
+    const [accountCheckStatus, setAccountCheckStatus] = useState('idle') // 'idle' | 'checking' | 'available' | 'taken'
+    const [accountCheckDetails, setAccountCheckDetails] = useState(null)
     const [formData, setFormData] = useState({ 
         firstName: '', 
         lastName: '', 
@@ -62,6 +64,8 @@ function CustomersContent() {
             const res = await customerService.generateAccountNumber(len)
             if (res?.status === 'success' && res.data?.account_number) {
                 setFormData(prev => ({ ...prev, accountNumber: res.data.account_number }))
+                setAccountCheckStatus('available')
+                setAccountCheckDetails(null)
             }
         } catch (e) {
             console.error("Failed to generate account number", e)
@@ -69,6 +73,45 @@ function CustomersContent() {
             setIsGeneratingAccount(false)
         }
     }
+
+    // Debounced check to confirm if account number is already in use by any user
+    useEffect(() => {
+        if (!isModalOpen) {
+            setAccountCheckStatus('idle')
+            setAccountCheckDetails(null)
+            return
+        }
+
+        const acc = formData.accountNumber?.trim()
+        if (!acc) {
+            setAccountCheckStatus('idle')
+            setAccountCheckDetails(null)
+            return
+        }
+
+        setAccountCheckStatus('checking')
+        const timer = setTimeout(async () => {
+            try {
+                const res = await customerService.checkAccountNumber(acc, currentCustomer?.id)
+                if (res && res.status === 'success') {
+                    if (res.data?.is_available) {
+                        setAccountCheckStatus('available')
+                        setAccountCheckDetails(null)
+                    } else {
+                        setAccountCheckStatus('taken')
+                        setAccountCheckDetails(res.data?.subscriber || null)
+                    }
+                } else {
+                    setAccountCheckStatus('idle')
+                }
+            } catch (err) {
+                console.error("Account availability check failed:", err)
+                setAccountCheckStatus('idle')
+            }
+        }, 350)
+
+        return () => clearTimeout(timer)
+    }, [formData.accountNumber, isModalOpen, currentCustomer?.id])
 
     const fetchInitialData = async () => {
         setIsLoading(true);
@@ -198,6 +241,13 @@ function CustomersContent() {
         if (!formData.firstName || !formData.lastName || !formData.phone || !formData.username || !formData.password || !formData.router_id || !formData.plan_id) {
             toast.error('Missing Required Fields', {
                 description: 'Please ensure First Name, Last Name, Phone, Router, QoS Plan, PPPoE Username, and Password are provided.'
+            });
+            return;
+        }
+
+        if (accountCheckStatus === 'taken') {
+            toast.error('Account Number In Use', {
+                description: `Account number "${formData.accountNumber}" is already registered to another subscriber. Please change it or click Auto-Generate.`
             });
             return;
         }
@@ -577,7 +627,7 @@ function CustomersContent() {
                                                     <div className="flex items-center gap-2 mt-0.5">
                                                         <span className="text-[11px] text-admin-dim font-mono">{c.accountNumber || c.phone}</span>
                                                         {c.phone && c.accountNumber && c.accountNumber !== c.phone && (
-                                                            <>
+                                                             <>
                                                                 <span className="text-[10px] text-gray-400">•</span>
                                                                 <span className="text-[11px] text-admin-dim font-normal">{c.phone}</span>
                                                             </>
@@ -741,59 +791,100 @@ function CustomersContent() {
                                     <span className="text-red-500">*</span>
                                 </label>
 
-                                {!currentCustomer && (
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center bg-pace-bg-subtle/80 border border-pace-border rounded-lg p-0.5 shadow-2xs">
-                                            <span className="text-[10px] text-admin-dim font-bold px-1.5 uppercase">Length:</span>
-                                            {[4, 5, 6].map(len => (
-                                                <button
-                                                    key={len}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setAccountLength(len);
-                                                        fetchGeneratedAccountNumber(len);
-                                                    }}
-                                                    className={cn(
-                                                        "px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer",
-                                                        accountLength === len
-                                                            ? "bg-pace-purple text-white shadow-xs"
-                                                            : "text-admin-dim hover:text-admin-value"
-                                                    )}
-                                                    title={`Set account number length to ${len} characters`}
-                                                >
-                                                    {len} Digits
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => fetchGeneratedAccountNumber(accountLength)}
-                                            disabled={isGeneratingAccount}
-                                            className="px-2.5 py-1 bg-pace-bg-subtle/80 hover:bg-pace-purple/10 border border-pace-border hover:border-pace-purple/30 text-admin-dim hover:text-pace-purple rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50"
-                                            title="Generate new unique account code"
-                                        >
-                                            <RefreshCw size={11} className={cn(isGeneratingAccount && "animate-spin text-pace-purple")} />
-                                            <span>Recreate</span>
-                                        </button>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center bg-pace-bg-subtle/80 border border-pace-border rounded-lg p-0.5 shadow-2xs">
+                                        <span className="text-[10px] text-admin-dim font-bold px-1.5 uppercase">Length:</span>
+                                        {[4, 5, 6].map(len => (
+                                            <button
+                                                key={len}
+                                                type="button"
+                                                onClick={() => {
+                                                    setAccountLength(len);
+                                                    fetchGeneratedAccountNumber(len);
+                                                }}
+                                                className={cn(
+                                                    "px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer",
+                                                    accountLength === len
+                                                        ? "bg-pace-purple text-white shadow-xs"
+                                                        : "text-admin-dim hover:text-admin-value"
+                                                )}
+                                                title={`Generate ${len}-character account number`}
+                                            >
+                                                {len} Digits
+                                            </button>
+                                        ))}
                                     </div>
-                                )}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => fetchGeneratedAccountNumber(accountLength)}
+                                        disabled={isGeneratingAccount}
+                                        className="px-2.5 py-1 bg-pace-bg-subtle/80 hover:bg-pace-purple/10 border border-pace-border hover:border-pace-purple/30 text-admin-dim hover:text-pace-purple rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50"
+                                        title="Auto-generate new unique account code"
+                                    >
+                                        <RefreshCw size={11} className={cn(isGeneratingAccount && "animate-spin text-pace-purple")} />
+                                        <span>Auto-Generate</span>
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="relative">
                                 <input 
                                     type="text"
-                                    readOnly
-                                    value={formData.accountNumber || (isGeneratingAccount ? 'Generating...' : '')}
-                                    className="w-full pl-3.5 pr-28 py-2.5 bg-pace-bg-subtle/70 border border-pace-border rounded-xl text-sm font-mono font-bold text-pace-purple tracking-widest outline-none cursor-default select-all"
+                                    required
+                                    value={formData.accountNumber}
+                                    onChange={(e) => {
+                                        const clean = e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+                                        setFormData(prev => ({ ...prev, accountNumber: clean }));
+                                    }}
+                                    placeholder="e.g. ACC01, PAC99, 102938"
+                                    className={cn(
+                                        "w-full pl-3.5 pr-36 py-2.5 bg-pace-bg-subtle/70 border rounded-xl text-sm font-mono font-bold tracking-wider outline-none transition-all",
+                                        accountCheckStatus === 'taken' 
+                                            ? "border-rose-500/80 text-rose-500 focus:ring-1 focus:ring-rose-500/30" 
+                                            : accountCheckStatus === 'available'
+                                            ? "border-emerald-500/60 text-pace-purple focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30"
+                                            : "border-pace-border text-pace-purple focus:border-pace-purple focus:ring-1 focus:ring-pace-purple/30"
+                                    )}
                                 />
                                 <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center">
-                                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                        <ShieldCheck size={12} /> Unique ID
-                                    </span>
+                                    {isGeneratingAccount || accountCheckStatus === 'checking' ? (
+                                        <span className="text-[10px] font-semibold text-admin-dim bg-pace-bg-subtle border border-pace-border px-2 py-0.5 rounded-md flex items-center gap-1.5">
+                                            <RefreshCw size={11} className="animate-spin text-pace-purple" /> Checking...
+                                        </span>
+                                    ) : accountCheckStatus === 'available' ? (
+                                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                            <CheckCircle2 size={12} className="text-emerald-500" /> Available
+                                        </span>
+                                    ) : accountCheckStatus === 'taken' ? (
+                                        <span className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                            <AlertCircle size={12} className="text-rose-500" /> In Use
+                                        </span>
+                                    ) : (
+                                        <span className="text-[10px] font-semibold text-admin-dim bg-pace-bg-subtle border border-pace-border px-2 py-0.5 rounded-md flex items-center gap-1">
+                                            <ShieldCheck size={12} /> Custom / Auto
+                                        </span>
+                                    )}
                                 </div>
                             </div>
-                            <p className="text-[10px] text-admin-dim pl-1">Automated unique reference (0-9, A-Z) assigned by server for M-Pesa payments</p>
+
+                            {/* Validation Feedback message */}
+                            {accountCheckStatus === 'taken' ? (
+                                <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center gap-2 text-rose-600 dark:text-rose-400 text-[11px] font-medium">
+                                    <AlertCircle size={13} className="shrink-0 text-rose-500" />
+                                    <span>
+                                        Account <strong>{formData.accountNumber}</strong> is already assigned to {accountCheckDetails ? <strong>{accountCheckDetails.name} ({accountCheckDetails.username})</strong> : 'another subscriber'}. Please enter a unique account code.
+                                    </span>
+                                </div>
+                            ) : accountCheckStatus === 'available' ? (
+                                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 pl-1 flex items-center gap-1">
+                                    <CheckCircle2 size={11} /> Account number is unique and verified available for M-Pesa bill payments.
+                                </p>
+                            ) : (
+                                <p className="text-[10px] text-admin-dim pl-1">
+                                    Type a custom alphanumeric account code or click Auto-Generate. System validates uniqueness before saving.
+                                </p>
+                            )}
                         </div>
                     </div>
 
