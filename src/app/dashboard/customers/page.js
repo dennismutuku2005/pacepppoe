@@ -1067,12 +1067,12 @@ function CustomersContent() {
                             {isSaving ? (
                                 <>
                                     <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    <span>Provisioning...</span>
+                                    <span>Creating...</span>
                                 </>
                             ) : (
                                 <>
                                     <UserPlus size={14} />
-                                    <span>{currentCustomer ? 'Save Changes' : 'Provision Subscriber'}</span>
+                                    <span>{currentCustomer ? 'Save Changes' : 'Create Subscriber'}</span>
                                 </>
                             )}
                         </button>
