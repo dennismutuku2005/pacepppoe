@@ -811,7 +811,7 @@ function CustomersContent() {
                                     <td colSpan="7" className="px-6 py-4 text-center">
                                         <div className="flex items-center justify-center gap-2 text-admin-dim text-xs font-medium py-2">
                                             <Loader2 className="animate-spin text-pace-purple" size={16} />
-                                            <span>Loading additional subscribers (13 per fetch)...</span>
+                                            <span>Loading more subscribers...</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -822,13 +822,9 @@ function CustomersContent() {
 
                 {/* Infinite Scroll Status & Progress Footer */}
                 <div className="px-6 py-4 border-t border-pace-border flex flex-col sm:flex-row items-center justify-between gap-3 bg-pace-bg-subtle/20 text-xs text-admin-dim">
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <span>
                             Showing <span className="font-semibold text-admin-value font-mono">{customers.length}</span> of <span className="font-semibold text-admin-value font-mono">{totalCount}</span> subscribers
-                        </span>
-                        <span className="text-gray-400">•</span>
-                        <span className="text-[11px] text-pace-purple font-semibold bg-pace-purple/10 px-2 py-0.5 rounded-md">
-                            13 per fetch
                         </span>
                     </div>
 
