@@ -380,7 +380,23 @@ function PackagesContent() {
             >
                 <form onSubmit={handleSave} className="space-y-4 font-figtree">
                     <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Plan Identity (Name)</label>
+                        <label className="text-[11px] font-bold text-admin-dim uppercase tracking-wider pl-1">Target Router</label>
+                        <select 
+                            required
+                            value={formData.router_id}
+                            onChange={(e) => setFormData({...formData, router_id: e.target.value})}
+                            className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all"
+                        >
+                            <option value="">Select Router</option>
+                            {routersList.map(r => (
+                                <option key={r.id} value={r.id}>{r.name}</option>
+                            ))}
+                        </select>
+                        <p className="text-[10px] text-admin-dim pl-1">Target NAS router for queue profile assignment</p>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-admin-dim uppercase tracking-wider pl-1">Plan Identity (Name)</label>
                         <input 
                             type="text" required
                             value={formData.name}
@@ -392,7 +408,7 @@ function PackagesContent() {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Speed Limit</label>
+                            <label className="text-[11px] font-bold text-admin-dim uppercase tracking-wider pl-1">Speed Limit</label>
                             <input 
                                 type="text" required
                                 value={formData.bandwidth_limit}
@@ -400,55 +416,41 @@ function PackagesContent() {
                                 placeholder="5M/5M"
                                 className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-pace-purple outline-none focus:border-pace-purple transition-all font-mono"
                             />
-                            <p className="text-[9px] text-admin-dim pl-1">e.g. 5M/5M, 10M/10M</p>
+                            <p className="text-[10px] text-admin-dim pl-1">e.g. 5M/5M, 10M/10M</p>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Target Router</label>
-                            <select 
-                                required
-                                value={formData.router_id}
-                                onChange={(e) => setFormData({...formData, router_id: e.target.value})}
-                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all appearance-none"
-                            >
-                                <option value="">Select Router</option>
-                                {routersList.map(r => (
-                                    <option key={r.id} value={r.id}>{r.name}</option>
-                                ))}
-                            </select>
-                            <p className="text-[9px] text-admin-dim pl-1">NAS router assignment</p>
+                            <label className="text-[11px] font-bold text-admin-dim uppercase tracking-wider pl-1">Monthly Price (KES)</label>
+                            <input 
+                                type="text" required inputMode="decimal"
+                                value={formData.price}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                                        setFormData(prev => ({ ...prev, price: val }));
+                                    }
+                                }}
+                                placeholder="1500"
+                                className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
+                            />
+                            <p className="text-[10px] text-admin-dim pl-1">Billing tariff</p>
                         </div>
                     </div>
 
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Monthly Price (KES)</label>
-                        <input 
-                            type="text" required inputMode="decimal"
-                            value={formData.price}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                if (val === '' || /^[0-9]*\.?[0-9]*$/.test(val)) {
-                                    setFormData(prev => ({ ...prev, price: val }));
-                                }
-                            }}
-                            placeholder="1500"
-                            className="w-full px-3.5 py-2.5 bg-pace-bg-subtle border border-pace-border rounded-xl text-sm font-semibold text-admin-value outline-none focus:border-pace-purple transition-all font-mono"
-                        />
-                    </div>
-
-                    <div className="pt-3 grid grid-cols-2 gap-3">
-                        <button 
-                            type="button" 
-                            onClick={() => setIsModalOpen(false)}
-                            className="w-full px-5 py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all"
-                        >
-                            Cancel
-                        </button>
+                    {/* Stacked End-to-End Action Buttons */}
+                    <div className="pt-2 flex flex-col gap-2.5">
                         <button 
                             type="submit"
                             disabled={isSaving}
-                            className="w-full px-5 py-2.5 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:opacity-90 shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                            className="w-full py-3 bg-pace-purple text-white rounded-xl text-xs font-semibold hover:opacity-95 shadow-none transition-all active:scale-[0.99] disabled:opacity-50 flex items-center justify-center cursor-pointer"
                         >
                             {isSaving ? 'Saving...' : (currentPackage ? 'Save Changes' : 'Create Plan')}
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={() => setIsModalOpen(false)}
+                            className="w-full py-2.5 border border-pace-border rounded-xl text-xs font-semibold text-admin-dim hover:bg-pace-bg-subtle transition-all cursor-pointer"
+                        >
+                            Cancel
                         </button>
                     </div>
                 </form>

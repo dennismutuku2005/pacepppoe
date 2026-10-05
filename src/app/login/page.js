@@ -74,60 +74,67 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="h-screen w-screen flex bg-white font-figtree text-sm overflow-hidden">
+        <div className="min-h-screen min-h-dvh w-full flex bg-white font-figtree text-sm overflow-x-hidden">
             {/* Login Form Side */}
-            <div className="w-full lg:w-120 h-full flex flex-col justify-center px-12 lg:px-20 relative z-10 bg-white shadow-xl">
+            <div className="w-full lg:w-[480px] min-h-screen lg:min-h-full flex flex-col justify-between lg:justify-center px-6 sm:px-12 lg:px-14 py-8 sm:py-12 relative z-10 bg-white mx-auto lg:mx-0">
+                <div className="hidden lg:block" />
+                
                 <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="w-full"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full max-w-sm mx-auto"
                 >
-                    <div className="mb-10 flex flex-col items-center text-center">
-                        <div className="mb-6 flex justify-center">
-                            <Image src="/logoc.png" alt="Pace" width={180} height={56} className="h-12 w-auto object-contain" priority />
+                    <div className="mb-8 sm:mb-10 flex flex-col items-center text-center">
+                        <div className="mb-5 sm:mb-6 flex justify-center">
+                            <Image src="/logoc.png" alt="Pace" width={180} height={56} className="h-11 sm:h-12 w-auto object-contain" priority />
                         </div>
-                        <h1 className="text-2xl font-bold text-admin-value tracking-tight">ISP LOGIN</h1>
+                        <h1 className="text-xl sm:text-2xl font-bold text-admin-value tracking-tight">ISP LOGIN</h1>
+                        <p className="text-xs text-admin-dim font-medium mt-1">Authenticate to access ISP operations control</p>
                     </div>
 
-                    <form onSubmit={enterDashboard} className="space-y-5">
+                    <form onSubmit={enterDashboard} className="space-y-4 sm:space-y-5">
                         {error && (
-                            <div className="bg-red-500/5 border border-red-500/10 text-red-500 px-4 py-3 rounded-xl flex items-center gap-3 text-[11px] font-medium">
-                                <AlertCircle size={14} />
-                                {error}
+                            <div className="bg-red-500/5 border border-red-500/15 text-red-600 px-4 py-3 rounded-xl flex items-center gap-3 text-xs font-medium">
+                                <AlertCircle size={15} className="shrink-0" />
+                                <span>{error}</span>
                             </div>
                         )}
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Username</label>
+                            <label className="text-[11px] font-bold text-admin-dim uppercase tracking-wider pl-1">Username</label>
                             <input
                                 type="text"
                                 name="username"
+                                autoComplete="username"
                                 value={formData.username}
                                 onChange={handleChange}
                                 required
                                 disabled={isAuthenticating}
-                                className="w-full px-4 py-3 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value disabled:opacity-50"
+                                className="w-full px-4 py-3 sm:py-3.5 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value text-sm disabled:opacity-50"
                                 placeholder="Enter username"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-admin-dim uppercase tracking-wider pl-1">Password</label>
+                            <label className="text-[11px] font-bold text-admin-dim uppercase tracking-wider pl-1">Password</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     name="password"
+                                    autoComplete="current-password"
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
                                     disabled={isAuthenticating}
-                                    className="w-full px-4 py-3 pr-12 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value disabled:opacity-50"
+                                    className="w-full px-4 py-3 sm:py-3.5 pr-12 rounded-xl border border-pace-border bg-pace-bg-subtle focus:bg-white focus:border-pace-purple outline-none transition-all font-medium text-admin-value text-sm disabled:opacity-50"
                                     placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-dim hover:text-admin-value transition-colors p-2"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-dim hover:text-admin-value transition-colors p-2 cursor-pointer"
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -137,7 +144,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={isAuthenticating}
-                            className="w-full bg-pace-purple text-white py-3.5 rounded-xl font-medium text-sm hover:opacity-95 transition-all active:scale-[0.98] mt-4 shadow-sm disabled:opacity-50 flex items-center justify-center"
+                            className="w-full bg-pace-purple text-white py-3.5 rounded-xl font-semibold text-sm hover:opacity-95 transition-all active:scale-[0.99] mt-3 shadow-none disabled:opacity-50 flex items-center justify-center cursor-pointer"
                         >
                             {isAuthenticating ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -146,18 +153,18 @@ export default function LoginPage() {
                             )}
                         </button>
                     </form>
-
-                    <div className="mt-12 pt-8 border-t border-pace-border">
-                        <div className="flex items-center justify-between text-xs text-admin-dim font-medium">
-                            <p>
-                                Pace Networks © 2026
-                            </p>
-                            <p>
-                                Version {APP_VERSION}
-                            </p>
-                        </div>
-                    </div>
                 </motion.div>
+
+                <div className="mt-8 pt-6 border-t border-pace-border max-w-sm mx-auto w-full">
+                    <div className="flex items-center justify-between text-xs text-admin-dim font-medium">
+                        <p>
+                            Pace Networks © 2026
+                        </p>
+                        <p>
+                            Version {APP_VERSION}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* Visual Side */}
