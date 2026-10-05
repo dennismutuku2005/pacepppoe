@@ -1,7 +1,7 @@
 import { apiFetch } from '@/lib/api';
 
 export const customerService = {
-    getCustomers: async ({ search = '', limit = 100, status = '' } = {}) => {
+    getCustomers: async ({ search = '', limit = 1000, status = '' } = {}) => {
         const queryParams = new URLSearchParams();
         if (search) queryParams.append('search', search);
         if (limit) queryParams.append('limit', limit);

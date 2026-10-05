@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react'
-import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin, Users, CheckCircle2, AlertCircle, ShieldCheck, User, Server, KeyRound, Lock, Coins } from 'lucide-react'
+import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin, Users, CheckCircle2, AlertCircle, ShieldCheck, User, Server, KeyRound, Lock, Coins, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, CardSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { customerService } from '@/services/isp/customers'
@@ -34,6 +34,10 @@ function CustomersContent() {
     const [filterRouter, setFilterRouter] = useState('')
     const [filterPlan, setFilterPlan] = useState('')
     const [filterStatus, setFilterStatus] = useState('ALL')
+
+    // Table Pagination State
+    const [currentPage, setCurrentPage] = useState(1)
+    const [pageSize, setPageSize] = useState(10)
     
     // Claim Payment Modal
     const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
@@ -399,6 +403,38 @@ function CustomersContent() {
         });
     }, [customers, search, filterRouter, filterPlan, filterStatus]);
 
+    // Reset page to 1 when filters or search change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, filterRouter, filterPlan, filterStatus, pageSize]);
+
+    // Calculate pagination slices
+    const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / pageSize));
+    const validCurrentPage = Math.min(currentPage, totalPages);
+    const startIndex = (validCurrentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, filteredCustomers.length);
+
+    const paginatedCustomers = useMemo(() => {
+        return filteredCustomers.slice(startIndex, endIndex);
+    }, [filteredCustomers, startIndex, endIndex]);
+
+    // Smart pagination numbers generator
+    const getPageNumbers = () => {
+        const pages = [];
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            if (validCurrentPage <= 4) {
+                pages.push(1, 2, 3, 4, 5, '...', totalPages);
+            } else if (validCurrentPage >= totalPages - 3) {
+                pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+            } else {
+                pages.push(1, '...', validCurrentPage - 1, validCurrentPage, validCurrentPage + 1, '...', totalPages);
+            }
+        }
+        return pages;
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-12 font-figtree">
             {/* Header */}
@@ -636,7 +672,7 @@ function CustomersContent() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredCustomers.map((c) => {
+                                paginatedCustomers.map((c) => {
                                     const fullName = c.name || `${c.firstName} ${c.lastName}`;
                                     const isEnabled = c.status === 'enabled' || c.status === 'active';
                                     return (
@@ -736,11 +772,106 @@ function CustomersContent() {
                     </table>
                 </div>
 
-                {/* Bottom Footer Total */}
-                <div className="px-6 py-4 border-t border-pace-border flex items-center justify-between bg-pace-bg-subtle/20 text-xs">
-                    <span className="text-admin-dim font-normal">
-                        Showing <span className="font-semibold text-admin-value">{filteredCustomers.length}</span> of <span className="font-semibold text-admin-value">{customers.length}</span> total subscribers
-                    </span>
+                {/* Bottom Footer & Pagination Controls */}
+                <div className="px-6 py-4 border-t border-pace-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-pace-bg-subtle/20 text-xs">
+                    {/* Range & Row Size Selector */}
+                    <div className="flex flex-wrap items-center gap-3 text-admin-dim">
+                        <span>
+                            Showing <span className="font-semibold text-admin-value">{filteredCustomers.length === 0 ? 0 : startIndex + 1}</span> to <span className="font-semibold text-admin-value">{endIndex}</span> of <span className="font-semibold text-admin-value">{filteredCustomers.length}</span> subscribers
+                            {filteredCustomers.length !== customers.length && (
+                                <span className="text-[11px] text-admin-dim/80 ml-1">
+                                    (filtered from {customers.length} total)
+                                </span>
+                            )}
+                        </span>
+
+                        <div className="flex items-center gap-1.5 pl-2 border-l border-pace-border/60">
+                            <span className="text-[11px]">Per page:</span>
+                            <select
+                                value={pageSize}
+                                onChange={(e) => setPageSize(Number(e.target.value))}
+                                className="bg-card-bg border border-pace-border rounded-lg px-2 py-1 text-xs font-semibold text-admin-value focus:outline-none focus:border-pace-purple transition-all cursor-pointer shadow-2xs"
+                            >
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Pagination Button Navigation */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-1">
+                            {/* First Page */}
+                            <button
+                                onClick={() => setCurrentPage(1)}
+                                disabled={validCurrentPage === 1}
+                                className="p-1.5 rounded-lg border border-pace-border bg-card-bg text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                                title="First Page"
+                            >
+                                <ChevronsLeft size={14} />
+                            </button>
+
+                            {/* Previous Page */}
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                disabled={validCurrentPage === 1}
+                                className="p-1.5 rounded-lg border border-pace-border bg-card-bg text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                                title="Previous Page"
+                            >
+                                <ChevronLeft size={14} />
+                            </button>
+
+                            {/* Numbered Buttons */}
+                            <div className="flex items-center gap-1 mx-1">
+                                {getPageNumbers().map((p, idx) => {
+                                    if (p === '...') {
+                                        return (
+                                            <span key={`ellipsis-${idx}`} className="px-2 py-1 text-xs text-admin-dim select-none font-mono">
+                                                …
+                                            </span>
+                                        );
+                                    }
+                                    const isCurrent = p === validCurrentPage;
+                                    return (
+                                        <button
+                                            key={`page-${p}`}
+                                            onClick={() => setCurrentPage(p)}
+                                            className={cn(
+                                                "min-w-[30px] h-[30px] flex items-center justify-center rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                                                isCurrent
+                                                    ? "bg-pace-purple text-white shadow-xs"
+                                                    : "border border-pace-border bg-card-bg text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle"
+                                            )}
+                                        >
+                                            {p}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Next Page */}
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                disabled={validCurrentPage === totalPages}
+                                className="p-1.5 rounded-lg border border-pace-border bg-card-bg text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                                title="Next Page"
+                            >
+                                <ChevronRight size={14} />
+                            </button>
+
+                            {/* Last Page */}
+                            <button
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={validCurrentPage === totalPages}
+                                className="p-1.5 rounded-lg border border-pace-border bg-card-bg text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                                title="Last Page"
+                            >
+                                <ChevronsRight size={14} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
