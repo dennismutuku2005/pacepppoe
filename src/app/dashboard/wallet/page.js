@@ -118,7 +118,7 @@ export default function IspWalletDashboard() {
   const totalWithdrawals = useMemo(() => {
     return (wallet.history || [])
       .filter(h => h.type === 'withdrawal')
-      .reduce((acc, h) => acc + Number(h.amount || 0), 0)
+      .reduce((acc, h) => acc + Number(h.total_deducted || (h.amount + (h.transaction_cost || 0)) || 0), 0)
   }, [wallet.history])
 
   // Filtered History
@@ -663,9 +663,14 @@ export default function IspWalletDashboard() {
                           "font-semibold text-xs tabular-nums font-mono block",
                           isDeposit ? "text-emerald-600" : "text-rose-600"
                         )}>
-                          {isDeposit ? '+' : '-'}KES {Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          {isDeposit ? '+' : '-'}KES {Number(isDeposit ? (tx.amount || 0) : (tx.total_deducted || (tx.amount + (tx.transaction_cost || 0)))).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </span>
-                        {tx.transaction_cost > 0 && (
+                        {tx.type === 'withdrawal' && (
+                          <span className="text-[10px] text-gray-400 font-mono block">
+                            Payout: KES {Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} {tx.transaction_cost > 0 ? `• Fee: KES ${Number(tx.transaction_cost).toFixed(2)}` : ''}
+                          </span>
+                        )}
+                        {isDeposit && tx.transaction_cost > 0 && (
                           <span className="text-[10px] text-gray-400 font-mono block">Fee: KES {Number(tx.transaction_cost).toFixed(2)}</span>
                         )}
                       </td>
@@ -791,14 +796,14 @@ export default function IspWalletDashboard() {
 
               <div className="space-y-1.5 pt-0.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Withdrawal Amount:</span>
+                  <span className="text-gray-400">Withdrawal Payout Amount:</span>
                   <span className="font-mono font-medium text-admin-value">
                     KES {numericWithdrawAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Estimated Transaction Fee:</span>
+                  <span className="text-gray-400">Transaction Tariff / Fee (TC):</span>
                   <span className="font-mono font-medium text-amber-600 dark:text-amber-400">
                     KES {estimatedWithdrawFee.toFixed(2)}
                   </span>
@@ -811,7 +816,14 @@ export default function IspWalletDashboard() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] text-gray-400 pt-0.5">
+                <div className="flex items-center justify-between text-xs font-semibold pt-0.5">
+                  <span className="text-emerald-600 dark:text-emerald-400">Net Disbursed to Destination:</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                    KES {numericWithdrawAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-gray-400 pt-0.5 border-t border-pace-border/40">
                   <span>Remaining Wallet Balance:</span>
                   <span className="font-mono">
                     KES {Math.max(0, wallet.balance - totalDeductedFromWallet).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -1012,7 +1024,7 @@ export default function IspWalletDashboard() {
                     "text-xl sm:text-2xl font-bold font-mono tracking-tight",
                     selectedTx.type === 'deposit' ? "text-emerald-600" : "text-rose-600"
                   )}>
-                    {selectedTx.type === 'deposit' ? '+' : '-'}KES {Number(selectedTx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {selectedTx.type === 'deposit' ? '+' : '-'}KES {Number(selectedTx.type === 'deposit' ? (selectedTx.amount || 0) : (selectedTx.total_deducted || (selectedTx.amount + (selectedTx.transaction_cost || 0)))).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
@@ -1060,21 +1072,40 @@ export default function IspWalletDashboard() {
               </div>
 
               {/* Fee Breakdown if applicable */}
-              {selectedTx.transaction_cost > 0 && (
+              {selectedTx.type === 'withdrawal' ? (
                 <>
                   <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
-                    <span className="text-gray-400">Transaction Tariff / Fee:</span>
+                    <span className="text-gray-400">Withdrawal Payout Amount:</span>
+                    <span className="font-mono text-admin-value font-semibold">
+                      KES {Number(selectedTx.amount || selectedTx.net_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                    <span className="text-gray-400">Transaction Tariff / Fee (TC):</span>
                     <span className="font-mono text-amber-600 font-semibold">
-                      KES {Number(selectedTx.transaction_cost).toFixed(2)}
+                      KES {Number(selectedTx.transaction_cost || 0).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                    <span className="text-gray-400">Total Deducted from Wallet:</span>
+                    <span className="font-mono text-rose-600 font-bold">
+                      KES {Number(selectedTx.total_deducted || (selectedTx.amount + (selectedTx.transaction_cost || 0))).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
                     <span className="text-gray-400">Net Disbursed to Destination:</span>
-                    <span className="font-mono text-admin-value font-semibold">
-                      KES {Number(selectedTx.amount - selectedTx.transaction_cost).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    <span className="font-mono text-emerald-600 font-bold">
+                      KES {Number(selectedTx.net_amount || selectedTx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 </>
+              ) : selectedTx.transaction_cost > 0 && (
+                <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                  <span className="text-gray-400">Transaction Tariff / Fee:</span>
+                  <span className="font-mono text-amber-600 font-semibold">
+                    KES {Number(selectedTx.transaction_cost).toFixed(2)}
+                  </span>
+                </div>
               )}
 
               {/* Description / Beneficiary */}
