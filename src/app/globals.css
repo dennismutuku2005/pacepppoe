@@ -74,7 +74,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-figtree), Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 13px;
+  font-size: 14.5px;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -89,18 +89,18 @@ body {
 
 /* Excel-like Table Header */
 th {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--admin-label);
   background-color: var(--pace-bg-subtle);
   letter-spacing: 0.02em;
-  padding: 8px 12px !important;
-  font-size: 11px !important;
+  padding: 10px 14px !important;
+  font-size: 12px !important;
   border-bottom: 1px solid var(--pace-border);
 }
 
 td {
-  padding: 8px 12px !important;
-  font-size: 12px !important;
+  padding: 10px 14px !important;
+  font-size: 13px !important;
 }
 
 tr:hover td {
@@ -133,11 +133,11 @@ tr:hover td {
   scrollbar-color: #9CA3AF transparent;
 }
 
-/* Tightening up spacing */
+/* Inputs, selects, and buttons font size */
 input,
 select,
 button {
-  font-size: 13px !important;
+  font-size: 13.5px !important;
 }
 
 /* Data Row Styling */
