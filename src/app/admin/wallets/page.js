@@ -89,7 +89,8 @@ export default function AdminWalletsPage() {
   const handleConfirmSubmit = async () => {
     setIsSaving(true)
     try {
-      const res = await walletService.setWalletBalance(selectedWallet.id, parseFloat(newAmount))
+      const targetIspId = selectedWallet.isp_id || selectedWallet.id
+      const res = await walletService.setWalletBalance(targetIspId, parseFloat(newAmount))
       if (res && res.status === 'success') {
         toast.success(`Wallet for ${selectedWallet.isp_name} manually set to KES ${parseFloat(newAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`)
         setIsConfirmOpen(false)
