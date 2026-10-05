@@ -1,11 +1,14 @@
 import { apiFetch } from '@/lib/api';
 
 export const customerService = {
-    getCustomers: async ({ search = '', limit = 1000, status = '' } = {}) => {
+    getCustomers: async ({ page = 1, limit = 13, search = '', status = '', router_id = '', plan_id = '' } = {}) => {
         const queryParams = new URLSearchParams();
-        if (search) queryParams.append('search', search);
+        if (page) queryParams.append('page', page);
         if (limit) queryParams.append('limit', limit);
-        if (status) queryParams.append('status', status);
+        if (search) queryParams.append('search', search);
+        if (status && status !== 'ALL') queryParams.append('status', status);
+        if (router_id) queryParams.append('router_id', router_id);
+        if (plan_id) queryParams.append('plan_id', plan_id);
 
         const queryString = queryParams.toString();
         const endpoint = `/isp/subscribers.php${queryString ? `?${queryString}` : ''}`;
@@ -15,6 +18,11 @@ export const customerService = {
             if (res && res.status === 'success') {
                 return {
                     status: 'success',
+                    total: res.data.total ?? 0,
+                    has_more: res.data.has_more ?? false,
+                    page: res.data.page ?? page,
+                    limit: res.data.limit ?? limit,
+                    stats: res.data.stats ?? { total: 0, active: 0, suspended: 0, total_billing: 0 },
                     data: (res.data.subscribers || []).map(c => ({
                         id: c.id,
                         name: c.name,
@@ -41,7 +49,7 @@ export const customerService = {
                     }))
                 };
             }
-            return { status: 'error', message: res?.message || 'Failed to load customers' };
+            return { status: 'error', message: res?.message || 'Failed to load customers', total: 0, has_more: false, stats: {}, data: [] };
         } catch (e) {
             console.error("getCustomers failed", e);
             throw e;

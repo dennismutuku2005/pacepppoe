@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react'
-import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin, Users, CheckCircle2, AlertCircle, ShieldCheck, User, Server, KeyRound, Lock, Coins, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react'
+import { Plus, Search, UserPlus, Edit2, Trash2, Smartphone, Network, LifeBuoy, Wallet, RefreshCw, X, MapPin, Users, CheckCircle2, AlertCircle, ShieldCheck, User, Server, KeyRound, Lock, Coins, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 import { Skeleton, CardSkeleton, TablePageSkeleton } from '@/components/Skeleton'
 import { customerService } from '@/services/isp/customers'
@@ -24,20 +24,29 @@ const MapPicker = dynamic(() => import('@/components/MapPicker'), {
 function CustomersContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
+    const observerRef = useRef(null)
+
     const [isLoading, setIsLoading] = useState(true)
+    const [isLoadingMore, setIsLoadingMore] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+    
+    // Subscribers & Infinite Scroll State
     const [customers, setCustomers] = useState([])
+    const [page, setPage] = useState(1)
+    const [hasMore, setHasMore] = useState(false)
+    const [totalCount, setTotalCount] = useState(0)
+    const [metrics, setMetrics] = useState({ total: 0, active: 0, suspended: 0, billing: 0 })
+
+    // Auxiliary metadata
     const [routersList, setRoutersList] = useState([])
     const [allPlansList, setAllPlansList] = useState([])
     
+    // Filters
     const [search, setSearch] = useState('')
+    const [debouncedSearch, setDebouncedSearch] = useState('')
     const [filterRouter, setFilterRouter] = useState('')
     const [filterPlan, setFilterPlan] = useState('')
     const [filterStatus, setFilterStatus] = useState('ALL')
-
-    // Table Pagination State
-    const [currentPage, setCurrentPage] = useState(1)
-    const [pageSize, setPageSize] = useState(10)
     
     // Claim Payment Modal
     const [isClaimModalOpen, setIsClaimModalOpen] = useState(false)
@@ -125,17 +134,55 @@ function CustomersContent() {
         return () => clearTimeout(timer)
     }, [formData.accountNumber, isModalOpen, currentCustomer?.id])
 
-    const fetchInitialData = async () => {
-        setIsLoading(true);
+    // Debounce search input
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search)
+        }, 350)
+        return () => clearTimeout(timer)
+    }, [search])
+
+    // Load auxiliary metadata (Routers & Plans)
+    useEffect(() => {
+        const fetchAuxMetadata = async () => {
+            try {
+                const [routerRes, planRes] = await Promise.all([
+                    routerService.getRouters(),
+                    planService.getPlans()
+                ])
+                if (routerRes.status === 'success') {
+                    setRoutersList(routerRes.data || [])
+                }
+                if (planRes.status === 'success') {
+                    setAllPlansList(planRes.data || [])
+                }
+            } catch (err) {
+                console.error("Failed to load auxiliary metadata:", err)
+            }
+        }
+        fetchAuxMetadata()
+    }, [])
+
+    // Server-driven subscriber loader (13 items per fetch)
+    const loadSubscribers = async (targetPage = 1, append = false) => {
+        if (append) {
+            setIsLoadingMore(true)
+        } else {
+            setIsLoading(true)
+        }
+
         try {
-            const [subRes, routerRes, planRes] = await Promise.all([
-                customerService.getCustomers(),
-                routerService.getRouters(),
-                planService.getPlans()
-            ]);
+            const subRes = await customerService.getCustomers({
+                page: targetPage,
+                limit: 13,
+                search: debouncedSearch,
+                status: filterStatus,
+                router_id: filterRouter,
+                plan_id: filterPlan
+            })
 
             if (subRes.status === 'success') {
-                const enriched = subRes.data.map(c => {
+                const enriched = (subRes.data || []).map(c => {
                     const names = c.name ? c.name.split(' ') : ['Subscriber', '']
                     const firstName = names[0] || 'Subscriber'
                     const lastName = names.slice(1).join(' ') || ''
@@ -144,28 +191,79 @@ function CustomersContent() {
                         firstName,
                         lastName
                     }
-                });
-                setCustomers(enriched);
-            }
+                })
 
-            if (routerRes.status === 'success') {
-                setRoutersList(routerRes.data || []);
-            }
+                if (append) {
+                    setCustomers(prev => [...prev, ...enriched])
+                } else {
+                    setCustomers(enriched)
+                }
 
-            if (planRes.status === 'success') {
-                setAllPlansList(planRes.data || []);
+                setHasMore(subRes.has_more ?? false)
+                setTotalCount(subRes.total ?? 0)
+
+                if (subRes.stats) {
+                    setMetrics({
+                        total: Number(subRes.stats.total || 0),
+                        active: Number(subRes.stats.active || 0),
+                        suspended: Number(subRes.stats.suspended || 0),
+                        billing: parseFloat(subRes.stats.total_billing || 0)
+                    })
+                }
+            } else {
+                if (!append) setCustomers([])
+                setHasMore(false)
             }
         } catch (err) {
-            console.error("Failed to load initial customer data:", err);
-            toast.error("Data Load Error", { description: "Failed to load live subscribers or routers from server." });
+            console.error("Failed to load subscribers:", err)
+            toast.error("Data Load Error", { description: "Failed to load live subscribers from server." })
         } finally {
-            setIsLoading(false);
+            setIsLoading(false)
+            setIsLoadingMore(false)
         }
-    };
+    }
 
+    // Trigger fresh load on filters or search change
     useEffect(() => {
-        fetchInitialData();
-    }, []);
+        setPage(1)
+        loadSubscribers(1, false)
+    }, [debouncedSearch, filterRouter, filterPlan, filterStatus])
+
+    // Infinite scroll observer
+    useEffect(() => {
+        if (isLoading || isLoadingMore || !hasMore) return
+
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                const nextPage = page + 1
+                setPage(nextPage)
+                loadSubscribers(nextPage, true)
+            }
+        }, { threshold: 0.1, rootMargin: '150px' })
+
+        if (observerRef.current) {
+            observer.observe(observerRef.current)
+        }
+
+        return () => observer.disconnect()
+    }, [hasMore, isLoadingMore, isLoading, page, debouncedSearch, filterRouter, filterPlan, filterStatus])
+
+    const refreshData = async () => {
+        setPage(1)
+        await Promise.all([
+            loadSubscribers(1, false),
+            (async () => {
+                try {
+                    const [routerRes, planRes] = await Promise.all([
+                        routerService.getRouters(),
+                        planService.getPlans()
+                    ])
+                    if (routerRes.status === 'success') setRoutersList(routerRes.data || [])
+                    if (planRes.status === 'success') setAllPlansList(planRes.data || [])
+                } catch (e) {}
+            })()
+        ])
+    }
 
     const handleNameChange = (field, value) => {
         const nextData = { ...formData, [field]: value }
@@ -178,7 +276,7 @@ function CustomersContent() {
     }
 
     const handleRouterChange = (routerId) => {
-        const selected = routersList.find(r => String(r.id) === String(routerId));
+        const selected = routersList.find(r => String(r.id) === String(routerId))
         setFormData(prev => ({
             ...prev,
             router_id: routerId,
@@ -187,23 +285,23 @@ function CustomersContent() {
             plan_id: '',
             plan: '',
             price: ''
-        }));
+        }))
     }
 
     const handlePlanChange = (planId) => {
-        const selected = allPlansList.find(p => String(p.id) === String(planId));
+        const selected = allPlansList.find(p => String(p.id) === String(planId))
         setFormData(prev => ({
             ...prev,
             plan_id: planId,
             plan: selected ? selected.name : '',
             price: selected && selected.price !== undefined ? String(selected.price) : ''
-        }));
+        }))
     }
 
     const handleOpenModal = (c = null) => {
-        const defaultNextPay = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const defaultNextPay = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         if (c) {
-            setCurrentCustomer(c);
+            setCurrentCustomer(c)
             setFormData({ 
                 firstName: c.firstName || c.name?.split(' ')[0] || '',
                 lastName: c.lastName || c.name?.split(' ').slice(1).join(' ') || '',
@@ -221,10 +319,10 @@ function CustomersContent() {
                 nextPayment: c.nextPayment ? c.nextPayment.split(' ')[0] : defaultNextPay,
                 lat: c.lat ? String(c.lat) : '',
                 lng: c.lng ? String(c.lng) : ''
-            });
+            })
         } else {
-            setCurrentCustomer(null);
-            setAccountLength(6);
+            setCurrentCustomer(null)
+            setAccountLength(6)
             setFormData({ 
                 firstName: '', 
                 lastName: '', 
@@ -242,30 +340,30 @@ function CustomersContent() {
                 nextPayment: defaultNextPay,
                 lat: '', 
                 lng: ''
-            });
-            fetchGeneratedAccountNumber(6);
+            })
+            fetchGeneratedAccountNumber(6)
         }
-        setIsModalOpen(true);
+        setIsModalOpen(true)
     }
 
     const handleSave = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
         if (!formData.firstName || !formData.lastName || !formData.phone || !formData.username || !formData.password || !formData.router_id || !formData.plan_id) {
             toast.error('Missing Required Fields', {
                 description: 'Please ensure First Name, Last Name, Phone, Router, QoS Plan, PPPoE Username, and Password are provided.'
-            });
-            return;
+            })
+            return
         }
 
         if (accountCheckStatus === 'taken') {
             toast.error('Account Number In Use', {
                 description: `Account number "${formData.accountNumber}" is already registered to another subscriber. Please change it or click Auto-Generate.`
-            });
-            return;
+            })
+            return
         }
 
-        setIsSaving(true);
-        const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
+        setIsSaving(true)
+        const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`
         const payload = {
             name: fullName,
             username: formData.username.trim(),
@@ -278,162 +376,100 @@ function CustomersContent() {
             activation_fee: formData.activationFee ? parseFloat(formData.activationFee) : 0,
             next_payment: formData.nextPayment || null,
             status: formData.status || 'enabled'
-        };
+        }
 
         try {
             if (currentCustomer) {
-                const res = await customerService.updateCustomer(currentCustomer.id, payload);
+                const res = await customerService.updateCustomer(currentCustomer.id, payload)
                 if (res?.status === 'success') {
                     toast.success('Subscriber Updated', {
                         description: `Profile for ${formData.username} has been saved.`
-                    });
-                    setIsModalOpen(false);
-                    await fetchInitialData();
+                    })
+                    setIsModalOpen(false)
+                    await refreshData()
                 } else {
-                    toast.error('Update Failed', { description: res?.message || 'Could not update subscriber.' });
+                    toast.error('Update Failed', { description: res?.message || 'Could not update subscriber.' })
                 }
             } else {
-                const res = await customerService.createCustomer(payload);
+                const res = await customerService.createCustomer(payload)
                 if (res?.status === 'success') {
                     toast.success('Subscriber Created', {
                         description: `New PPPoE subscriber ${formData.username} provisioned on ${formData.router}.`
-                    });
-                    setIsModalOpen(false);
-                    await fetchInitialData();
+                    })
+                    setIsModalOpen(false)
+                    await refreshData()
                 } else {
-                    toast.error('Creation Failed', { description: res?.message || 'Could not create subscriber.' });
+                    toast.error('Creation Failed', { description: res?.message || 'Could not create subscriber.' })
                 }
             }
         } catch (err) {
-            console.error("Save customer error:", err);
-            toast.error('Network Error', { description: 'Failed to communicate with server.' });
+            console.error("Save customer error:", err)
+            toast.error('Network Error', { description: 'Failed to communicate with server.' })
         } finally {
-            setIsSaving(false);
+            setIsSaving(false)
         }
     }
 
     const promptDelete = (c) => {
-        setDeleteTarget(c);
-    };
+        setDeleteTarget(c)
+    }
 
     const handleConfirmDelete = async () => {
-        if (!deleteTarget) return;
-        setIsDeleting(true);
+        if (!deleteTarget) return
+        setIsDeleting(true)
         try {
-            const res = await customerService.deleteCustomer(deleteTarget.id);
+            const res = await customerService.deleteCustomer(deleteTarget.id)
             if (res?.status === 'success') {
                 toast.success('Subscriber Deleted', {
                     description: `Subscriber ${deleteTarget.name || deleteTarget.username} has been removed.`
-                });
-                setDeleteTarget(null);
-                await fetchInitialData();
+                })
+                setDeleteTarget(null)
+                await refreshData()
             } else {
-                toast.error('Delete Failed', { description: res?.message || 'Could not delete subscriber.' });
+                toast.error('Delete Failed', { description: res?.message || 'Could not delete subscriber.' })
             }
         } catch (err) {
-            console.error("Delete customer error:", err);
-            toast.error('Delete Failed', { description: err?.message || 'Failed to contact backend.' });
+            console.error("Delete customer error:", err)
+            toast.error('Delete Failed', { description: err?.message || 'Failed to contact backend.' })
         } finally {
-            setIsDeleting(false);
+            setIsDeleting(false)
         }
-    };
+    }
 
     const handleToggleStatus = async (id, currentStatus) => {
-        const newStatus = currentStatus === 'enabled' ? 'disabled' : 'enabled';
+        const newStatus = currentStatus === 'enabled' ? 'disabled' : 'enabled'
         try {
-            const res = await customerService.toggleStatus(id, newStatus);
+            const res = await customerService.toggleStatus(id, newStatus)
             if (res?.status === 'success') {
                 toast.info(newStatus === 'enabled' ? 'Access Enabled' : 'Access Suspended', {
                     description: `Subscriber state updated to ${newStatus}.`
-                });
-                await fetchInitialData();
+                })
+                await refreshData()
             } else {
-                toast.error('Status Toggle Failed', { description: res?.message || 'Could not update status.' });
+                toast.error('Status Toggle Failed', { description: res?.message || 'Could not update status.' })
             }
         } catch (err) {
-            console.error("Toggle status error:", err);
-            toast.error('Status Toggle Failed', { description: 'Network error.' });
+            console.error("Toggle status error:", err)
+            toast.error('Status Toggle Failed', { description: 'Network error.' })
         }
     }
 
     // Deep link status filter support (?status=active / ?status=suspended)
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const st = searchParams.get('status');
+            const st = searchParams.get('status')
             if (st) {
-                const clean = st.toLowerCase();
-                if (clean === 'active' || clean === 'enabled') setFilterStatus('enabled');
-                else if (clean === 'suspended' || clean === 'disabled') setFilterStatus('disabled');
+                const clean = st.toLowerCase()
+                if (clean === 'active' || clean === 'enabled') setFilterStatus('enabled')
+                else if (clean === 'suspended' || clean === 'disabled') setFilterStatus('disabled')
             }
         }
-    }, [searchParams]);
+    }, [searchParams])
 
     // Filter plans attached to the currently selected router in the modal
     const availablePlansForSelectedRouter = allPlansList.filter(
         p => String(p.router_id) === String(formData.router_id)
-    );
-
-    // Filter options
-    const routerOptions = [...new Set(customers.map(c => c.router).filter(Boolean))];
-    const planOptions = [...new Set(customers.map(c => c.plan).filter(Boolean))];
-
-    // Calculated metrics
-    const metrics = useMemo(() => {
-        const total = customers.length;
-        const active = customers.filter(c => c.status === 'enabled' || c.status === 'active').length;
-        const suspended = customers.filter(c => c.status === 'disabled' || c.status === 'suspended').length;
-        const billing = customers.reduce((sum, c) => sum + (parseFloat(c.price || 0)), 0);
-        return { total, active, suspended, billing };
-    }, [customers]);
-
-    const filteredCustomers = useMemo(() => {
-        return customers.filter(c => {
-            const fullName = c.name || `${c.firstName} ${c.lastName}`;
-            const matchesSearch =
-                fullName.toLowerCase().includes(search.toLowerCase()) ||
-                c.username?.toLowerCase().includes(search.toLowerCase()) ||
-                c.phone?.includes(search) ||
-                c.accountNumber?.includes(search);
-            const matchesRouter = filterRouter === '' || c.router === filterRouter;
-            const matchesPlan = filterPlan === '' || c.plan === filterPlan;
-            const matchesStatus = filterStatus === 'ALL' || 
-                (filterStatus === 'enabled' && (c.status === 'enabled' || c.status === 'active')) ||
-                (filterStatus === 'disabled' && (c.status === 'disabled' || c.status === 'suspended'));
-            return matchesSearch && matchesRouter && matchesPlan && matchesStatus;
-        });
-    }, [customers, search, filterRouter, filterPlan, filterStatus]);
-
-    // Reset page to 1 when filters or search change
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [search, filterRouter, filterPlan, filterStatus, pageSize]);
-
-    // Calculate pagination slices
-    const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / pageSize));
-    const validCurrentPage = Math.min(currentPage, totalPages);
-    const startIndex = (validCurrentPage - 1) * pageSize;
-    const endIndex = Math.min(startIndex + pageSize, filteredCustomers.length);
-
-    const paginatedCustomers = useMemo(() => {
-        return filteredCustomers.slice(startIndex, endIndex);
-    }, [filteredCustomers, startIndex, endIndex]);
-
-    // Smart pagination numbers generator
-    const getPageNumbers = () => {
-        const pages = [];
-        if (totalPages <= 7) {
-            for (let i = 1; i <= totalPages; i++) pages.push(i);
-        } else {
-            if (validCurrentPage <= 4) {
-                pages.push(1, 2, 3, 4, 5, '...', totalPages);
-            } else if (validCurrentPage >= totalPages - 3) {
-                pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-            } else {
-                pages.push(1, '...', validCurrentPage - 1, validCurrentPage, validCurrentPage + 1, '...', totalPages);
-            }
-        }
-        return pages;
-    };
+    )
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-12 font-figtree">
@@ -453,7 +489,7 @@ function CustomersContent() {
                         <span>Claim M-Pesa Payment</span>
                     </button>
                     <ReloadButton
-                        onClick={fetchInitialData}
+                        onClick={refreshData}
                         isLoading={isLoading}
                         label="Refresh List"
                         title="Refresh subscribers"
@@ -470,7 +506,7 @@ function CustomersContent() {
 
             {/* Top Metrics Cards - Dashboard Theme */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {isLoading ? (
+                {isLoading && customers.length === 0 ? (
                     [...Array(4)].map((_, i) => <CardSkeleton key={i} />)
                 ) : [
                     {
@@ -518,15 +554,15 @@ function CustomersContent() {
                         filter: 'ALL'
                     },
                 ].map((metric, i) => {
-                    const isActive = filterStatus.toLowerCase() === metric.filter.toLowerCase();
+                    const isActive = filterStatus.toLowerCase() === metric.filter.toLowerCase()
                     return (
                         <div
                             key={i}
                             onClick={() => {
                                 if (metric.filter === 'ALL') {
-                                    setFilterStatus('ALL');
+                                    setFilterStatus('ALL')
                                 } else {
-                                    setFilterStatus(prev => prev === metric.filter ? 'ALL' : metric.filter);
+                                    setFilterStatus(prev => prev === metric.filter ? 'ALL' : metric.filter)
                                 }
                             }}
                             className={cn(
@@ -556,7 +592,7 @@ function CustomersContent() {
                                 </div>
                             </div>
                         </div>
-                    );
+                    )
                 })}
             </div>
 
@@ -602,8 +638,8 @@ function CustomersContent() {
                         className="px-3 py-1.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all cursor-pointer"
                     >
                         <option value="">All Routers</option>
-                        {routerOptions.map(r => (
-                            <option key={r} value={r}>{r}</option>
+                        {routersList.map(r => (
+                            <option key={r.id} value={r.id}>{r.name}</option>
                         ))}
                     </select>
 
@@ -614,8 +650,8 @@ function CustomersContent() {
                         className="px-3 py-1.5 bg-card-bg border border-pace-border rounded-xl text-xs font-medium text-admin-value focus:outline-none focus:border-pace-purple transition-all cursor-pointer"
                     >
                         <option value="">All Plans</option>
-                        {planOptions.map(p => (
-                            <option key={p} value={p}>{p}</option>
+                        {allPlansList.map(p => (
+                            <option key={p.id} value={p.id}>{p.name} {p.price ? `(KES ${p.price})` : ''}</option>
                         ))}
                     </select>
 
@@ -647,7 +683,7 @@ function CustomersContent() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-pace-border/70">
-                            {isLoading ? (
+                            {isLoading && customers.length === 0 ? (
                                 Array.from({ length: 7 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
                                         <td className="px-6 py-4"><div className="h-4 w-32 bg-pace-bg-subtle rounded" /></td>
@@ -659,7 +695,7 @@ function CustomersContent() {
                                         <td className="px-6 py-4 text-right"><div className="h-4 w-16 bg-pace-bg-subtle rounded ml-auto" /></td>
                                     </tr>
                                 ))
-                            ) : filteredCustomers.length === 0 ? (
+                            ) : customers.length === 0 ? (
                                 <tr>
                                     <td colSpan="7" className="py-24 text-center">
                                         <div className="flex flex-col items-center justify-center gap-2">
@@ -672,9 +708,9 @@ function CustomersContent() {
                                     </td>
                                 </tr>
                             ) : (
-                                paginatedCustomers.map((c) => {
-                                    const fullName = c.name || `${c.firstName} ${c.lastName}`;
-                                    const isEnabled = c.status === 'enabled' || c.status === 'active';
+                                customers.map((c) => {
+                                    const fullName = c.name || `${c.firstName} ${c.lastName}`
+                                    const isEnabled = c.status === 'enabled' || c.status === 'active'
                                     return (
                                         <tr key={c.id} className="hover:bg-pace-bg-subtle/40 transition-colors group">
                                             {/* Subscriber */}
@@ -765,113 +801,49 @@ function CustomersContent() {
                                                 </div>
                                             </td>
                                         </tr>
-                                    );
+                                    )
                                 })
+                            )}
+
+                            {/* Infinite Scroll Bottom Sentinel / Loader */}
+                            {hasMore && (
+                                <tr ref={observerRef}>
+                                    <td colSpan="7" className="px-6 py-4 text-center">
+                                        <div className="flex items-center justify-center gap-2 text-admin-dim text-xs font-medium py-2">
+                                            <Loader2 className="animate-spin text-pace-purple" size={16} />
+                                            <span>Loading additional subscribers (13 per fetch)...</span>
+                                        </div>
+                                    </td>
+                                </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
 
-                {/* Bottom Footer & Pagination Controls */}
-                <div className="px-6 py-4 border-t border-pace-border flex flex-col sm:flex-row items-center justify-between gap-4 bg-pace-bg-subtle/20 text-xs">
-                    {/* Range & Row Size Selector */}
-                    <div className="flex flex-wrap items-center gap-3 text-admin-dim">
+                {/* Infinite Scroll Status & Progress Footer */}
+                <div className="px-6 py-4 border-t border-pace-border flex flex-col sm:flex-row items-center justify-between gap-3 bg-pace-bg-subtle/20 text-xs text-admin-dim">
+                    <div className="flex flex-wrap items-center gap-2">
                         <span>
-                            Showing <span className="font-semibold text-admin-value">{filteredCustomers.length === 0 ? 0 : startIndex + 1}</span> to <span className="font-semibold text-admin-value">{endIndex}</span> of <span className="font-semibold text-admin-value">{filteredCustomers.length}</span> subscribers
-                            {filteredCustomers.length !== customers.length && (
-                                <span className="text-[11px] text-admin-dim/80 ml-1">
-                                    (filtered from {customers.length} total)
-                                </span>
-                            )}
+                            Showing <span className="font-semibold text-admin-value font-mono">{customers.length}</span> of <span className="font-semibold text-admin-value font-mono">{totalCount}</span> subscribers
                         </span>
-
-                        <div className="flex items-center gap-1.5 pl-2 border-l border-pace-border/60">
-                            <span className="text-[11px]">Per page:</span>
-                            <select
-                                value={pageSize}
-                                onChange={(e) => setPageSize(Number(e.target.value))}
-                                className="bg-card-bg border border-pace-border rounded-lg px-2 py-1 text-xs font-semibold text-admin-value focus:outline-none focus:border-pace-purple transition-all cursor-pointer shadow-2xs"
-                            >
-                                <option value={10}>10</option>
-                                <option value={25}>25</option>
-                                <option value={50}>50</option>
-                                <option value={100}>100</option>
-                            </select>
-                        </div>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-[11px] text-pace-purple font-semibold bg-pace-purple/10 px-2 py-0.5 rounded-md">
+                            13 per fetch
+                        </span>
                     </div>
 
-                    {/* Pagination Button Navigation */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center gap-1">
-                            {/* First Page */}
-                            <button
-                                onClick={() => setCurrentPage(1)}
-                                disabled={validCurrentPage === 1}
-                                className="p-1.5 rounded-lg border border-pace-border bg-card-bg text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                                title="First Page"
-                            >
-                                <ChevronsLeft size={14} />
-                            </button>
-
-                            {/* Previous Page */}
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                disabled={validCurrentPage === 1}
-                                className="p-1.5 rounded-lg border border-pace-border bg-card-bg text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                                title="Previous Page"
-                            >
-                                <ChevronLeft size={14} />
-                            </button>
-
-                            {/* Numbered Buttons */}
-                            <div className="flex items-center gap-1 mx-1">
-                                {getPageNumbers().map((p, idx) => {
-                                    if (p === '...') {
-                                        return (
-                                            <span key={`ellipsis-${idx}`} className="px-2 py-1 text-xs text-admin-dim select-none font-mono">
-                                                …
-                                            </span>
-                                        );
-                                    }
-                                    const isCurrent = p === validCurrentPage;
-                                    return (
-                                        <button
-                                            key={`page-${p}`}
-                                            onClick={() => setCurrentPage(p)}
-                                            className={cn(
-                                                "min-w-[30px] h-[30px] flex items-center justify-center rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                                                isCurrent
-                                                    ? "bg-pace-purple text-white shadow-xs"
-                                                    : "border border-pace-border bg-card-bg text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle"
-                                            )}
-                                        >
-                                            {p}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Next Page */}
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                disabled={validCurrentPage === totalPages}
-                                className="p-1.5 rounded-lg border border-pace-border bg-card-bg text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                                title="Next Page"
-                            >
-                                <ChevronRight size={14} />
-                            </button>
-
-                            {/* Last Page */}
-                            <button
-                                onClick={() => setCurrentPage(totalPages)}
-                                disabled={validCurrentPage === totalPages}
-                                className="p-1.5 rounded-lg border border-pace-border bg-card-bg text-admin-dim hover:text-admin-value hover:bg-pace-bg-subtle transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                                title="Last Page"
-                            >
-                                <ChevronsRight size={14} />
-                            </button>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2 text-[11px]">
+                        {hasMore ? (
+                            <span className="flex items-center gap-1.5 text-admin-dim">
+                                <span className="w-2 h-2 rounded-full bg-pace-purple animate-ping" />
+                                Scroll down to load more
+                            </span>
+                        ) : customers.length > 0 ? (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                                <CheckCircle2 size={13} /> All {totalCount} subscribers loaded
+                            </span>
+                        ) : null}
+                    </div>
                 </div>
             </div>
 
