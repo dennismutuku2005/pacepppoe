@@ -108,7 +108,7 @@ function ActiveUsersContent() {
                         <thead>
                             <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-bold text-admin-dim uppercase tracking-wider text-[10px]">
                                 <th className="px-6 py-3">Subscriber Identity</th>
-                                <th className="px-6 py-3">MikroTik Gateway</th>
+                                <th className="px-6 py-3">Mikrotik</th>
                                 <th className="px-6 py-3">Service QoS Plan</th>
                                 <th className="px-6 py-3 text-right">Plan Rate</th>
                                 <th className="px-6 py-3">Latest M-Pesa Payment</th>

@@ -675,7 +675,7 @@ function CustomersContent() {
                             <tr className="bg-pace-bg-subtle/50 border-b border-pace-border font-semibold text-admin-dim uppercase tracking-wider text-[10px]">
                                 <th className="px-6 py-3.5">Subscriber / Account</th>
                                 <th className="px-6 py-3.5">PPPoE Credentials</th>
-                                <th className="px-6 py-3.5">Router Gateway</th>
+                                <th className="px-6 py-3.5">Mikrotik</th>
                                 <th className="px-6 py-3.5">Assigned Plan</th>
                                 <th className="px-6 py-3.5 text-center">Billing & Expiry</th>
                                 <th className="px-6 py-3.5 text-center">Status</th>
