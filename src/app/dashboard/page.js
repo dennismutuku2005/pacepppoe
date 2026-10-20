@@ -58,12 +58,23 @@ function DashboardContent() {
         if (routers.length === 0) {
             routerService.getRouters().then(res => {
                 if (res && res.status === 'success') {
-                    const list = res.data || []
+                    const list = (res.data || []).map(r => ({
+                        ...r,
+                        isChecking: true,
+                        latency_ms: null,
+                        status: null
+                    }))
                     setRouters(list)
                     list.forEach(r => pingSingleRouter(r))
                 }
             }).catch(console.error).finally(() => setIsPingingRouters(false))
         } else {
+            setRouters(prev => prev.map(r => ({
+                ...r,
+                isChecking: true,
+                latency_ms: null,
+                status: null
+            })))
             routers.forEach(r => pingSingleRouter(r))
             setTimeout(() => setIsPingingRouters(false), 1200)
         }
@@ -76,13 +87,26 @@ function DashboardContent() {
                 const latency = pingRes.data?.latency_ms || 12
                 setRouters(prev => prev.map(item => item.id === r.id ? {
                     ...item,
+                    isChecking: false,
                     status: isOnline ? 'Online' : 'Offline',
                     latency_ms: isOnline ? latency : null
+                } : item))
+            } else {
+                setRouters(prev => prev.map(item => item.id === r.id ? {
+                    ...item,
+                    isChecking: false,
+                    status: 'Offline',
+                    latency_ms: null
                 } : item))
             }
         }).catch(err => {
             console.warn(`Router ${r.id} ping failed:`, err)
-            setRouters(prev => prev.map(item => item.id === r.id ? { ...item, status: 'Offline', latency_ms: null } : item))
+            setRouters(prev => prev.map(item => item.id === r.id ? {
+                ...item,
+                isChecking: false,
+                status: 'Offline',
+                latency_ms: null
+            } : item))
         })
     }
 
@@ -120,10 +144,15 @@ function DashboardContent() {
             setIsTxLoading(false)
         })
 
-        // 4. Fetch router list immediately and ping in background (exact same as /dashboard/routers)
+        // 4. Fetch router list and mark isChecking: true so skeleton shows while pinging
         routerService.getRouters().then(res => {
             if (res && res.status === 'success') {
-                const list = res.data || []
+                const list = (res.data || []).map(r => ({
+                    ...r,
+                    isChecking: true,
+                    latency_ms: null,
+                    status: null
+                }))
                 setRouters(list)
                 setIsRoutersLoading(false)
                 // Ping each router live
@@ -293,12 +322,7 @@ function DashboardContent() {
                 <div className="lg:col-span-4 bg-card-bg border border-pace-border rounded-xl p-5 flex flex-col order-2 lg:order-1">
                     <div className="flex justify-between items-center mb-5">
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-medium text-admin-value">Your Mikrotiks</h4>
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-500">
-                                    Live
-                                </span>
-                            </div>
+                            <h4 className="text-sm font-medium text-admin-value">Your Mikrotiks</h4>
                             <p className="text-[10px] text-gray-400 font-medium mt-0.5">Real-time ping</p>
                         </div>
                         <button 
@@ -341,15 +365,24 @@ function DashboardContent() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    {device.latency_ms && device.status === 'Online' && (
-                                        <span className="text-[9px] font-mono text-emerald-500 font-semibold">{device.latency_ms}ms</span>
+                                    {device.isChecking || !device.status ? (
+                                        <div className="flex items-center gap-1.5">
+                                            <Skeleton className="h-3 w-8 rounded" />
+                                            <Skeleton className="h-4 w-12 rounded-full" />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {device.latency_ms && device.status === 'Online' && (
+                                                <span className="text-[9px] font-mono text-emerald-500 font-semibold">{device.latency_ms}ms</span>
+                                            )}
+                                            <Badge 
+                                                variant={device.status === 'Online' ? 'success' : 'error'} 
+                                                className="text-[8px] font-semibold tracking-wider px-2 py-0.5 border-none"
+                                            >
+                                                {device.status}
+                                            </Badge>
+                                        </>
                                     )}
-                                    <Badge 
-                                        variant={device.status === 'Online' ? 'success' : 'error'} 
-                                        className="text-[8px] font-semibold tracking-wider px-2 py-0.5 border-none"
-                                    >
-                                        {device.status}
-                                    </Badge>
                                 </div>
                             </div>
                         ))}
