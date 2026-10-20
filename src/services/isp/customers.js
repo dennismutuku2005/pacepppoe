@@ -44,6 +44,8 @@ export const customerService = {
                         price: parseFloat(c.price || 0),
                         router: c.router,
                         router_id: c.router_id,
+                        router_ip: c.router_ip || '',
+                        router_status: c.router_status || 'online',
                         nextPayment: c.next_payment,
                         createdAt: c.created_at
                     }))

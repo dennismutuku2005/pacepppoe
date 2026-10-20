@@ -50,6 +50,8 @@ function PaymentsContent() {
                     const direction = isDeposit ? 'in' : 'out'
                     const amount = Number(item.amount || 0)
                     const fee = Number(item.transaction_cost || 0)
+                    const totalDeducted = Number(item.total_deducted || (isWithdrawal ? (amount + fee) : amount))
+                    const netAmount = Number(item.net_amount || amount)
 
                     return {
                         id: item.id || `${item.type}-${item.reference}`,
@@ -61,7 +63,8 @@ function PaymentsContent() {
                         reference: item.reference || '—',
                         amount: amount,
                         fee: fee,
-                        netAmount: isWithdrawal ? (amount - fee) : amount,
+                        totalDeducted: totalDeducted,
+                        netAmount: netAmount,
                         date: item.created_at || item.date || '—',
                         status: item.status || 'completed',
                         paybillNumber: item.paybill_number || '',
@@ -146,7 +149,7 @@ function PaymentsContent() {
     const totalOutflow = useMemo(() => {
         return ledger
             .filter(t => t.direction === 'out')
-            .reduce((acc, t) => acc + Number(t.amount || 0), 0)
+            .reduce((acc, t) => acc + Number(t.totalDeducted || t.amount || 0), 0)
     }, [ledger])
 
     const netCashflow = totalInflow - totalOutflow
@@ -446,7 +449,7 @@ function PaymentsContent() {
                                                     "font-semibold text-xs tabular-nums font-mono block",
                                                     isInflow ? "text-emerald-600" : "text-rose-600"
                                                 )}>
-                                                    {isInflow ? '+' : '-'}KES {Number(t.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                    {isInflow ? '+' : '-'}KES {Number(isInflow ? (t.amount || 0) : (t.totalDeducted || t.amount || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </span>
                                                 {t.fee > 0 && (
                                                     <span className="text-[10px] text-gray-400 font-mono block">Fee: KES {Number(t.fee).toFixed(2)}</span>
@@ -510,13 +513,19 @@ function PaymentsContent() {
                                 </div>
                                 <div>
                                     <span className="text-[11px] font-medium text-gray-400 block uppercase tracking-wider">
-                                        {selectedTx.direction === 'in' ? 'Incoming Collection' : 'Outgoing Disbursement'}
+                                        {selectedTx.direction === 'in' 
+                                            ? 'Incoming Collection' 
+                                            : (selectedTx.type === 'withdrawal' ? 'Wallet Withdrawal' : 'Outgoing Disbursement')}
                                     </span>
                                     <span className={cn(
                                         "text-xl sm:text-2xl font-bold font-mono tracking-tight",
                                         selectedTx.direction === 'in' ? "text-emerald-600" : "text-rose-600"
                                     )}>
-                                        {selectedTx.direction === 'in' ? '+' : '-'}KES {Number(selectedTx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        {selectedTx.direction === 'in' ? '+' : '-'}KES {Number(
+                                            selectedTx.direction === 'in' 
+                                                ? (selectedTx.amount || 0) 
+                                                : (selectedTx.totalDeducted || selectedTx.amount || 0)
+                                        ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             </div>
@@ -564,22 +573,41 @@ function PaymentsContent() {
                             </div>
 
                             {/* Fee Breakdown if applicable */}
-                            {selectedTx.fee > 0 && (
+                            {selectedTx.type === 'withdrawal' ? (
                                 <>
                                     <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
-                                        <span className="text-gray-400">Transaction Tariff / Fee:</span>
-                                        <span className="font-mono text-amber-600 font-semibold">
-                                            KES {Number(selectedTx.fee).toFixed(2)}
+                                        <span className="text-gray-400">Withdrawal Payout Amount:</span>
+                                        <span className="font-mono text-admin-value font-semibold">
+                                            KES {Number(selectedTx.amount || selectedTx.netAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
-                                        <span className="text-gray-400">Net Disbursed Amount:</span>
-                                        <span className="font-mono text-admin-value font-semibold">
-                                            KES {Number(selectedTx.netAmount || (selectedTx.amount - selectedTx.fee)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        <span className="text-gray-400">Transaction Tariff / Fee (TC):</span>
+                                        <span className="font-mono text-amber-600 font-semibold">
+                                            KES {Number(selectedTx.fee || 0).toFixed(2)}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                                        <span className="text-gray-400">Total Deducted from Wallet:</span>
+                                        <span className="font-mono text-rose-600 font-bold">
+                                            KES {Number(selectedTx.totalDeducted || (selectedTx.amount + (selectedTx.fee || 0))).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                                        <span className="text-gray-400">Net Disbursed to Destination:</span>
+                                        <span className="font-mono text-emerald-600 font-bold">
+                                            KES {Number(selectedTx.netAmount || selectedTx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </span>
                                     </div>
                                 </>
-                            )}
+                            ) : selectedTx.fee > 0 ? (
+                                <div className="flex items-center justify-between py-1 border-b border-pace-border/60">
+                                    <span className="text-gray-400">Transaction Tariff / Fee:</span>
+                                    <span className="font-mono text-amber-600 font-semibold">
+                                        KES {Number(selectedTx.fee).toFixed(2)}
+                                    </span>
+                                </div>
+                            ) : null}
 
                             {/* Description / Beneficiary */}
                             <div className="py-1">

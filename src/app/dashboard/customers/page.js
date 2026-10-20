@@ -711,6 +711,15 @@ function CustomersContent() {
                                 customers.map((c) => {
                                     const fullName = c.name || `${c.firstName} ${c.lastName}`
                                     const isEnabled = c.status === 'enabled' || c.status === 'active'
+
+                                    const routerObj = routersList.find(r => String(r.id) === String(c.router_id) || r.name === c.router)
+                                    const planObj = allPlansList.find(p => String(p.id) === String(c.plan_id))
+                                    const routerFromPlan = planObj?.router_id ? routersList.find(r => String(r.id) === String(planObj.router_id)) : null
+
+                                    const routerName = (c.router && c.router !== 'Unassigned')
+                                        ? c.router
+                                        : (routerObj?.name || routerFromPlan?.name || 'Unassigned')
+
                                     return (
                                         <tr key={c.id} className="hover:bg-pace-bg-subtle/40 transition-colors group">
                                             {/* Subscriber */}
@@ -737,9 +746,9 @@ function CustomersContent() {
                                                 </div>
                                             </td>
 
-                                            {/* Router */}
+                                            {/* Router Gateway */}
                                             <td className="px-6 py-3.5 text-xs font-normal text-admin-value">
-                                                <span>{c.router || 'Unassigned'}</span>
+                                                <span>{routerName}</span>
                                             </td>
 
                                             {/* Plan */}

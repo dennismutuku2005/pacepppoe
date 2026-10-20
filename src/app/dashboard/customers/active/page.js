@@ -154,7 +154,7 @@ function ActiveUsersContent() {
                                             {/* Router / NAS */}
                                             <td className="px-6 py-3">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                                                     <span className="text-xs font-semibold text-admin-value font-mono">
                                                         {user.router || 'Default Router'}
                                                     </span>
